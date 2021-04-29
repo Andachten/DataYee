@@ -11,13 +11,13 @@ import copy
 import time
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import numpy as np
-from datapro import lcfunc
+from src.datapro import lcfunc
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QMessageBox,QProgressDialog,QGridLayout
-from designer import Ui_MainWindow
+from src.designer import Ui_MainWindow
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from loadjpk import loadjpkfile,zipfileopera,forcecurve
-from main import process_customize
+from src.loadjpk import loadjpkfile,zipfileopera,forcecurve
+from src.main import process_customize
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 mpl.rcParams['font.family']='Arial'
