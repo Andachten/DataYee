@@ -280,12 +280,13 @@ def slope(fc):
     data = fc.get_prodata()['retract']
     data_y = data['vDeflection'][:,0]*1e12
     data_x = data['measuredHeight'][:,0]*1e9
-    for i,p_i in enumerate(peak_index):
-        if p_i - bottom_index[i]>60:
-            popt = np.polyfit(data_x[p_i-60:p_i] , data_y[p_i-60:p_i],1)
-        else:
-            popt = np.polyfit(data_x[bottom_index[i]:p_i] , data_y[bottom_index[i]:p_i],1)
-        fc.data['k'].append(popt)
+    for i in range(len(peak_index)):
+        x,y = data_x[bottom_index[i]:peak_index[i]],data_y[bottom_index[i]:peak_index[i]]
+        re = np.polyfit(x,y,5)
+        d = np.polyder(re)
+        k = np.polyval(d,data_x[peak_index[i]])
+        b = data_y[peak_index[i]]-k*data_x[peak_index[i]]
+        fc.data.append((k,b))
         
 def graph(forcecurve):
     fig,ax = plt.subplots(dpi=300,figsize=(8,5))
