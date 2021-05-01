@@ -36,7 +36,7 @@ def lcfunc(x,lc,lp):
     return 1.3806e-23*298/(lp*1e-9)*(1/4*(1-x/lc)**(-2)+x/lc-1/4)*1e12
 def loadmodel():
     global model,device,transform
-    model = torch.load(r'model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
+    model = torch.load(r'../model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
