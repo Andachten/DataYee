@@ -286,7 +286,7 @@ def slope(fc):
         d = np.polyder(re)
         k = np.polyval(d,data_x[peak_index[i]])
         b = data_y[peak_index[i]]-k*data_x[peak_index[i]]
-        fc.data.append((k,b))
+        fc.data['k'].append((k,b))
         
 def graph(forcecurve):
     fig,ax = plt.subplots(dpi=300,figsize=(8,5))
