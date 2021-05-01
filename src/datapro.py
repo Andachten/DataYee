@@ -122,6 +122,22 @@ def fig2img(fig):
     fig.canvas.draw()
     img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
     return img
+@jit(nopython=True)
+def FRC_transformer(f,x,thr=30):
+    thr = thr*1e-12
+    f = f*1e-12
+    x = x*1e-9
+    kb = 1.38e-23
+    b = 0.11*1e-9
+    gama = 41/180*np.pi
+    T = 298
+    l = b*np.cos(gama/2)/np.abs(np.log(np.cos(gama)))
+    fb = kb*T*l/b**2
+    state_L1 =  x[np.where((f<fb) & (f>thr))]/(1-(4*f[np.where((f<fb) & (f>thr))]*l/kb/T)**(-0.5))*1e9
+    state_f1 = f[np.where((f<fb) & (f>thr))]*1e12
+    state_L2 =  x[np.where(f>fb)]/(1-(2*f[np.where(f>fb)]*b/kb/T)**(-1))*1e9
+    state_f2 = f[np.where(f>fb)]*1e12
+    return np.hstack((state_L1,state_L2)),np.hstack((state_f1,state_f2))
 def cal_baseline(forcecurve):
     data = copy.deepcopy(forcecurve.data['rawdata']['retract'])
     data['vDeflection'] = savgol_filter(data['vDeflection'][:,0],29,2).reshape(len(data['vDeflection']),1)
@@ -280,12 +296,13 @@ def slope(fc):
     data = fc.get_prodata()['retract']
     data_y = data['vDeflection'][:,0]*1e12
     data_x = data['measuredHeight'][:,0]*1e9
-    for i,p_i in enumerate(peak_index):
-        if p_i - bottom_index[i]>60:
-            popt = np.polyfit(data_x[p_i-60:p_i] , data_y[p_i-60:p_i],1)
-        else:
-            popt = np.polyfit(data_x[bottom_index[i]:p_i] , data_y[bottom_index[i]:p_i],1)
-        fc.data['k'].append(popt)
+    for i in range(len(peak_index)):
+        x,y = data_x[bottom_index[i]:peak_index[i]],data_y[bottom_index[i]:peak_index[i]]
+        re = np.polyfit(x,y,5)
+        d = np.polyder(re)
+        k = np.polyval(d,data_x[peak_index[i]])
+        b = data_y[peak_index[i]]-k*data_x[peak_index[i]]
+        fc.data.append((k,b))
         
 def graph(forcecurve):
     fig,ax = plt.subplots(dpi=300,figsize=(8,5))
