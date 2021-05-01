@@ -312,6 +312,6 @@ def graph(forcecurve):
         ax.plot(x_,y_,'-.',lw=0.5)
     for i in range(len(forcecurve.data['k'])):
         x_ = np.linspace(data_x[peak_index[i]]-10,data_x[peak_index[i]]+5)
-        y_ = forcecurve.data['k'][i][0]*x_+forcecurve['k'][i][1]
+        y_ = forcecurve.data['k'][i][0]*x_+forcecurve.data['k'][i][1]
         ax.plot(x_,y_,'b-.')
     return fig,ax
