@@ -18,7 +18,7 @@ def main(fc,zpo):
     process_customize(fc, [1])
     if not fc.data['mobilenet_judge']:
         return None
-    zpo.addforce(fc)
+    zpo.changingforce(fc)
 if __name__ == '__main__':
     import time,datetime
     t1 = time.time()

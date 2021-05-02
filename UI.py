@@ -348,24 +348,25 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         progress.setRange(0,num) 
         self.fc = forcecurve()
         t1 =time.time()
-        with ThreadPoolExecutor(max_workers=3) as e:
-            for i,data in enumerate(self.ljp):
-                progress.setValue(i)
-                if progress.wasCanceled():
-                    QMessageBox.warning(self,"Warning!","Failed!")
-                    self.zpo.delet_dataYee()
-                    break
-                self.fc.data = data
-                e.submit(main,self.fc,self.zpo)
-            else:
-                progress.setValue(num)
-                t2=time.time()
-                print((t2-t1)/i,t2-t1,i)
-                QMessageBox.information(self,"Notic","Success")
-                self.run_z = False
-                self.peak_index = 0
-                self.force_index = 0
-                self.displace_result()
+        for i,data in enumerate(self.ljp):
+            progress.setValue(i)
+            if progress.wasCanceled():
+                QMessageBox.warning(self,"Warning!","Failed!")
+                self.zpo.delet_dataYee()
+                break
+            self.fc.data = data
+            main(self.fc,self.zpo)
+        else:
+            self.zpo.saveforce()
+            progress.setValue(num)
+            self.zpo.saveforce()
+            t2=time.time()
+            print((t2-t1)/i,t2-t1,i)
+            QMessageBox.information(self,"Notic","Success")
+            self.run_z = False
+            self.peak_index = 0
+            self.force_index = 0
+            self.displace_result()
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyMainWindow()

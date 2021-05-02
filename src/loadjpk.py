@@ -188,6 +188,15 @@ class zipfileopera:
         pkl = pickle.dumps(fc.data)
         with ZipFile(self.fname, 'a', zipfile.ZIP_DEFLATED) as zips:
             zips.writestr(o,pkl)
+    def saveforce(self):
+        print(len(self.change))
+        with ZipFile(self.fname, 'a', zipfile.ZIP_DEFLATED) as zips:
+            for i,fcs in self.change.items():
+                o = os.path.splitext(os.path.basename(fcs.data['datamsg'][0]))[0]+'-s-'+str(fcs.data['datamsg'][1])+'.pkl'
+                pkl = pickle.dumps(fcs.data)
+                zips.writestr(o, pkl)
+        self.change = {}
+        
     def changingforce(self,fc):
         bup = copy.deepcopy(fc)
         bup.clean_force()

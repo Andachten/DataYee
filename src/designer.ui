@@ -157,7 +157,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/renew.ico</normaloff>../source/renew.ico</iconset>
+      <normaloff>../source/trash.ico</normaloff>../source/trash.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -301,7 +301,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/trash.ico</normaloff>../source/trash.ico</iconset>
+      <normaloff>../source/renew.ico</normaloff>../source/renew.ico</iconset>
     </property>
     <property name="iconSize">
      <size>

@@ -21,9 +21,9 @@ mpl.rcParams['axes.linewidth']=0.5
 mpl.rcParams['font.size'] = 8
 mpl.rcParams['axes.spines.right']=False
 mpl.rcParams['axes.spines.top']=False
-arg_run = {'peakH':35,
-           'sens':6,
-           'peakN':(2,7),
+arg_run = {'peakH':50,
+           'sens':10,
+           'peakN':(2,8),
            'xlim':20,
            'lp':(0.34,0.38),
            'mark':{'GB1':(14,23),'MT':(1,14)},
