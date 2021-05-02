@@ -36,7 +36,7 @@ def lcfunc(x,lc,lp):
     return 1.3806e-23*298/(lp*1e-9)*(1/4*(1-x/lc)**(-2)+x/lc-1/4)*1e12
 def loadmodel():
     global model,device,transform
-    model = torch.load(r'../model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
+    model = torch.load(r'./model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
@@ -282,7 +282,12 @@ def slope(fc):
     data_x = data['measuredHeight'][:,0]*1e9
     for i in range(len(peak_index)):
         x,y = data_x[bottom_index[i]:peak_index[i]],data_y[bottom_index[i]:peak_index[i]]
-        re = np.polyfit(x,y,5)
+        if len(x)>150:
+            deg = 5
+        else:
+            deg = 1
+        re = np.polyfit(x,y,deg)
+
         d = np.polyder(re)
         k = np.polyval(d,data_x[peak_index[i]])
         b = data_y[peak_index[i]]-k*data_x[peak_index[i]]
@@ -301,8 +306,8 @@ def graph(forcecurve):
     ax.set_ylim([-30,data_y.max()+40])
     ax.set_yticks(np.arange(0,data_y.max(),150))
     ax.plot(data_x,data_y,'k',lw=0.5)
-    ax.plot(data_x[peak_index],data_y[peak_index],'ro',markersize=1)
-    ax.plot(data_x[bottom_index],data_y[bottom_index],'g*',markersize=1)
+    ax.plot(data_x[peak_index],data_y[peak_index],'ro',markersize=2)
+    ax.plot(data_x[bottom_index],data_y[bottom_index],'g*',markersize=7)
     for i in range(len(forcecurve.data['wlcarg'])):
         wlcarg = forcecurve.data['wlcarg'][i]
         if sum(wlcarg)==0:

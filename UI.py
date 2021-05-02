@@ -17,8 +17,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QMessageBox,QP
 from src.designer import Ui_MainWindow
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.loadjpk import loadjpkfile,zipfileopera,forcecurve
-from src.main import process_customize
+from src.main import process_customize,main
 import matplotlib.pyplot as plt
+from concurrent.futures import ThreadPoolExecutor
 import matplotlib as mpl
 mpl.rcParams['font.family']='Arial'
 mpl.rcParams['axes.labelsize']=16
@@ -347,33 +348,24 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         progress.setRange(0,num) 
         self.fc = forcecurve()
         t1 =time.time()
-        for i,data in enumerate(self.ljp):
-            progress.setValue(i) 
-            if progress.wasCanceled():
-                QMessageBox.warning(self,"Warning!","Failed!") 
-                self.zpo.delet_dataYee()
-                break
-            if data['rawdata']=={}:
-                continue
-            
-            self.fc.data = data
-            process_customize(self.fc,[0,2,3,4,5,6,7,8])
-            
-            if not self.fc.data['peaknum_judge']:
-                continue
-            process_customize(self.fc,[1])
-            if not self.fc.data['mobilenet_judge']:
-                continue
-            self.zpo.addforce(self.fc)
-        else:
-            progress.setValue(num)
-            t2=time.time()
-            print((t2-t1)/i,t2-t1,i)
-            QMessageBox.information(self,"Notic","Success")
-            self.run_z = False
-            self.peak_index = 0
-            self.force_index = 0
-            self.displace_result()
+        with ThreadPoolExecutor(max_workers=3) as e:
+            for i,data in enumerate(self.ljp):
+                progress.setValue(i)
+                if progress.wasCanceled():
+                    QMessageBox.warning(self,"Warning!","Failed!")
+                    self.zpo.delet_dataYee()
+                    break
+                self.fc.data = data
+                e.submit(main,self.fc,self.zpo)
+            else:
+                progress.setValue(num)
+                t2=time.time()
+                print((t2-t1)/i,t2-t1,i)
+                QMessageBox.information(self,"Notic","Success")
+                self.run_z = False
+                self.peak_index = 0
+                self.force_index = 0
+                self.displace_result()
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyMainWindow()

@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>source/DataYee.ico</normaloff>source/DataYee.ico</iconset>
+    <normaloff>../source/DataYee.ico</normaloff>../source/DataYee.ico</iconset>
   </property>
   <property name="dockOptions">
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
@@ -84,7 +84,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>source/left_arrow.ico</normaloff>source/left_arrow.ico</iconset>
+      <normaloff>../source/left_arrow.ico</normaloff>../source/left_arrow.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -157,7 +157,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>source/trash.ico</normaloff>source/trash.ico</iconset>
+      <normaloff>../source/renew.ico</normaloff>../source/renew.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -301,7 +301,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>source/renew.ico</normaloff>source/renew.ico</iconset>
+      <normaloff>../source/trash.ico</normaloff>../source/trash.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -324,7 +324,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>source/right.ico</normaloff>source/right.ico</iconset>
+      <normaloff>../source/right.ico</normaloff>../source/right.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -360,7 +360,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>source/top.ico</normaloff>source/top.ico</iconset>
+      <normaloff>../source/top.ico</normaloff>../source/top.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -383,7 +383,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>source/down.ico</normaloff>source/down.ico</iconset>
+      <normaloff>../source/down.ico</normaloff>../source/down.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
