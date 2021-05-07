@@ -17,8 +17,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QMessageBox,QP
 from src.designer import Ui_MainWindow
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.loadjpk import loadjpkfile,zipfileopera,forcecurve
-from src.main import process_customize
+from src.main import process_customize,main
 import matplotlib.pyplot as plt
+from concurrent.futures import ThreadPoolExecutor
 import matplotlib as mpl
 mpl.rcParams['font.family']='Arial'
 mpl.rcParams['axes.labelsize']=16
@@ -111,6 +112,7 @@ class MyFigure(FigureCanvas):
                 elif i%3==2:
                     texts.append(self.ax.text(data_x[peak_index[i]]-3,-30,'{}.{}'.format(i,mark[i]),font,horizontalalignment= 'left'))
             self.mark_lst = texts
+            '''
         if fc.data['k']!=self.fc.data['k'] or fc.data['offset']!=self.fc.data['offset']:
             for line in self.k_lst:
                 line.remove()
@@ -119,7 +121,7 @@ class MyFigure(FigureCanvas):
             for i,p_i in enumerate(k_arg):
                 x_ = np.linspace(data_x[p_i]-10,data_x[p_i]+10)
                 y_ = np.polyval(k_arg[i],x_)
-                self.k_lst.append(self.ax.plot(x_,y_,'b'))
+                self.k_lst.append(self.ax.plot(x_,y_,'b'))'''
         plt.draw()
         self.fc = copy.deepcopy(fc)
         
@@ -348,25 +350,17 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.fc = forcecurve()
         t1 =time.time()
         for i,data in enumerate(self.ljp):
-            progress.setValue(i) 
+            progress.setValue(i)
             if progress.wasCanceled():
-                QMessageBox.warning(self,"Warning!","Failed!") 
+                QMessageBox.warning(self,"Warning!","Failed!")
                 self.zpo.delet_dataYee()
                 break
-            if data['rawdata']=={}:
-                continue
-            
             self.fc.data = data
-            process_customize(self.fc,[0,2,3,4,5,6,7,8])
-            
-            if not self.fc.data['peaknum_judge']:
-                continue
-            process_customize(self.fc,[1])
-            if not self.fc.data['mobilenet_judge']:
-                continue
-            self.zpo.addforce(self.fc)
+            main(self.fc,self.zpo)
         else:
+            self.zpo.saveforce()
             progress.setValue(num)
+            self.zpo.saveforce()
             t2=time.time()
             print((t2-t1)/i,t2-t1,i)
             QMessageBox.information(self,"Notic","Success")

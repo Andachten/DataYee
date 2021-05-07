@@ -21,9 +21,9 @@ mpl.rcParams['axes.linewidth']=0.5
 mpl.rcParams['font.size'] = 8
 mpl.rcParams['axes.spines.right']=False
 mpl.rcParams['axes.spines.top']=False
-arg_run = {'peakH':35,
-           'sens':6,
-           'peakN':(2,7),
+arg_run = {'peakH':50,
+           'sens':10,
+           'peakN':(2,8),
            'xlim':20,
            'lp':(0.34,0.38),
            'mark':{'GB1':(14,23),'MT':(1,14)},
@@ -36,7 +36,7 @@ def lcfunc(x,lc,lp):
     return 1.3806e-23*298/(lp*1e-9)*(1/4*(1-x/lc)**(-2)+x/lc-1/4)*1e12
 def loadmodel():
     global model,device,transform
-    model = torch.load(r'model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
+    model = torch.load(r'./model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
@@ -224,7 +224,7 @@ def wlcfit(forcecurve,lp = arg_run['lp']):
     data_x = data['measuredHeight'][:,0]*1e9
     peak_index = forcecurve.data['peakindex']
     bottom_index = forcecurve.data['bottomindex']
-    boundary_force = 150
+    boundary_force = 150#doi: 10.3389/fmolb.2020.00085
     for i in range(len(peak_index)):
         p_i = peak_index[i]
         b_i = bottom_index[i]
@@ -298,11 +298,16 @@ def slope(fc):
     data_x = data['measuredHeight'][:,0]*1e9
     for i in range(len(peak_index)):
         x,y = data_x[bottom_index[i]:peak_index[i]],data_y[bottom_index[i]:peak_index[i]]
-        re = np.polyfit(x,y,5)
+        if len(x)>150:
+            deg = 5
+        else:
+            deg = 1
+        re = np.polyfit(x,y,deg)
+
         d = np.polyder(re)
         k = np.polyval(d,data_x[peak_index[i]])
         b = data_y[peak_index[i]]-k*data_x[peak_index[i]]
-        fc.data.append((k,b))
+        fc.data['k'].append((k,b))
         
 def graph(forcecurve):
     fig,ax = plt.subplots(dpi=300,figsize=(8,5))
@@ -317,8 +322,8 @@ def graph(forcecurve):
     ax.set_ylim([-30,data_y.max()+40])
     ax.set_yticks(np.arange(0,data_y.max(),150))
     ax.plot(data_x,data_y,'k',lw=0.5)
-    ax.plot(data_x[peak_index],data_y[peak_index],'ro',markersize=1)
-    ax.plot(data_x[bottom_index],data_y[bottom_index],'g*',markersize=1)
+    ax.plot(data_x[peak_index],data_y[peak_index],'ro',markersize=2)
+    ax.plot(data_x[bottom_index],data_y[bottom_index],'g*',markersize=7)
     for i in range(len(forcecurve.data['wlcarg'])):
         wlcarg = forcecurve.data['wlcarg'][i]
         if sum(wlcarg)==0:
@@ -326,4 +331,8 @@ def graph(forcecurve):
         x_ = np.linspace(0,data_x[peak_index[i]]+10)
         y_ = lcfunc(x_,*wlcarg)
         ax.plot(x_,y_,'-.',lw=0.5)
+    for i in range(len(forcecurve.data['k'])):
+        x_ = np.linspace(data_x[peak_index[i]]-10,data_x[peak_index[i]]+5)
+        y_ = forcecurve.data['k'][i][0]*x_+forcecurve.data['k'][i][1]
+        ax.plot(x_,y_,'b-.')
     return fig,ax
