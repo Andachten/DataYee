@@ -208,7 +208,7 @@ def wlcfit(forcecurve,lp = arg_run['lp']):
     data_x = data['measuredHeight'][:,0]*1e9
     peak_index = forcecurve.data['peakindex']
     bottom_index = forcecurve.data['bottomindex']
-    boundary_force = 150
+    boundary_force = 150#doi: 10.3389/fmolb.2020.00085
     for i in range(len(peak_index)):
         p_i = peak_index[i]
         b_i = bottom_index[i]

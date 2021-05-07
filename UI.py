@@ -112,6 +112,7 @@ class MyFigure(FigureCanvas):
                 elif i%3==2:
                     texts.append(self.ax.text(data_x[peak_index[i]]-3,-30,'{}.{}'.format(i,mark[i]),font,horizontalalignment= 'left'))
             self.mark_lst = texts
+            '''
         if fc.data['k']!=self.fc.data['k'] or fc.data['offset']!=self.fc.data['offset']:
             for line in self.k_lst:
                 line.remove()
@@ -120,7 +121,7 @@ class MyFigure(FigureCanvas):
             for i,p_i in enumerate(k_arg):
                 x_ = np.linspace(data_x[p_i]-10,data_x[p_i]+10)
                 y_ = np.polyval(k_arg[i],x_)
-                self.k_lst.append(self.ax.plot(x_,y_,'b'))
+                self.k_lst.append(self.ax.plot(x_,y_,'b'))'''
         plt.draw()
         self.fc = copy.deepcopy(fc)
         

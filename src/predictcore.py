@@ -11,6 +11,7 @@ from scipy import stats
 import itertools
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
+from xgboost import XGBClassifier
 def loadmodel():
     global model,device,transform
     model = torch.load(r'../model/2021-05-03-16-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
@@ -106,18 +107,20 @@ if __name__=='__main__':
     print("accuracy of rf is {}".format(sum(rf.predict(val_data_array)==val_target_array)/len(val_target_array)))
     m = mobilenet(train,value)
     print("accuracy of mb is {}".format(sum(m.predict(val_img_lst)==val_target_array)/len(val_target_array)))
-    k = kmeans(train,value)
-    k.fit()
-    print("accuracy of kmeans is {}".format(sum(k.predict(val_data_array)==val_target_array)/len(val_target_array)))
+    #k = kmeans(train,value)
+    #k.fit()
+    boost = XGBClassifier()
+    boost.fit(data_array,target_array)
+    print("accuracy of boost is {}".format(sum(boost.predict(val_data_array)==val_target_array)/len(val_target_array)))
     lg = LogisticRegression(max_iter=50000)
     lg.fit(data_array,target_array)
     print("accuracy of lg is {}".format(sum(lg.predict(val_data_array)==val_target_array)/len(val_target_array)))
     svc_re = svc.predict(val_data_array)
     rf_re = rf.predict(val_data_array)
     m_re = m.predict(val_img_lst)
-    k_re = k.predict(val_data_array)
+    boost_re = boost.predict(val_data_array)
     lg_re = lg.predict(val_data_array)
-    lst_re = [svc_re,rf_re,m_re,k_re,lg_re]
+    lst_re = [svc_re,rf_re,m_re,boost_re,lg_re]
     lst_blend = []
     score_max = 0
     weight_max = np.array([0,0,0,0,0])
@@ -145,7 +148,8 @@ if __name__=='__main__':
     voting_clf = VotingClassifier(estimators=[
     ('log_clf', LogisticRegression(max_iter=50000)),
     ('svm_clf', svm.SVC(probability=True)),
-('rf_clf',RandomForestClassifier(n_estimators=1000,  max_features='sqrt', max_depth=None, min_samples_split=2, bootstrap=True, n_jobs=1, random_state=1))], voting='soft')
+('rf_clf',RandomForestClassifier(n_estimators=1000,  max_features='sqrt', max_depth=None, min_samples_split=2, bootstrap=True, n_jobs=1, random_state=1))]
+        , voting='soft')
     voting_clf.fit(data_array, target_array)
     score = voting_clf.score(val_data_array, val_target_array)
     print("accuracy of voting is {}".format(score))
