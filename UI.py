@@ -28,6 +28,8 @@ mpl.rcParams['axes.linewidth']=1
 mpl.rcParams['font.size'] = 12
 mpl.rcParams['axes.spines.right']=False
 mpl.rcParams['axes.spines.top']=False
+mpl.rcParams['figure.subplot.left'] = 0.05
+mpl.rcParams['figure.subplot.right'] = 1
 color_lsts = ['#f76707','#74b816','#f59f00','#1098ad','#ae3ec9','#0ca678','#f03e3e']
 #plt.ion()
 def getfitcurve(wlcarg,peakindex,data_x):

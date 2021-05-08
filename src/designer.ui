@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1126</width>
+    <width>1291</width>
     <height>824</height>
    </rect>
   </property>
@@ -56,7 +56,7 @@
      <rect>
       <x>260</x>
       <y>0</y>
-      <width>851</width>
+      <width>1001</width>
       <height>581</height>
      </rect>
     </property>
@@ -146,7 +146,7 @@
    <widget class="QPushButton" name="trashButtom">
     <property name="geometry">
      <rect>
-      <x>1020</x>
+      <x>1100</x>
       <y>590</y>
       <width>71</width>
       <height>71</height>
@@ -277,7 +277,7 @@
    <widget class="Line" name="line_4">
     <property name="geometry">
      <rect>
-      <x>1000</x>
+      <x>1050</x>
       <y>580</y>
       <width>20</width>
       <height>181</height>
@@ -290,7 +290,7 @@
    <widget class="QPushButton" name="pushButton_2">
     <property name="geometry">
      <rect>
-      <x>1020</x>
+      <x>1100</x>
       <y>670</y>
       <width>71</width>
       <height>71</height>
@@ -392,19 +392,6 @@
      </size>
     </property>
    </widget>
-   <widget class="Line" name="line_5">
-    <property name="geometry">
-     <rect>
-      <x>1100</x>
-      <y>580</y>
-      <width>20</width>
-      <height>181</height>
-     </rect>
-    </property>
-    <property name="orientation">
-     <enum>Qt::Vertical</enum>
-    </property>
-   </widget>
    <widget class="Line" name="line_6">
     <property name="geometry">
      <rect>
@@ -472,7 +459,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1126</width>
+     <width>1291</width>
      <height>45</height>
     </rect>
    </property>
