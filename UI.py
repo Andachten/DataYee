@@ -39,6 +39,115 @@ def getfitcurve(wlcarg,peakindex,data_x):
         y_ = y_[:y_.argmax()]
         arg_lst.append((x_,y_))
     return arg_lst
+class myFigure(FigureCanvas):
+    def __init__(self):
+        self.figure = plt.figure()
+        self.ax = self.figure.add_subplot(111)
+        self.ax.plot([-5,15],[0,0],'r-',lw=1.5)
+        self.ax.plot([0,0],[-50,50],'r-',lw=1)
+        self.figure.patch.set_facecolor('None')
+        self.figure.patch.set_alpha(0)
+        self.fc_old = forcecurve()
+        self.fc_new = forcecurve()
+        self.index = 0
+        self.content = {'curve':[],
+                            'peak':[],
+                            'bottom':[],
+                            'mark':[],
+                            'fitcurve':[]}
+        super(myFigure,self).__init__(self.figure)
+    def getdata(self):
+        data = self.fc_new.get_prodata()['retract']
+        self.data_y = data['vDeflection'][:,0]*1e12
+        self.data_x = data['measuredHeight'][:,0]*1e9
+    def setlim(self,xlim,ylim):
+        self.ax.set_xlim(xlim)
+        self.ax.set_ylim(ylim)
+    def plotcurve(self):
+        for line in self.content['curve']:
+            line[0].remove()
+        self.content['curve'] = []
+
+        self.ax.set_yticks(np.arange(0,self.data_y.max(),150))
+        if not self.fc_new.data['artificial_judge']:
+            self.content['curve'].append(self.ax.plot(self.data_x,self.data_y,'b',lw=1.5))
+        else:
+            self.content['curve'].append(self.ax.plot(self.data_x,self.data_y,'k',lw=1.5))
+    def plotfitcurve(self):
+        for line in self.content['fitcurve']:
+            line[0].remove()
+        self.content['fitcurve'] = []
+        data_x = self.fc_new.get_prodata()['retract']['measuredHeight'][:,0]*1e9
+        fit_lst=getfitcurve(self.fc_new.data['wlcarg'],self.fc_new.data['peakindex'],data_x)
+        color_lst = (len(self.fc_new.data['wlcarg'])//len(color_lsts)+1)*color_lsts
+        for i,xy_ in enumerate(fit_lst):
+            x_,y_ = xy_
+            self.content['fitcurve'].append(self.ax.plot(x_,y_,'-.',c=color_lst[i],lw=1.5))
+    def plotpeak(self):
+        for line in self.content['peak']:
+            line[0].remove()
+        self.content['peak'] = []
+        peak_index = self.fc_new.data['peakindex']
+        self.content['peak'].append(self.ax.plot(self.data_x[peak_index[self.index]],self.data_y[peak_index[self.index]],'ro',markersize=16))
+        self.content['peak'].append((self.ax.plot(self.data_x[peak_index],self.data_y[peak_index],'ro',markersize=8)))
+    def plotbottom(self):
+        for line in self.content['bottom']:
+            line[0].remove()
+        self.content['bottom']=[]
+        bottom_index = self.fc_new.data['bottomindex']
+        self.content['bottom'].append(self.ax.plot(self.data_x[bottom_index],self.data_y[bottom_index],'g*',markersize=8))
+    def plotmark(self):
+        for line in self.content['mark']:
+            line.remove()
+        self.content['mark']=[]
+        font={'family':'serif','style':'italic','weight':'normal','color':'red','size':14}
+        mark = self.fc_new.data['mark']
+        peak_index = self.fc_new.data['peakindex']
+        for i in range(len(mark)):
+            if mark[i]=='none':
+                font['color'] = 'red'
+            else:
+                font['color'] = 'blue'
+            if i%3==0:
+                self.content['mark'].append(self.ax.text(self.data_x[peak_index[i]]-3,-70,'{}.{}'.format(i,mark[i]),font,horizontalalignment= 'left'))
+            elif i%3==1:
+                self.content['mark'].append(self.ax.text(self.data_x[peak_index[i]]-3,-50,'{}.{}'.format(i,mark[i]),font,horizontalalignment= 'left'))
+            elif i%3==2:
+                self.content['mark'].append(self.ax.text(self.data_x[peak_index[i]]-3,-30,'{}.{}'.format(i,mark[i]),font,horizontalalignment= 'left'))
+    def changeall(self):
+        self.setlim((-10,self.data_x[self.fc_new.data['peakindex'][-1]]+30),(-90,self.data_y.max()+40))
+        self.plotcurve()
+        self.plotfitcurve()
+        self.plotpeak()
+        self.plotbottom()
+        self.plotmark()
+    def plot(self,fc,index):
+        self.fc_new = fc
+        self.getdata()
+        if self.index!=index:
+            self.index = index
+            self.plotpeak()
+        if self.fc_new.data['datamsg'] != self.fc_old.data['datamsg']:
+            self.changeall()
+        elif  self.fc_new.data['artificial_judge']!= self.fc_old.data['artificial_judge']:
+            self.changeall()
+        elif self.fc_new.data['offset']!=self.fc_old.data['offset']:
+            self.changeall()
+        else:
+            if self.fc_new.data['peakindex']!=self.fc_old.data['peakindex']:
+                self.plotpeak()
+            if self.fc_new.data['artificial_judge']!= self.fc_old.data['artificial_judge']:
+                self.plotcurve()
+            if self.fc_new.data['bottomindex']!=self.fc_old.data['bottomindex']:
+                self.plotbottom()
+            if self.fc_new.data['wlcarg']!=self.fc_old.data['wlcarg']:
+                self.plotfitcurve()
+            if self.fc_new.data['mark']!=self.fc_old.data['mark']:
+                self.plotmark()
+        plt.draw()
+        self.fc_old = copy.deepcopy(self.fc_new)
+                
+            
 class MyFigure(FigureCanvas):
     def __init__(self):
         self.figure = plt.figure()
@@ -79,7 +188,7 @@ class MyFigure(FigureCanvas):
             self.peakplot_lst.append(self.ax.plot(data_x[peak_index[self.index]],data_y[peak_index[self.index]],'ro',markersize=16))
             self.peakplot_lst.append((self.ax.plot(data_x[peak_index],data_y[peak_index],'ro',markersize=8)))
             self.peakplot_lst.append(self.ax.plot(data_x[bottom_index],data_y[bottom_index],'g*',markersize=8))
-        
+            
         if fc.data['wlcarg']!=self.fc.data['wlcarg'] or fc.data['offset']!=self.fc.data['offset']:
             for line in self.fitcurve_lst:
                 line[0].remove()
@@ -137,7 +246,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.change_dict={}
         self.force_index = 0
         self.peak_index = 0
-        self.F = MyFigure()
+        self.F = myFigure()
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         self.gridlayout = QGridLayout(self.groupBox)
@@ -216,7 +325,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         else:
             self.fc.data = self.zpo[self.force_index]
         self.fc.recover_force(self.ljp)
-        self.F.plot_(self.fc,self.peak_index)
+        self.F.plot(self.fc,self.peak_index)
         self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
         if self.peak_index<len(self.fc.data['peakindex'])-1:
             self.lclplabel.setText('Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm'.format(*self.fc.data['wlcarg'][self.peak_index],self.fc.data['dlc'][self.peak_index]))
