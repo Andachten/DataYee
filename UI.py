@@ -29,7 +29,7 @@ mpl.rcParams['font.size'] = 12
 mpl.rcParams['axes.spines.right']=False
 mpl.rcParams['axes.spines.top']=False
 color_lsts = ['#f76707','#74b816','#f59f00','#1098ad','#ae3ec9','#0ca678','#f03e3e']
-plt.ion()
+#plt.ion()
 def getfitcurve(wlcarg,peakindex,data_x):
     arg_lst = []
     for i,arg in enumerate(wlcarg):
@@ -133,6 +133,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.fname = ''
         self.svfname = 'test.DataYee-force'
         self.run_z = False
+        self.state = False
         self.change_dict={}
         self.force_index = 0
         self.peak_index = 0
@@ -183,6 +184,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
                 self.peak_index = 0
                 self.fc = forcecurve()
                 self.fc.data = self.zpo[self.force_index]
+                self.state = True
                 self.displace_result()
     def opendir(self):
         path = QFileDialog.getExistingDirectory(self,'Load batch of force curve','*.*')
@@ -222,6 +224,8 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.lclplabel.setText('Lc={:.1f}nm; lp={:.2f}'.format(*self.fc.data['wlcarg'][self.peak_index]))
         self.gridlayout.addWidget(self.F)
     def indexplus(self):
+        if not self.state:
+            return None
         if self.force_index+1<len(self.zpo):
             self.force_index+=1
             self.peak_index = 0
@@ -229,6 +233,8 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.resetslide()
             self.displace_result()
     def indexreduct(self):
+        if not self.state:
+            return None
         if self.force_index-1>=0 and self.force_index-1<len(self.zpo):
             self.force_index-=1
             self.peak_index = 0
@@ -236,17 +242,23 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.resetslide()
             self.displace_result()
     def peakindexplus(self):
+        if not self.state:
+            return None
         if self.peak_index + 1<len(self.fc.data['peakindex']):
             self.peak_index+=1
             self.resetslide()
             self.displace_result()
     def peakindexretact(self):
+        if not self.state:
+            return None
         if self.peak_index-1>=0 and self.peak_index-1<len(self.fc.data['peakindex']):
             self.peak_index-=1
             #self.resetslidevalue()
             self.resetslide()
             self.displace_result()
     def peakdelete(self):
+        if not self.state:
+            return None
         self.setFocusPolicy(Qt.StrongFocus)
         del self.fc.data['peakindex'][self.peak_index]
         del self.fc.data['bottomindex'][self.peak_index]
@@ -259,12 +271,16 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.resetslide()
         self.displace_result()
     def forcedelete(self):
+        if not self.state:
+            return None
         self.fc.data['artificial_judge']=False
         self.change_dict[self.force_index] = self.fc.data['datamsg']
         self.zpo.changingforce(self.fc)
         self.resetslide()
         self.displace_result()
     def reset_delete(self):
+        if not self.state:
+            return None
         self.setFocusPolicy(Qt.StrongFocus)
         process_customize(self.fc,list(range(2,8)))
         self.fc.data['artificial_judge'] = True
@@ -287,6 +303,8 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.lpslide.setValue(0)
         
     def lcslidechange(self,value):
+        if not self.state:
+            return None
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         real_peakindex = np.argwhere(self.zpo[self.force_index]['peakindex']==self.fc.data['peakindex'][self.peak_index])[0][0]
@@ -297,6 +315,8 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.change_dict[self.force_index] = self.fc.data['datamsg']
         self.displace_result()
     def lpslidechange(self,value):
+        if not self.state:
+            return None
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         real_peakindex = np.argwhere(self.zpo[self.force_index]['peakindex']==self.fc.data['peakindex'][self.peak_index])[0][0]
@@ -310,6 +330,8 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
     def spinbox_changevalue(self,value):
+        if not self.state:
+            return None
         sender = self.sender()
         if sender == self.lcdoubleSpinBox:
             self.lc_value = value
@@ -322,12 +344,16 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
                 self.force_index = len(self.zpo)-1
             self.displace_result()
     def baselineplus(self):
+        if not self.state:
+            return None
         self.fc.data['offset']['y']+=5e-12
         process_customize(self.fc,range(4,8))
         self.zpo.changingforce(self.fc)
         self.change_dict[self.force_index] = self.fc.data['datamsg']
         self.displace_result()
     def baselineminus(self):
+        if not self.state:
+            return None
         self.fc.data['offset']['y']-=5e-12
         self.zpo.changingforce(self.fc)
         process_customize(self.fc,range(4,8))
@@ -335,6 +361,8 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.change_dict[self.force_index] = self.fc.data['datamsg']
         self.displace_result()
     def exportexcel(self):
+        if not self.state:
+            return None
         self.zpo.extrac_argdata(self.ljp)
     def run(self):
         if not self.run_z:
@@ -358,6 +386,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.fc.data = data
             main(self.fc,self.zpo)
         else:
+            self.state = True
             self.zpo.saveforce()
             progress.setValue(num)
             self.zpo.saveforce()
