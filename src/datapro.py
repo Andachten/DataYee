@@ -26,7 +26,7 @@ arg_run = {'peakH':50,
            'peakN':(2,8),
            'xlim':20,
            'lp':(0.34,0.38),
-           'mark':{'GB1':(14,23),'MT':(1,14)},
+           'mark':{'GB1':(13,23),'I27':(23,36)},
            'fitjudge':False}
 @jit(nopython=True)
 def func(x,k,b):
