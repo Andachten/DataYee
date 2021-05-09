@@ -16,10 +16,9 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QMessageBox,QProgressDialog,QGridLayout
 from src.designer import Ui_MainWindow
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from src.loadjpk import loadjpkfile,zipfileopera,forcecurve
-from src.main import process_customize,main
+from src.loadjpk import zipfileopera,forcecurve
+from src.main import programbody
 import matplotlib.pyplot as plt
-from concurrent.futures import ThreadPoolExecutor
 import matplotlib as mpl
 mpl.rcParams['font.family']='Arial'
 mpl.rcParams['axes.labelsize']=16
@@ -243,6 +242,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.filedir = ''
         self.fname = ''
         self.svfname = 'test.DataYee-force'
+        self.pb = programbody()
         self.run_z = False
         self.state = False
         self.change_dict={}
@@ -281,40 +281,48 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         fname,_ = QFileDialog.getOpenFileName(self, "Load force curve",'*.txt;;*.jpk-force;;*.jpk-force-map')
         self.fname = fname
         if fname !='':
+            self.programbody.creattask(fname,'smfs')
+            '''
             self.ljp = loadjpkfile(self.fname)
             self.zpo = zipfileopera()
-            self.run_z = True
+            self.run_z = True'''
     def openfile_DataYee(self):
         fname,_ = QFileDialog.getOpenFileName(self, "Open DataYee Force",'*.DataYee-force')
         self.fname = fname
         if fname != '' :
-            self.zpo = zipfileopera(self.fname)
+            self.pb.creattask(fname,'smfs')
+            self.displace_result()
+            #self.zpo = zipfileopera(self.fname)
+            '''
             if os.path.isdir(self.zpo.get_sourcepath()):
+                
                 self.ljp = loadjpkfile(self.zpo.get_sourcepath())
                 self.force_index = 0
                 self.peak_index = 0
                 self.fc = forcecurve()
                 self.fc.data = self.zpo[self.force_index]
                 self.state = True
-                self.displace_result()
+                '''
+                
     def opendir(self):
         path = QFileDialog.getExistingDirectory(self,'Load batch of force curve','*.*')
         self.filedir = path
         if path != '':
-            self.ljp = loadjpkfile(self.filedir)
-            self.zpo = zipfileopera()
-            self.run_z = True
+            self.programbody.creattask(path,'smfs')
+            #self.ljp = loadjpkfile(self.filedir)
+            #self.zpo = zipfileopera()
+            #self.run_z = True
     def savefile(self):
-        self.svfname = self.zpo.fname
+        self.svfname = self.pb.zpo.fname
         if self.svfname == 'test.DataYee-force':
             self.svfname,_ = QFileDialog.getSaveFileName(self,'Save DataYee Force','*.DataYee-force')
-        else:
-            self.zpo.changedforce(self.svfname)
+        self.pb.savechange(self.svfname)
+        '''
         if self.svfname == 'test.DataYee-force':
             self.zpo.changedforce()
         else:
-            self.zpo.changedforce(self.svfname)
-        self.change_dict={}
+            self.zpo.changedforce(self.svfname)'''
+        #self.change_dict={}
     def aboutprogramm(self):
         _ = QMessageBox.information(self,'DataYee','Programm Version:0.1', QMessageBox.Ok | QMessageBox.Close, QMessageBox.Close)
     def displace_result(self):
@@ -322,28 +330,42 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         #plt.close()
         #sip.delete(self.F)
         #self.F = MyFigure()
+        '''
         if self.force_index in self.change_dict.keys():
             self.fc.data = copy.deepcopy(self.zpo.change[self.change_dict[self.force_index]].data)
         else:
             self.fc.data = self.zpo[self.force_index]
-        self.fc.recover_force(self.ljp)
-        self.F.plot(self.fc,self.peak_index)
-        self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
+        '''
+        self.pb.plot(self.F)
+        #self.fc.recover_force(self.ljp)
+        #self.F.plot(self.fc,self.peak_index)
+        self.pb.drawlabel(self.label,self.lclplabel)
+        #self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
+        '''
         if self.peak_index<len(self.fc.data['peakindex'])-1:
             self.lclplabel.setText('Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm'.format(*self.fc.data['wlcarg'][self.peak_index],self.fc.data['dlc'][self.peak_index]))
         else:
             self.lclplabel.setText('Lc={:.1f}nm; lp={:.2f}'.format(*self.fc.data['wlcarg'][self.peak_index]))
+        '''
         self.gridlayout.addWidget(self.F)
     def indexplus(self):
+        self.pb.fc_indexchange(1)
+        self.displace_result()
+        self.resetslide()
+        '''
         if not self.state:
             return None
         if self.force_index+1<len(self.zpo):
             self.force_index+=1
             self.peak_index = 0
             self.spinBox.setValue(self.force_index)
-            self.resetslide()
             self.displace_result()
+        '''
     def indexreduct(self):
+        self.pb.fc_indexchange(-1)
+        self.resetslide()
+        self.displace_result()
+        '''
         if not self.state:
             return None
         if self.force_index-1>=0 and self.force_index-1<len(self.zpo):
@@ -352,14 +374,24 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.spinBox.setValue(self.force_index)
             self.resetslide()
             self.displace_result()
+        '''
     def peakindexplus(self):
+        self.pb.pk_indexchange(1)
+        self.resetslide()
+        self.displace_result()
+        '''
         if not self.state:
             return None
         if self.peak_index + 1<len(self.fc.data['peakindex']):
             self.peak_index+=1
             self.resetslide()
             self.displace_result()
+        '''
     def peakindexretact(self):
+        self.pb.pk_indexchange(-1)
+        self.resetslide()
+        self.displace_result()
+        '''
         if not self.state:
             return None
         if self.peak_index-1>=0 and self.peak_index-1<len(self.fc.data['peakindex']):
@@ -367,7 +399,12 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             #self.resetslidevalue()
             self.resetslide()
             self.displace_result()
+            '''
     def peakdelete(self):
+        self.pb.pk_delete()
+        self.resetslide()
+        self.displace_result()
+        '''
         if not self.state:
             return None
         self.setFocusPolicy(Qt.StrongFocus)
@@ -380,16 +417,21 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.peak_index = len(self.fc.data['peakindex'])-1
         self.zpo.changingforce(self.fc)
         self.resetslide()
-        self.displace_result()
+        self.displace_result()'''
     def forcedelete(self):
+        self.pb.fc_delete()
+        self.resetslide()
+        self.displace_result()
+        '''
         if not self.state:
             return None
         self.fc.data['artificial_judge']=False
         self.change_dict[self.force_index] = self.fc.data['datamsg']
         self.zpo.changingforce(self.fc)
         self.resetslide()
-        self.displace_result()
+        self.displace_result()'''
     def reset_delete(self):
+        '''
         if not self.state:
             return None
         self.setFocusPolicy(Qt.StrongFocus)
@@ -397,6 +439,9 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.fc.data['artificial_judge'] = True
         self.zpo.changingforce(self.fc)
         self.change_dict[self.force_index]=self.fc.data['datamsg']
+        self.displace_result()
+        '''
+        self.pb.reset()
         self.displace_result()
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Up:
@@ -414,28 +459,30 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.lpslide.setValue(0)
         
     def lcslidechange(self,value):
-        if not self.state:
-            return None
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
+        self.pb.lc_change(value,self.lc_value)
+        '''
         real_peakindex = np.argwhere(self.zpo[self.force_index]['peakindex']==self.fc.data['peakindex'][self.peak_index])[0][0]
         self.fc.data['wlcarg'][self.peak_index]=(self.zpo[self.force_index]['wlcarg'][real_peakindex][0]+value*self.lc_value,
                                                  self.fc.data['wlcarg'][self.peak_index][1])
         process_customize(self.fc,[6,7])
         self.zpo.changingforce(self.fc)
         self.change_dict[self.force_index] = self.fc.data['datamsg']
+        '''
         self.displace_result()
     def lpslidechange(self,value):
-        if not self.state:
-            return None
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
+        self.pb.lp_change(value,self.lp_value)
+        '''
         real_peakindex = np.argwhere(self.zpo[self.force_index]['peakindex']==self.fc.data['peakindex'][self.peak_index])[0][0]
         self.fc.data['wlcarg'][self.peak_index]=(self.fc.data['wlcarg'][self.peak_index][0],
                                                  self.zpo[self.force_index]['wlcarg'][real_peakindex][1]+value*self.lp_value)
         process_customize(self.fc,[6,7])
         self.zpo.changingforce(self.fc)
         self.change_dict[self.force_index] = self.fc.data['datamsg']
+        '''
         self.displace_result()
     def resetslide(self):
         self.lcslide.setValue(0)
@@ -450,19 +497,24 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.lp_value = value
         elif sender == self.spinBox:
             if value < len(self.zpo):
-                self.force_index = value
+                self.pb.forcepeak_index = value
             else:
-                self.force_index = len(self.zpo)-1
+                self.forcepeak_index = len(self.pb.zpo)-1
             self.displace_result()
     def baselineplus(self):
+        self.pb.baseline_change(5e-12)
+        '''
         if not self.state:
             return None
         self.fc.data['offset']['y']+=5e-12
         process_customize(self.fc,range(4,8))
         self.zpo.changingforce(self.fc)
         self.change_dict[self.force_index] = self.fc.data['datamsg']
+        '''
         self.displace_result()
     def baselineminus(self):
+        self.pb.baseline_change(-5e-12)
+        '''
         if not self.state:
             return None
         self.fc.data['offset']['y']-=5e-12
@@ -470,12 +522,18 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         process_customize(self.fc,range(4,8))
         self.zpo.changingforce(self.fc)
         self.change_dict[self.force_index] = self.fc.data['datamsg']
+        '''
         self.displace_result()
     def exportexcel(self):
         if not self.state:
             return None
-        self.zpo.extrac_argdata(self.ljp)
+        self.pb.zpo.extrac_argdata(self.ljp)
     def run(self):
+        progress = QProgressDialog(self)
+        self.bp.execu_autostep(progress)
+        if self.bp.state:
+            self.displace_result()
+        '''
         if not self.run_z:
             return None
         num = len(self.ljp)
@@ -508,6 +566,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             self.peak_index = 0
             self.force_index = 0
             self.displace_result()
+        '''
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyMainWindow()

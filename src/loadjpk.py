@@ -15,13 +15,16 @@ from jpkfile import JPKFile,JPKMap
 import zipfile
 from zipfile import ZipFile
 from scipy.signal import savgol_filter
+def rotate(data_x,data_y,index,k):
+    theta = np.arctan(k)*-1
+    return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
 class forcecurve:
     def __init__(self):
         self.data = {'rawdata':{},
                      'path':'',
                      'springConstant':0.01,
                      'datamsg':('',0),
-                     'offset':{'x':0,'y':0},
+                     'offset':{'x':0,'y':0,'k':0},
                      'filters':{'methods':'savgol','win_lens':11,'poly':2},
                      'mobilenet_judge':True,
                      'peaknum_judge':True,
@@ -45,6 +48,8 @@ class forcecurve:
             data[k]['vDeflection']*=-1
             if tip_correc:
                 data[k]['measuredHeight'] = data[k]['measuredHeight'] - data[k]['vDeflection']/self.data['springConstant']
+            if 'k' in self.data['offset'].keys():
+                data[k]['vDeflection'] = rotate(data[k]['measuredHeight'].reshape(-1),data[k]['vDeflection'].reshape(-1),-1,self.data['offset']['k']).reshape(-1,1)
         return data
     def savedata2txt(self,savedir='data.txt'):
         data = self.get_prodata(tip_correc=False)
@@ -62,7 +67,7 @@ class forcecurve:
         with open(savedir,'w') as f:
             np.savetxt(f,data2save,header=header,fmt ='%.6e')
     def clean_force(self):
-        del self.data['rawdata']
+        self.data['rawdata'] = {}
     def recover_force(self,ljf):
         ljf.file_type_deter(*self.data['datamsg'])
         self.data['rawdata'] = ljf.data['rawdata']
@@ -199,7 +204,7 @@ class zipfileopera:
         
     def changingforce(self,fc):
         bup = copy.deepcopy(fc)
-        bup.clean_force()
+#        bup.clean_force()
         self.change[fc.data['datamsg']] = bup
     def changedforce(self,svfname=''):
         if len(self.change) == 0:
