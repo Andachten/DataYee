@@ -23,6 +23,7 @@ def process_customize(fc,functions=[0],tasktype='smfs'):
 def main_smfs(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
+    fc.data['tasktype']='smfs'
     process_customize(fc, [0, 2, 3, 4, 5, 6, 7, 8])
     if not fc.data['peaknum_judge']:
         return None
@@ -33,6 +34,7 @@ def main_smfs(fc,zpo):
 def main_cell(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
+    fc.data['tasktype']='cell_curve'
     process_customize(fc, [0,1,2],'cell_curve')
     if not fc.data['peaknum_judge']:
         return None
@@ -57,6 +59,8 @@ class programbody():
         if path.endswith('.DataYee-force'):
             self.zpo = zipfileopera(path)
             self.ljp = loadjpkfile(self.zpo.get_sourcepath())
+            if 'tasktype' in self.zpo[0].keys():
+                self.tasktype = self.zpo[0]['tasktype']
             self.state = True
         else:
             self.zpo= zipfileopera()
@@ -72,6 +76,7 @@ class programbody():
             self.forcecurve_index = 0
         else:
             self.forcecurve_index = self.forcecurve_index+n
+        self.forcepeak_index = 0
     def pk_indexchange(self,n):
         peaklength = len(self.fc.data['peakindex'])
         if peaklength == 0:
@@ -131,14 +136,16 @@ class programbody():
             self.fc.data = self.zpo[self.forcecurve_index]
         fc = copy.deepcopy(self.fc)
         fc.recover_force(self.ljp)
-        F.plot(fc,self.forcepeak_index)
+        F.plot(fc,self.forcepeak_index,self.tasktype)
     def drawlabel(self,label,lclplabel):
         label.setText('Peak select: {}/{}'.format(self.forcecurve_index,len(self.zpo)-1))
+        if self.tasktype!='smfs':
+            return None
         if self.forcepeak_index<len(self.fc.data['peakindex'])-1:
             lclplabel.setText('Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index]))
         else:
             lclplabel.setText('Lc={:.1f}nm; lp={:.2f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index]))
-    def execu_autostep(self,progress):
+    def execu_autostep(self,progress,sel):
         if not self.ready_run:
             return None
         num = len(self.ljp)
@@ -151,16 +158,16 @@ class programbody():
         for i,data in enumerate(self.ljp):
             progress.setValue(i)
             if progress.wasCanceled():
-                QMessageBox.warning(self,"Warning!","Failed!")
+                QMessageBox.warning(sel,"Warning!","Failed!")
                 self.zpo.delet_dataYee()
                 break
             self.fc.data = data
-            main(self.fc,self.zpo)
+            main(self.fc,self.zpo,self.tasktype)
         else:
             self.state = True
             self.zpo.saveforce()
             progress.setValue(num)
-            QMessageBox.information(self,"Notic","Success")
+            QMessageBox.information(sel,"Notic","Success")
             self.ready_run = False
 if __name__ == '__main__':
     import time,datetime

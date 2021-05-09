@@ -24,7 +24,7 @@ mpl.rcParams['axes.spines.right']=False
 mpl.rcParams['axes.spines.top']=False
 arg_run = {'peakH':50,
            'sens':10,
-           'peakN':(2,8),
+           'peakN':(0,8),
            'xlim':20,
            'lp':(0.34,0.38),
            'mark':{'GB1':(13,23),'I27':(23,36)},
@@ -219,9 +219,9 @@ def findpeakbottom_cell(fc):
                 bottom_index = np.append(bottom_index,b_)
     if data_y[:,0][0]>data_y[:,0][400:].min():
         peak_index,bottom_index = np.array([]),np.array([])
-    fc.data['peakindex']=peak_index.astype(np.int16)
-    fc.data['bottomindex']=bottom_index.astype(np.int16)
-    return bottom_index.astype(np.int16),peak_index.astype(np.int16)
+    fc.data['peakindex']=list(peak_index.astype(np.int16))
+    fc.data['bottomindex']=list(bottom_index.astype(np.int16))
+    #return bottom_index.astype(np.int16),peak_index.astype(np.int16)
 #must execute after findpeak
 def findbottom(forcecurve):
     forcecurve.data['bottomindex']=[]

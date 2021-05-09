@@ -20,12 +20,13 @@ def rotate(data_x,data_y,index,k):
     return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
 class forcecurve:
     def __init__(self):
-        self.data = {'rawdata':{},
+        self.data = {'tasktype':'',
+                     'rawdata':{},
                      'path':'',
                      'springConstant':0.01,
                      'datamsg':('',0),
                      'offset':{'x':0,'y':0,'k':0},
-                     'filters':{'methods':'savgol','win_lens':11,'poly':2},
+                     'filters':{'methods':'savgol','win_lens':19,'poly':2},
                      'mobilenet_judge':True,
                      'peaknum_judge':True,
                      'artificial_judge':True,

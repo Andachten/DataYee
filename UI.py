@@ -73,7 +73,7 @@ class myFigure(FigureCanvas):
         if not self.fc_new.data['artificial_judge']:
             self.content['curve'].append(self.ax.plot(self.data_x,self.data_y,'b',lw=1.5))
         else:
-            self.content['curve'].append(self.ax.plot(self.data_x,self.data_y,'k',lw=1.5))
+            self.content['curve'].append(self.ax.plot(self.data_x,self.data_y,c='#495057',lw=1.5))
     def plotfitcurve(self):
         for line in self.content['fitcurve']:
             line[0].remove()
@@ -122,7 +122,7 @@ class myFigure(FigureCanvas):
         self.plotpeak()
         self.plotbottom()
         self.plotmark()
-    def plot(self,fc,index):
+    def plot(self,fc,index,tasktype='smfs'):
         self.fc_new = fc
         self.getdata()
         if self.index!=index:
@@ -145,6 +145,8 @@ class myFigure(FigureCanvas):
                 self.plotfitcurve()
             if self.fc_new.data['mark']!=self.fc_old.data['mark']:
                 self.plotmark()
+        if tasktype=='cell_curve':
+            self.setlim((self.data_x.min(),self.data_x.max()+500),(self.data_y.min()+5,self.data_y.max()))
         plt.draw()
         self.fc_old = copy.deepcopy(self.fc_new)
                 
@@ -281,7 +283,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         fname,_ = QFileDialog.getOpenFileName(self, "Load force curve",'*.txt;;*.jpk-force;;*.jpk-force-map')
         self.fname = fname
         if fname !='':
-            self.programbody.creattask(fname,'smfs')
+            self.pb.creattask(fname,'cell_curve')
             '''
             self.ljp = loadjpkfile(self.fname)
             self.zpo = zipfileopera()
@@ -290,7 +292,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         fname,_ = QFileDialog.getOpenFileName(self, "Open DataYee Force",'*.DataYee-force')
         self.fname = fname
         if fname != '' :
-            self.pb.creattask(fname,'smfs')
+            self.pb.creattask(fname)
             self.displace_result()
             #self.zpo = zipfileopera(self.fname)
             '''
@@ -530,8 +532,8 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.pb.zpo.extrac_argdata(self.ljp)
     def run(self):
         progress = QProgressDialog(self)
-        self.bp.execu_autostep(progress)
-        if self.bp.state:
+        self.pb.execu_autostep(progress,self)
+        if self.pb.state:
             self.displace_result()
         '''
         if not self.run_z:
