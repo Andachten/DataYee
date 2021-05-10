@@ -15,14 +15,18 @@ from jpkfile import JPKFile,JPKMap
 import zipfile
 from zipfile import ZipFile
 from scipy.signal import savgol_filter
+def rotate(data_x,data_y,index,k):
+    theta = np.arctan(k)*-1
+    return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
 class forcecurve:
     def __init__(self):
-        self.data = {'rawdata':{},
+        self.data = {'tasktype':'',
+                     'rawdata':{},
                      'path':'',
                      'springConstant':0.01,
                      'datamsg':('',0),
-                     'offset':{'x':0,'y':0},
-                     'filters':{'methods':'savgol','win_lens':11,'poly':2},
+                     'offset':{'x':0,'y':0,'k':0},
+                     'filters':{'methods':'savgol','win_lens':19,'poly':2},
                      'mobilenet_judge':True,
                      'peaknum_judge':True,
                      'artificial_judge':True,
@@ -45,6 +49,8 @@ class forcecurve:
             data[k]['vDeflection']*=-1
             if tip_correc:
                 data[k]['measuredHeight'] = data[k]['measuredHeight'] - data[k]['vDeflection']/self.data['springConstant']
+            if 'k' in self.data['offset'].keys():
+                data[k]['vDeflection'] = rotate(data[k]['measuredHeight'].reshape(-1),data[k]['vDeflection'].reshape(-1),-1,self.data['offset']['k']).reshape(-1,1)
         return data
     def savedata2txt(self,savedir='data.txt'):
         data = self.get_prodata(tip_correc=False)
@@ -62,7 +68,7 @@ class forcecurve:
         with open(savedir,'w') as f:
             np.savetxt(f,data2save,header=header,fmt ='%.6e')
     def clean_force(self):
-        del self.data['rawdata']
+        self.data['rawdata'] = {}
     def recover_force(self,ljf):
         ljf.file_type_deter(*self.data['datamsg'])
         self.data['rawdata'] = ljf.data['rawdata']
@@ -101,7 +107,7 @@ class loadjpkfile(forcecurve):
         return self.data
     def get_dataindex(self):
         for fname in self.filelst:
-            if sum([True for i in ['.txt','.jpk-force'] if fname.endswith(i)]):
+            if sum([True for i in ['.txt','.jpk-force','.datay'] if fname.endswith(i)]):
                 self.datalst.append((fname,0))
             elif sum([True for i in ['.jpk-force-map'] if fname.endswith(i)]):
                 properties = ZipFile(fname).open('header.properties')
@@ -119,7 +125,7 @@ class loadjpkfile(forcecurve):
         elif os.path.isdir(self.filedir):
             for a,b,c in os.walk(self.filedir, topdown=True, onerror=None, followlinks=False):
                 for filename in c:
-                    if sum([True for i in ['.txt','.jpk-force','.jpk-force-map'] if os.path.join(a, filename).endswith(i)]):
+                    if sum([True for i in ['.txt','.jpk-force','.jpk-force-map','.datay'] if os.path.join(a, filename).endswith(i)]):
                         self.filelst.append(os.path.join(a, filename))
                 if not Travel:
                     break
@@ -130,6 +136,8 @@ class loadjpkfile(forcecurve):
             self.extract_force_data(filename,index)
         elif filename.endswith('.jpk-force-map'):
             self.extract_map_data(filename,index)
+        elif filename.endswith('.datay'):
+            self.extract_datay_data(filename,index)
     def extract_txt_data(self,filename,index):
         data = np.loadtxt(filename,comments='#')
         with open(filename,'r') as f:
@@ -160,7 +168,19 @@ class loadjpkfile(forcecurve):
         self.data['springConstant'] = springConstant
         for i,segment in jpk.segments.items():
             self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight','vDeflection'])[0]
-    
+    def extract_datay_data(self,filename,index):
+        with open(filename,'rb') as f:
+            pkl = pickle.load(f)
+        springConstant = pkl['springConstant']
+        self.data['springConstant'] = springConstant
+        self.data['rawdata'] = pkl['rawdata']
+    def conver_jpk_datay(self,todir):
+        if os.path.isdir(todir):
+            for data in self:
+                filename = "{}-{}.datay".format(os.path.splitext(os.path.basename(data['datamsg'][0]))[0],data['datamsg'][1])
+                fname = os.path.join(todir,filename)
+                with open(fname,'wb') as f:
+                    pickle.dump(data,f)
 class zipfileopera:
     def __init__(self,fname='test.DataYee-force'):
         self.fname = fname
@@ -199,7 +219,7 @@ class zipfileopera:
         
     def changingforce(self,fc):
         bup = copy.deepcopy(fc)
-        bup.clean_force()
+#        bup.clean_force()
         self.change[fc.data['datamsg']] = bup
     def changedforce(self,svfname=''):
         if len(self.change) == 0:

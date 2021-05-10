@@ -8,6 +8,7 @@ import numpy as np
 import copy
 from scipy.signal import savgol_filter,find_peaks,medfilt
 from scipy.optimize import curve_fit
+from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 import torchvision.transforms as transforms
 import torch
@@ -23,7 +24,7 @@ mpl.rcParams['axes.spines.right']=False
 mpl.rcParams['axes.spines.top']=False
 arg_run = {'peakH':50,
            'sens':10,
-           'peakN':(2,8),
+           'peakN':(0,8),
            'xlim':20,
            'lp':(0.34,0.38),
            'mark':{'GB1':(13,23),'I27':(23,36)},
@@ -34,6 +35,9 @@ def func(x,k,b):
 @jit(nopython=True)
 def lcfunc(x,lc,lp):
     return 1.3806e-23*298/(lp*1e-9)*(1/4*(1-x/lc)**(-2)+x/lc-1/4)*1e12
+def rotate(data_x,data_y,index,k):
+    theta = np.arctan(k)*-1
+    return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
 def loadmodel():
     global model,device,transform
     model = torch.load(r'./model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
@@ -41,6 +45,7 @@ def loadmodel():
     model = model.to(device)
     model.eval()
     transform = transforms.Compose([transforms.Resize(224), transforms.ToTensor(), ])
+loadmodel()
 def feature_extract(data_y):
     peakindex,_ = find_peaks(data_y, height = 25, prominence = 40, width = 30)
     #1st_D of vDeflection
@@ -150,8 +155,17 @@ def cal_baseline(forcecurve):
             break
     #forcecurve.data['offset']['x'] = data['measuredHeight'][:,0][np.where(np.abs(data['vDeflection'][:,0])<1e-12)[0][0]]
     data['measuredHeight'] = data['measuredHeight'] - forcecurve.data['offset']['x']
-loadmodel()
-
+def cal_baseline_cell(fc):
+    fc.data['offset']['x'],fc.data['offset']['y'],fc.data['offset']['k']=0,0,0
+    data = copy.deepcopy(fc.data['rawdata']['retract'])
+    data['vDeflection'] = savgol_filter(data['vDeflection'][:,0],29,2).reshape(len(data['vDeflection']),1)*-1
+    left_data = data[int(0.6*len(data['measuredHeight'])):]
+    p = np.polyfit(left_data['measuredHeight'].reshape(-1),left_data['vDeflection'].reshape(-1),1)
+    d = np.polyder(p)
+    k = np.polyval(d,left_data['measuredHeight'].reshape(-1)[-1])
+    data['vDeflection'] = rotate(data['measuredHeight'].reshape(-1),data['vDeflection'].reshape(-1),-1,k).reshape(-1,1)
+    fc.data['offset']['k'] = k
+    
 def predict(forcecurve,get_img=False):
     fig = feature(forcecurve)
     img = fig2img(fig)
@@ -194,6 +208,33 @@ def findpeak(forcecurve,height=arg_run['peakH'],sens=arg_run['sens'],xlim=arg_ru
     peak_index = peak_index[x_judge]
     forcecurve.data['peakindex']=peak_index
     return peak_index
+#must after cal_baseline_cell
+def findpeakbottom_cell(fc):
+    data = fc.get_prodata(s=29)['retract']
+    data_y = data['vDeflection']*1e12
+    data_x = data['measuredHeight']*1e9
+    if data_y[:,0][0]>data_y[:,0][400:].min():
+        return None
+    d = np.gradient(np.gradient(gaussian_filter(data_y[:,0],89)))[400:]
+    d=d/d.max()*-1
+    p = find_peaks(d,height=0.5,distance=100)[0]+400
+    b = find_peaks(d*-1,height=0.5,distance=100)[0]+400
+    n = 100
+    f_boundary = 10
+    for p_ in p:
+        temp_array = data_x[b] - data_x[p_]
+        i = np.where(temp_array > 0, temp_array, np.inf).argmin()
+        b_ = b[i]
+        if data_x[b_]-data_x[p_]<150 and p_<b_:
+            y = rotate(data_x[p_-n:b_],data_y[p_-n:b_],n,-0.07)
+            p_ = p_-n+np.argmax(y)
+            k = np.polyval(np.polyder(np.polyfit(data_x[b_:b_+300][:,0],data_y[b_:b_+300][:,0],1)),data_x[b_])
+            y = rotate(data_x[p_:b_+n],data_y[p_:b_+n],b_-p_,k-0.07)
+            b_ = p_ + np.argmin(y)
+            if data_y[p_]-data_y[b_]>f_boundary and data_y[p_]-data_y[b_:b_+20].mean()>f_boundary:
+                fc.data['peakindex'].append(p_)
+                fc.data['bottomindex'].append(b_)
+    #return bottom_index.astype(np.int16),peak_index.astype(np.int16)
 #must execute after findpeak
 def findbottom(forcecurve):
     forcecurve.data['bottomindex']=[]
@@ -319,7 +360,6 @@ def graph(forcecurve):
     ax.plot([-5,5],[0,0],'r-',lw=1)
     ax.plot([0,0],[-50,50],'r-',lw=1)
     ax.set_xlim([-5,data_x[peak_index[-1]]+40])
-    ax.set_ylim([-30,data_y.max()+40])
     ax.set_yticks(np.arange(0,data_y.max(),150))
     ax.plot(data_x,data_y,'k',lw=0.5)
     ax.plot(data_x[peak_index],data_y[peak_index],'ro',markersize=2)
@@ -335,4 +375,5 @@ def graph(forcecurve):
         x_ = np.linspace(data_x[peak_index[i]]-10,data_x[peak_index[i]]+5)
         y_ = forcecurve.data['k'][i][0]*x_+forcecurve.data['k'][i][1]
         ax.plot(x_,y_,'b-.')
+    ax.set_ylim([-30,data_y.max()+40])
     return fig,ax
