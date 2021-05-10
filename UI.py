@@ -8,18 +8,19 @@ Created on Sun Apr 11 18:16:38 2021
 import sys
 import os
 import copy
-import time
 os.environ['KMP_DUPLICATE_LIB_OK']='True'
 import numpy as np
 from src.datapro import lcfunc
+from src.loadjpk import forcecurve,loadjpkfile
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QMessageBox,QProgressDialog,QGridLayout
 from src.designer import Ui_MainWindow
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from src.loadjpk import zipfileopera,forcecurve
 from src.main import programbody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
+import matplotlib.style as mplstyle
+mplstyle.use('fast')
 mpl.rcParams['font.family']='Arial'
 mpl.rcParams['axes.labelsize']=16
 mpl.rcParams['axes.labelweight']='normal'
@@ -68,7 +69,7 @@ class myFigure(FigureCanvas):
         for line in self.content['curve']:
             line[0].remove()
         self.content['curve'] = []
-
+        self.fc_new.recover_force(self.ljp)
         self.ax.set_yticks(np.arange(0,self.data_y.max(),150))
         if not self.fc_new.data['artificial_judge']:
             self.content['curve'].append(self.ax.plot(self.data_x,self.data_y,'b',lw=1.5))
@@ -78,6 +79,8 @@ class myFigure(FigureCanvas):
         for line in self.content['fitcurve']:
             line[0].remove()
         self.content['fitcurve'] = []
+        if len(self.fc_new.data['peakindex'])<=0:
+            return None
         data_x = self.fc_new.get_prodata()['retract']['measuredHeight'][:,0]*1e9
         fit_lst=getfitcurve(self.fc_new.data['wlcarg'],self.fc_new.data['peakindex'],data_x)
         color_lst = (len(self.fc_new.data['wlcarg'])//len(color_lsts)+1)*color_lsts
@@ -89,6 +92,8 @@ class myFigure(FigureCanvas):
             line[0].remove()
         self.content['peak'] = []
         peak_index = self.fc_new.data['peakindex']
+        if len(peak_index)<=0:
+            return None
         self.content['peak'].append(self.ax.plot(self.data_x[peak_index[self.index]],self.data_y[peak_index[self.index]],'ro',markersize=16))
         self.content['peak'].append((self.ax.plot(self.data_x[peak_index],self.data_y[peak_index],'ro',markersize=8)))
     def plotbottom(self):
@@ -96,6 +101,8 @@ class myFigure(FigureCanvas):
             line[0].remove()
         self.content['bottom']=[]
         bottom_index = self.fc_new.data['bottomindex']
+        if len(bottom_index)<=0:
+            return None
         self.content['bottom'].append(self.ax.plot(self.data_x[bottom_index],self.data_y[bottom_index],'g*',markersize=8))
     def plotmark(self):
         for line in self.content['mark']:
@@ -103,6 +110,8 @@ class myFigure(FigureCanvas):
         self.content['mark']=[]
         font={'family':'serif','style':'italic','weight':'normal','color':'red','size':14}
         mark = self.fc_new.data['mark']
+        if len(mark)<=0:
+            return None
         peak_index = self.fc_new.data['peakindex']
         for i in range(len(mark)):
             if mark[i]=='none':
@@ -116,13 +125,17 @@ class myFigure(FigureCanvas):
             elif i%3==2:
                 self.content['mark'].append(self.ax.text(self.data_x[peak_index[i]]-3,-30,'{}.{}'.format(i,mark[i]),font,horizontalalignment= 'left'))
     def changeall(self):
-        self.setlim((-10,self.data_x[self.fc_new.data['peakindex'][-1]]+30),(-90,self.data_y.max()+40))
         self.plotcurve()
+        if len(self.fc_new.data['peakindex'])>0:
+            self.setlim((-10,self.data_x[self.fc_new.data['peakindex'][-1]]+30),(-90,self.data_y.max()+40))
+        else:
+            self.setlim((-10,self.data_x.max()+30),(-90,self.data_y.max()+40))
         self.plotfitcurve()
         self.plotpeak()
         self.plotbottom()
         self.plotmark()
-    def plot(self,fc,index,tasktype='smfs'):
+    def plot(self,fc,index,ljp,tasktype='smfs'):
+        self.ljp = ljp
         self.fc_new = fc
         self.getdata()
         if self.index!=index:
@@ -150,7 +163,7 @@ class myFigure(FigureCanvas):
         plt.draw()
         self.fc_old = copy.deepcopy(self.fc_new)
                 
-            
+'''         
 class MyFigure(FigureCanvas):
     def __init__(self):
         self.figure = plt.figure()
@@ -224,7 +237,7 @@ class MyFigure(FigureCanvas):
                 elif i%3==2:
                     texts.append(self.ax.text(data_x[peak_index[i]]-3,-30,'{}.{}'.format(i,mark[i]),font,horizontalalignment= 'left'))
             self.mark_lst = texts
-            '''
+            
         if fc.data['k']!=self.fc.data['k'] or fc.data['offset']!=self.fc.data['offset']:
             for line in self.k_lst:
                 line.remove()
@@ -233,10 +246,10 @@ class MyFigure(FigureCanvas):
             for i,p_i in enumerate(k_arg):
                 x_ = np.linspace(data_x[p_i]-10,data_x[p_i]+10)
                 y_ = np.polyval(k_arg[i],x_)
-                self.k_lst.append(self.ax.plot(x_,y_,'b'))'''
+                self.k_lst.append(self.ax.plot(x_,y_,'b'))
         plt.draw()
         self.fc = copy.deepcopy(fc)
-        
+    '''    
 class MyMainWindow(QMainWindow,Ui_MainWindow):
     def __init__(self,parent=None):
         super(MyMainWindow,self).__init__(parent)
@@ -245,18 +258,18 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.fname = ''
         self.svfname = 'test.DataYee-force'
         self.pb = programbody()
-        self.run_z = False
-        self.state = False
-        self.change_dict={}
-        self.force_index = 0
-        self.peak_index = 0
+        #self.run_z = False
+        #self.state = False
+        #self.change_dict={}
+        #self.force_index = 0
+        #self.peak_index = 0
         self.F = myFigure()
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F)
-        
-        
+        self.action_init()
+    def action_init(self):
         self.actionForce_Curve.triggered.connect(self.openfile)
         self.actionSave.triggered.connect(self.savefile)
         self.actionBatch_of_Force_Curve.triggered.connect(self.opendir)
@@ -310,7 +323,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         path = QFileDialog.getExistingDirectory(self,'Load batch of force curve','*.*')
         self.filedir = path
         if path != '':
-            self.programbody.creattask(path,'smfs')
+            self.pb.creattask(path,'smfs')
             #self.ljp = loadjpkfile(self.filedir)
             #self.zpo = zipfileopera()
             #self.run_z = True
@@ -353,6 +366,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
     def indexplus(self):
         self.pb.fc_indexchange(1)
         self.displace_result()
+        self.spinBox.setValue(self.pb.forcecurve_index)
         self.resetslide()
         '''
         if not self.state:
@@ -366,6 +380,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
     def indexreduct(self):
         self.pb.fc_indexchange(-1)
         self.resetslide()
+        self.spinBox.setValue(self.pb.forcecurve_index)
         self.displace_result()
         '''
         if not self.state:
@@ -490,18 +505,16 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
     def spinbox_changevalue(self,value):
-        if not self.state:
-            return None
         sender = self.sender()
         if sender == self.lcdoubleSpinBox:
             self.lc_value = value
         elif sender == self.lpdoubleSpinBox:
             self.lp_value = value
         elif sender == self.spinBox:
-            if value < len(self.zpo):
-                self.pb.forcepeak_index = value
+            if value < len(self.pb.zpo):
+                self.pb.forcecurve_index = value
             else:
-                self.forcepeak_index = len(self.pb.zpo)-1
+                self.pb.forcecurve_index = len(self.pb.zpo)-1
             self.displace_result()
     def baselineplus(self):
         self.pb.baseline_change(5e-12)

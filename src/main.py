@@ -4,6 +4,7 @@ Created on Sat Apr 10 14:54:58 2021
 
 @author: ZhengBin
 """
+import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox
 import numpy as np
@@ -80,7 +81,6 @@ class programbody():
     def pk_indexchange(self,n):
         peaklength = len(self.fc.data['peakindex'])
         if peaklength == 0:
-            self.fc.data['artificial_judge']=False
             return None
         if self.forcepeak_index+n >peaklength-1:
             self.forcepeak_index = peaklength-1
@@ -94,10 +94,12 @@ class programbody():
         if self.tasktype == 'smfs':
             process_customize(self.fc,range(4,8),self.tasktype)
     def pk_delete(self):
-        del self.fc.data['peakindex'][self.forcepeak_index]
-        del self.fc.data['bottomindex'][self.forcepeak_index]
-        del self.fc.data['wlcarg'][self.forcepeak_index]
-        process_customize(self.fc,[6,7],self.tasktype)
+        if len(self.fc.data['peakindex'])>0:
+            del self.fc.data['peakindex'][self.forcepeak_index]
+            del self.fc.data['bottomindex'][self.forcepeak_index]
+        if self.tasktype == 'smfs':
+            del self.fc.data['wlcarg'][self.forcepeak_index]
+            process_customize(self.fc,[6,7],self.tasktype)
         self.pk_indexchange(-1)
         self.curve_change()
     def fc_delete(self):
@@ -135,8 +137,7 @@ class programbody():
         else:
             self.fc.data = self.zpo[self.forcecurve_index]
         fc = copy.deepcopy(self.fc)
-        fc.recover_force(self.ljp)
-        F.plot(fc,self.forcepeak_index,self.tasktype)
+        F.plot(fc,self.forcepeak_index,self.ljp,self.tasktype)
     def drawlabel(self,label,lclplabel):
         label.setText('Peak select: {}/{}'.format(self.forcecurve_index,len(self.zpo)-1))
         if self.tasktype!='smfs':
