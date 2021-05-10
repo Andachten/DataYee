@@ -197,11 +197,12 @@ def findpeakbottom_cell(fc):
     data = fc.get_prodata(s=29)['retract']
     data_y = data['vDeflection']*1e12
     data_x = data['measuredHeight']*1e9
+    if data_y[:,0][0]>data_y[:,0][400:].min():
+        return None
     d = np.gradient(np.gradient(gaussian_filter(data_y[:,0],89)))[400:]
     d=d/d.max()*-1
     p = find_peaks(d,height=0.5,distance=100)[0]+400
     b = find_peaks(d*-1,height=0.5,distance=100)[0]+400
-    peak_index,bottom_index = np.array([]),np.array([])
     n = 100
     f_boundary = 10
     for p_ in p:
@@ -215,12 +216,8 @@ def findpeakbottom_cell(fc):
             y = rotate(data_x[p_:b_+n],data_y[p_:b_+n],b_-p_,k-0.07)
             b_ = p_ + np.argmin(y)
             if data_y[p_]-data_y[b_]>f_boundary and data_y[p_]-data_y[b_:b_+20].mean()>f_boundary:
-                peak_index = np.append(peak_index,p_)
-                bottom_index = np.append(bottom_index,b_)
-    if data_y[:,0][0]>data_y[:,0][400:].min():
-        peak_index,bottom_index = np.array([]),np.array([])
-    fc.data['peakindex']=list(peak_index.astype(np.int16))
-    fc.data['bottomindex']=list(bottom_index.astype(np.int16))
+                fc.data['peakindex'].append(p_)
+                fc.data['bottomindex'].append(b_)
     #return bottom_index.astype(np.int16),peak_index.astype(np.int16)
 #must execute after findpeak
 def findbottom(forcecurve):

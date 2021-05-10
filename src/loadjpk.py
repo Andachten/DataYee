@@ -107,7 +107,7 @@ class loadjpkfile(forcecurve):
         return self.data
     def get_dataindex(self):
         for fname in self.filelst:
-            if sum([True for i in ['.txt','.jpk-force'] if fname.endswith(i)]):
+            if sum([True for i in ['.txt','.jpk-force','.datay'] if fname.endswith(i)]):
                 self.datalst.append((fname,0))
             elif sum([True for i in ['.jpk-force-map'] if fname.endswith(i)]):
                 properties = ZipFile(fname).open('header.properties')
@@ -125,7 +125,7 @@ class loadjpkfile(forcecurve):
         elif os.path.isdir(self.filedir):
             for a,b,c in os.walk(self.filedir, topdown=True, onerror=None, followlinks=False):
                 for filename in c:
-                    if sum([True for i in ['.txt','.jpk-force','.jpk-force-map'] if os.path.join(a, filename).endswith(i)]):
+                    if sum([True for i in ['.txt','.jpk-force','.jpk-force-map','.datay'] if os.path.join(a, filename).endswith(i)]):
                         self.filelst.append(os.path.join(a, filename))
                 if not Travel:
                     break
@@ -136,6 +136,8 @@ class loadjpkfile(forcecurve):
             self.extract_force_data(filename,index)
         elif filename.endswith('.jpk-force-map'):
             self.extract_map_data(filename,index)
+        elif filename.endswith('.datay'):
+            self.extract_datay_data(filename,index)
     def extract_txt_data(self,filename,index):
         data = np.loadtxt(filename,comments='#')
         with open(filename,'r') as f:
@@ -166,7 +168,19 @@ class loadjpkfile(forcecurve):
         self.data['springConstant'] = springConstant
         for i,segment in jpk.segments.items():
             self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight','vDeflection'])[0]
-    
+    def extract_datay_data(self,filename,index):
+        with open(filename,'rb') as f:
+            pkl = pickle.load(f)
+        springConstant = pkl['springConstant']
+        self.data['springConstant'] = springConstant
+        self.data['rawdata'] = pkl['rawdata']
+    def conver_jpk_datay(self,todir):
+        if os.path.isdir(todir):
+            for data in self:
+                filename = "{}-{}.datay".format(os.path.splitext(os.path.basename(data['datamsg'][0]))[0],data['datamsg'][1])
+                fname = os.path.join(todir,filename)
+                with open(fname,'wb') as f:
+                    pickle.dump(data,f)
 class zipfileopera:
     def __init__(self,fname='test.DataYee-force'):
         self.fname = fname

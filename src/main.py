@@ -39,6 +39,7 @@ def main_cell(fc,zpo):
     process_customize(fc, [0,1,2],'cell_curve')
     if not fc.data['peaknum_judge']:
         return None
+    fc.clean_force()
     zpo.changingforce(fc)
 def main(fc,zpo,tasktype='smfs'):
     if tasktype=='smfs':
@@ -124,7 +125,10 @@ class programbody():
         self.curve_change()
     def reset(self):
         self.fc.recover_force(self.ljp)
-        process_customize(self.fc,range(2,8),'smfs')
+        if self.tasktype == 'smfs':
+            process_customize(self.fc,range(2,8),'smfs')
+        elif self.tasktype == 'cell_curve':
+            process_customize(self.fc,range(1,3),'cell_curve')
         self.fc.data['artificial_judge'] = True
         self.fc.clean_force()
         self.curve_change()

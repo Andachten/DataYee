@@ -137,6 +137,8 @@ class myFigure(FigureCanvas):
     def plot(self,fc,index,ljp,tasktype='smfs'):
         self.ljp = ljp
         self.fc_new = fc
+        if 'retract' not in self.fc_new.data['rawdata'].keys():
+            self.fc_new.recover_force(ljp)
         self.getdata()
         if self.index!=index:
             self.index = index
@@ -323,7 +325,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         path = QFileDialog.getExistingDirectory(self,'Load batch of force curve','*.*')
         self.filedir = path
         if path != '':
-            self.pb.creattask(path,'smfs')
+            self.pb.creattask(path,'cell_curve')
             #self.ljp = loadjpkfile(self.filedir)
             #self.zpo = zipfileopera()
             #self.run_z = True
