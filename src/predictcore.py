@@ -11,7 +11,6 @@ from scipy import stats
 import itertools
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
-from xgboost import XGBClassifier
 def loadmodel():
     global model,device,transform
     model = torch.load(r'../model/2021-05-03-16-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
@@ -93,7 +92,7 @@ class mobilenet:
     def predict(self,imglst):
         return np.array([self.classify(img) for img in imglst])
 
-
+'''
 if __name__=='__main__':
     train = r'D:\code\py\SMFS\20210503-train-data\train'
     value = r'D:\code\py\SMFS\20210503-train-data\val'
@@ -153,7 +152,7 @@ if __name__=='__main__':
     voting_clf.fit(data_array, target_array)
     score = voting_clf.score(val_data_array, val_target_array)
     print("accuracy of voting is {}".format(score))
-    '''
+    
     blendtrain = np.dstack((svc.predict(val_data_array),
                             rf.predict(val_data_array),
                             m.predict(val_img_lst),
@@ -161,8 +160,7 @@ if __name__=='__main__':
                             k.predict(val_data_array),
                             lg.predict(val_data_array),
                             lg.predict(val_data_array),
-                            lg.predict(val_data_array)))[0].astype(np.int)
-    '''
-    #print(sum(np.array([stats.mode(i)[0][0] for i in blendtrain])==val_target_array)/len(val_target_array))
+                            lg.predict(val_data_array)))[0].astype(np.int)'''
     
+    #print(sum(np.array([stats.mode(i)[0][0] for i in blendtrain])==val_target_array)/len(val_target_array))
     

@@ -15,9 +15,17 @@ from jpkfile import JPKFile,JPKMap
 import zipfile
 from zipfile import ZipFile
 from scipy.signal import savgol_filter
+import multiprocessing
 def rotate(data_x,data_y,index,k):
     theta = np.arctan(k)*-1
     return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
+def writedatay(ljp,index,todir):
+    data = ljp[index]
+    datamsg =  ljp.data_lst[index]
+    filename = "{}-{}.datay".format(os.path.splitext(os.path.basename(datamsg[0]))[0],datamsg[1])
+    fname = os.path.join(todir,filename)
+    with open(fname,'wb') as f:
+            pickle.dump(data,f)
 class forcecurve:
     def __init__(self):
         self.data = {'tasktype':'',
@@ -174,13 +182,20 @@ class loadjpkfile(forcecurve):
         springConstant = pkl['springConstant']
         self.data['springConstant'] = springConstant
         self.data['rawdata'] = pkl['rawdata']
+    def wriredatay(self,todir,index):
+        data = self[index]
+        datamsg =  self.data_lst[index]
+        filename = "{}-{}.datay".format(os.path.splitext(os.path.basename(datamsg[0]))[0],datamsg[1])
+        fname = os.path.join(todir,filename)
+        with open(fname,'wb') as f:
+            pickle.dump(data,f)
     def conver_jpk_datay(self,todir):
         if os.path.isdir(todir):
-            for data in self:
-                filename = "{}-{}.datay".format(os.path.splitext(os.path.basename(data['datamsg'][0]))[0],data['datamsg'][1])
-                fname = os.path.join(todir,filename)
-                with open(fname,'wb') as f:
-                    pickle.dump(data,f)
+            pool = multiprocessing.Pool(processes = 3)
+            for i in range(len(self)):
+                pool.apply_async(self.wriredatay, (todir, i))
+            pool.close()
+            pool.join()
 class zipfileopera:
     def __init__(self,fname='test.DataYee-force'):
         self.fname = fname
