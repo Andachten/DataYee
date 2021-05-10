@@ -168,19 +168,42 @@ class loadjpkfile(forcecurve):
         self.data['springConstant'] = springConstant
         for i,segment in jpk.segments.items():
             self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight','vDeflection'])[0]
+    def extract_all_map2datay(self,todir):
+        dic = self.data_structure
+        for filename in self.filelst:
+            print(filename)
+            if filename.endswith('.jpk-force-map'):
+                jpks = JPKMap(filename)
+                for i in range(len(jpks.flat_indices)):
+
+                    jpk = jpks.get_single_pixel(i)
+                    try:
+                        springConstant = float(jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling']['multiplier'])
+                    except:
+                        springConstant = float(jpk.shared_parameters['lcd-info']['1']['conversion-set']['conversion']['force']['scaling']['multiplier'])
+                    dic['springConstant'] = springConstant
+                    dic['datamsg']=(filename,i)
+                    for n,segment in jpk.segments.items():
+                        dic['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight','vDeflection'])[0]
+                    fname = "{}-{}.datay".format(os.path.join(todir,os.path.splitext(os.path.basename(filename))[0]),i)
+                    with open(fname,'wb') as f:
+                        pickle.dump(dic,f)
+            elif filename.endswith('.jpk-force-map'):
+                jpk = JPKFile(filename)
+                try:
+                    springConstant = float(jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling']['multiplier'])
+                except:
+                    continue
+                dic['springConstant'] = springConstant
+                fname = "{}-{}.datay".format(os.path.splitext(os.path.basename(filename))[0],0)
+                with open(fname,'wb') as f:
+                    pickle.dump(dic,f)
     def extract_datay_data(self,filename,index):
         with open(filename,'rb') as f:
             pkl = pickle.load(f)
         springConstant = pkl['springConstant']
         self.data['springConstant'] = springConstant
         self.data['rawdata'] = pkl['rawdata']
-    def conver_jpk_datay(self,todir):
-        if os.path.isdir(todir):
-            for data in self:
-                filename = "{}-{}.datay".format(os.path.splitext(os.path.basename(data['datamsg'][0]))[0],data['datamsg'][1])
-                fname = os.path.join(todir,filename)
-                with open(fname,'wb') as f:
-                    pickle.dump(data,f)
 class zipfileopera:
     def __init__(self,fname='test.DataYee-force'):
         self.fname = fname
