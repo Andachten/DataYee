@@ -152,7 +152,7 @@ def cal_baseline(forcecurve):
 def cal_baseline_cell(fc):
     fc.data['offset']['x'],fc.data['offset']['y'],fc.data['offset']['k']=0,0,0
     data = copy.deepcopy(fc.data['rawdata']['retract'])
-    fc.data['offset']['y'] = data['vDeflection'][int(0.8*len(data)):].mean()
+    fc.data['offset']['y'] = data['vDeflection'][int(0.9*len(data['vDeflection'])):].mean()
     fc.data['offset']['x'] = data['measuredHeight'].min()
     data['vDeflection'] = savgol_filter(data['vDeflection'][:,0],fc.data['filters']['win_lens'],2).reshape(len(data['vDeflection']),1)*-1
     left_data = data[int(0.6*len(data['measuredHeight'])):]
