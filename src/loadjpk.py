@@ -28,7 +28,7 @@ class forcecurve:
                      'springConstant':0.01,
                      'datamsg':('',0),
                      'offset':{'x':0,'y':0,'k':0},
-                     'filters':{'methods':'savgol','win_lens':19,'poly':2},
+                     'filters':{'methods':'savgol','win_lens':3,'poly':2},
                      'mobilenet_judge':True,
                      'peaknum_judge':True,
                      'artificial_judge':True,
@@ -52,7 +52,6 @@ class forcecurve:
             if tip_correc:
                 data[k]['measuredHeight'] = data[k]['measuredHeight'] - data[k]['vDeflection']/self.data['springConstant']
             if 'k' in self.data['offset'].keys():
-                print('ok')
                 data[k]['vDeflection'] = rotate(data[k]['measuredHeight'].reshape(-1),data[k]['vDeflection'].reshape(-1),-1,self.data['offset']['k']).reshape(-1,1)
         return data
     def savedata2txt(self,savedir='data.txt'):
@@ -256,7 +255,6 @@ class zipfileopera:
         with ZipFile(self.fname, 'a', zipfile.ZIP_DEFLATED) as zips:
             zips.writestr(o,pkl)
     def saveforce(self):
-        print(len(self.change))
         with ZipFile(self.fname, 'a', zipfile.ZIP_DEFLATED) as zips:
             for i,fcs in self.change.items():
                 o = os.path.splitext(os.path.basename(fcs.data['datamsg'][0]))[0]+'-s-'+str(fcs.data['datamsg'][1])+'.pkl'

@@ -13,7 +13,7 @@ import numpy as np
 from src.datapro import lcfunc
 from src.loadjpk import forcecurve,loadjpkfile
 from PyQt5.QtCore import Qt
-from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QMessageBox,QProgressDialog,QGridLayout
+from PyQt5.QtWidgets import QApplication, QMainWindow,QFileDialog,QMessageBox,QProgressDialog,QGridLayout,QButtonGroup
 from src.designer import Ui_MainWindow
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
@@ -45,7 +45,7 @@ class myFigure(FigureCanvas):
     def __init__(self):
         self.figure = plt.figure()
         self.ax = self.figure.add_subplot(111)
-        self.ax.plot([-5,15],[0,0],'r-',lw=1.5)
+        self.ax.plot([-1e4,1e4],[0,0],lw=1.5,c='#ff8787')
         self.ax.plot([0,0],[-50,50],'r-',lw=1)
         self.figure.patch.set_facecolor('None')
         self.figure.patch.set_alpha(0)
@@ -70,7 +70,7 @@ class myFigure(FigureCanvas):
             line[0].remove()
         self.content['curve'] = []
         self.fc_new.recover_force(self.ljp)
-        self.ax.set_yticks(np.arange(0,self.data_y.max(),150))
+        #self.ax.set_yticks(np.arange(0,self.data_y.max(),150))
         if not self.fc_new.data['artificial_judge']:
             self.content['curve'].append(self.ax.plot(self.data_x,self.data_y,'b',lw=1.5))
         else:
@@ -258,6 +258,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.setupUi(self)
         self.filedir = ''
         self.fname = ''
+        self.tasktype='smfs'
         self.svfname = 'test.DataYee-force'
         self.pb = programbody()
         #self.run_z = False
@@ -294,11 +295,15 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         self.actionBaseline_plus.triggered.connect(self.baselineplus)
         self.actionBaseline_minus.triggered.connect(self.baselineminus)
         self.setFocusPolicy(Qt.StrongFocus)
+        self.bg = QButtonGroup(self)
+        self.bg.addButton(self.radioButton_2, 0)
+        self.bg.addButton(self.tasktype_cell, 1)
+        self.bg.buttonClicked.connect(self.rbclicked)
     def openfile(self):
         fname,_ = QFileDialog.getOpenFileName(self, "Load force curve",'*.txt;;*.jpk-force;;*.jpk-force-map')
         self.fname = fname
         if fname !='':
-            self.pb.creattask(fname,'cell_curve')
+            self.pb.creattask(fname)
             '''
             self.ljp = loadjpkfile(self.fname)
             self.zpo = zipfileopera()
@@ -325,7 +330,7 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         path = QFileDialog.getExistingDirectory(self,'Load batch of force curve','*.*')
         self.filedir = path
         if path != '':
-            self.pb.creattask(path,'cell_curve')
+            self.pb.creattask(path)
             #self.ljp = loadjpkfile(self.filedir)
             #self.zpo = zipfileopera()
             #self.run_z = True
@@ -518,6 +523,13 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
             else:
                 self.pb.forcecurve_index = len(self.pb.zpo)-1
             self.displace_result()
+    def rbclicked(self):
+        sender = self.sender()
+        if sender == self.bg:
+            if self.bg.checkedId()==0:
+                self.tasktype = 'smfs'
+            elif self.bg.checkedId()==1:
+                self.tasktype = 'cell_curve'
     def baselineplus(self):
         self.pb.baseline_change(5e-12)
         '''
@@ -542,11 +554,10 @@ class MyMainWindow(QMainWindow,Ui_MainWindow):
         '''
         self.displace_result()
     def exportexcel(self):
-        if not self.state:
-            return None
-        self.pb.zpo.extrac_argdata(self.ljp)
+        self.pb.export_prodata()
     def run(self):
         progress = QProgressDialog(self)
+        self.pb.tasktype = self.tasktype
         self.pb.execu_autostep(progress,self)
         if self.pb.state:
             self.displace_result()
