@@ -1,9 +1,3 @@
-# -*- coding: utf-8 -*-
-"""
-Created on Sat Apr 10 14:54:58 2021
-
-@author: ZhengBin
-"""
 import time
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox
@@ -33,7 +27,7 @@ def main_smfs(fc,zpo):
         return None
     zpo.changingforce(fc)
 def main_cell(fc,zpo):
-    if fc.data['rawdata'] == {}:
+    if fc.data['rawdata'] == {} or fc.data['rawdata']['retract']['vDeflection'].sum()==0:
         return None
     fc.data['tasktype']='cell_curve'
     process_customize(fc, [0,1,2,3],'cell_curve')
@@ -149,8 +143,8 @@ class programbody():
     def savechange(self,name):
         if not self.state:
             return None
+        self.change_dic={}
         self.zpo.changedforce(name)
-        self.change_dict={}
     def plot(self,F):
         if not self.state:
             return None
