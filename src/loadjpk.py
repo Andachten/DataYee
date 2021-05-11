@@ -15,6 +15,8 @@ from jpkfile import JPKFile,JPKMap
 import zipfile
 from zipfile import ZipFile
 from scipy.signal import savgol_filter
+from nanoscope import files
+from nanoscope.constants import FORCE, METRIC, VOLTS, PLT_kwargs
 def rotate(data_x,data_y,index,k):
     theta = np.arctan(k)*-1
     return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
@@ -50,6 +52,7 @@ class forcecurve:
             if tip_correc:
                 data[k]['measuredHeight'] = data[k]['measuredHeight'] - data[k]['vDeflection']/self.data['springConstant']
             if 'k' in self.data['offset'].keys():
+                print('ok')
                 data[k]['vDeflection'] = rotate(data[k]['measuredHeight'].reshape(-1),data[k]['vDeflection'].reshape(-1),-1,self.data['offset']['k']).reshape(-1,1)
         return data
     def savedata2txt(self,savedir='data.txt'):
@@ -118,14 +121,18 @@ class loadjpkfile(forcecurve):
                         for i in range(maxindex):
                             self.datalst.append((fname,i))
                         break
-                
+            elif sum([True for i in ['.spm'] if fname.endswith(i)]):
+                with files.ForceVolumeFile(fname) as f:
+                    fv_pixels = f.force_curves_channel.number_of_force_curves
+                    for i in range(fv_pixels):
+                        self.datalst.append((fname,i))
     def get_filenamelst(self,Travel=True):
         if os.path.isfile(self.filedir):
             self.filelst.append(self.filedir)
         elif os.path.isdir(self.filedir):
             for a,b,c in os.walk(self.filedir, topdown=True, onerror=None, followlinks=False):
                 for filename in c:
-                    if sum([True for i in ['.txt','.jpk-force','.jpk-force-map','.datay'] if os.path.join(a, filename).endswith(i)]):
+                    if sum([True for i in ['.txt','.jpk-force','.jpk-force-map','.datay','spm'] if os.path.join(a, filename).endswith(i)]):
                         self.filelst.append(os.path.join(a, filename))
                 if not Travel:
                     break
@@ -138,6 +145,8 @@ class loadjpkfile(forcecurve):
             self.extract_map_data(filename,index)
         elif filename.endswith('.datay'):
             self.extract_datay_data(filename,index)
+        elif filename.endswith('.spm'):
+            self.extract_spm_data(filename,index)
     def extract_txt_data(self,filename,index):
         data = np.loadtxt(filename,comments='#')
         with open(filename,'r') as f:
@@ -168,6 +177,21 @@ class loadjpkfile(forcecurve):
         self.data['springConstant'] = springConstant
         for i,segment in jpk.segments.items():
             self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight','vDeflection'])[0]
+    def extract_spm_data(self,fname,index):
+        with files.ForceVolumeFile(fname) as f:
+            fc_channel = f.force_curves_channel
+            h_sens_chan = f[2]
+            fz_plot, ax_prop = fc_channel.create_force_z_plot(index, FORCE)
+            h_sens_data = h_sens_chan.get_force_curve_data(index, METRIC)
+            if 'nN' in ax_prop['ylabel']:
+                factor = 1e-9
+            elif 'pN' in ax_prop['ylabel']:
+                factor = 1e-12
+            data_x=h_sens_data.retrace*-1e-9
+            data_y=fz_plot.retrace.y*factor
+            data = np.dstack((data_x,data_y))[0]
+            self.data['rawdata']['retract'] = np.array([[tuple(i)] for i in data],dtype=[('measuredHeight', '<f8'), ('vDeflection', '<f8')])
+            self.data['springConstant'] = f.spring_constant
     def extract_all_map2datay(self,todir):
         dic = self.data_structure
         for filename in self.filelst:

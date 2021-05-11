@@ -40,7 +40,7 @@ def rotate(data_x,data_y,index,k):
     return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
 def loadmodel():
     global model,device,transform
-    model = torch.load(r'./model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
+    model = torch.load(r'../model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
@@ -142,6 +142,8 @@ def cal_baseline(forcecurve):
 def cal_baseline_cell(fc):
     fc.data['offset']['x'],fc.data['offset']['y'],fc.data['offset']['k']=0,0,0
     data = copy.deepcopy(fc.data['rawdata']['retract'])
+    fc.data['offset']['y'] = data['vDeflection'][int(0.8*len(data)):].mean()
+    fc.data['offset']['x'] = data['measuredHeight'].min()
     data['vDeflection'] = savgol_filter(data['vDeflection'][:,0],29,2).reshape(len(data['vDeflection']),1)*-1
     left_data = data[int(0.6*len(data['measuredHeight'])):]
     p = np.polyfit(left_data['measuredHeight'].reshape(-1),left_data['vDeflection'].reshape(-1),1)
@@ -200,15 +202,20 @@ def findpeakbottom_cell(fc):
     if data_y[:,0][0]>data_y[:,0][400:].min():
         return None
     find_range = int(0.1*len(data_y))
-    d = np.gradient(np.gradient(gaussian_filter(data_y[:,0],95)))[find_range:]
+    d = np.gradient(np.gradient(gaussian_filter(data_y[:,0],9)))[find_range:]
     d=d/d.max()*-1
+    plt.plot(d)
     p = find_peaks(d,height=0.6,distance=50)[0]+find_range
     b = find_peaks(d*-1,height=0.5,distance=50)[0]+find_range
     n = 100
     f_boundary = 10
     for p_ in p:
         temp_array = data_x[b] - data_x[p_]
-        i = np.where(temp_array > 0, temp_array, np.inf).argmin()
+        i = np.where(temp_array > 0, temp_array, np.inf)
+        if len(i)>0:
+            i = i.argmin()
+        else:
+            return None
         b_ = b[i]
         if data_x[b_]-data_x[p_]<130 and p_<b_:
             y = rotate(data_x[p_-n:b_],data_y[p_-n:b_],n,-0.07)
