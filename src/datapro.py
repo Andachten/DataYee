@@ -40,7 +40,7 @@ def rotate(data_x,data_y,index,k):
     return (data_x - data_x[index])*np.sin(theta) + (data_y - data_y[index])*np.cos(theta) +data_y[index]
 def loadmodel():
     global model,device,transform
-    model = torch.load(r'../model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
+    model = torch.load(r'./model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
@@ -127,22 +127,16 @@ def fig2img(fig):
     fig.canvas.draw()
     img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
     return img
-@jit(nopython=True)
-def FRC_transformer(f,x,thr=30):
-    thr = thr*1e-12
-    f = f*1e-12
-    x = x*1e-9
-    kb = 1.38e-23
-    b = 0.11*1e-9
-    gama = 41/180*np.pi
-    T = 298
-    l = b*np.cos(gama/2)/np.abs(np.log(np.cos(gama)))
-    fb = kb*T*l/b**2
-    state_L1 =  x[np.where((f<fb) & (f>thr))]/(1-(4*f[np.where((f<fb) & (f>thr))]*l/kb/T)**(-0.5))*1e9
-    state_f1 = f[np.where((f<fb) & (f>thr))]*1e12
-    state_L2 =  x[np.where(f>fb)]/(1-(2*f[np.where(f>fb)]*b/kb/T)**(-1))*1e9
-    state_f2 = f[np.where(f>fb)]*1e12
-    return np.hstack((state_L1,state_L2)),np.hstack((state_f1,state_f2))
+def noise_down(fc):
+    data_y = fc.data['rawdata']['retract']['vDeflection']*1e12
+    r = 0.9
+    data_y_right = data_y[:,0][int(r*len(data_y)):]
+    data_y_right_smth = savgol_filter(data_y_right,199,2)
+    for s in np.arange(100)[3::2]:
+        err = np.abs(savgol_filter(data_y[:,0][int(r*len(data_y)):],s,2)-data_y_right_smth).mean()
+        if err<2:
+            break
+    fc.data['filters']['win_lens']=s
 def cal_baseline(forcecurve):
     data = copy.deepcopy(forcecurve.data['rawdata']['retract'])
     data['vDeflection'] = savgol_filter(data['vDeflection'][:,0],29,2).reshape(len(data['vDeflection']),1)
@@ -158,9 +152,9 @@ def cal_baseline(forcecurve):
 def cal_baseline_cell(fc):
     fc.data['offset']['x'],fc.data['offset']['y'],fc.data['offset']['k']=0,0,0
     data = copy.deepcopy(fc.data['rawdata']['retract'])
-    fc.data['offset']['y'] = data['vDeflection'][int(0.8*len(data)):].mean()
+    fc.data['offset']['y'] = data['vDeflection'][int(0.9*len(data['vDeflection'])):].mean()
     fc.data['offset']['x'] = data['measuredHeight'].min()
-    data['vDeflection'] = savgol_filter(data['vDeflection'][:,0],29,2).reshape(len(data['vDeflection']),1)*-1
+    data['vDeflection'] = savgol_filter(data['vDeflection'][:,0],fc.data['filters']['win_lens'],2).reshape(len(data['vDeflection']),1)*-1
     left_data = data[int(0.6*len(data['measuredHeight'])):]
     p = np.polyfit(left_data['measuredHeight'].reshape(-1),left_data['vDeflection'].reshape(-1),1)
     d = np.polyder(p)
@@ -218,7 +212,7 @@ def findpeakbottom_cell(fc):
     if data_y[:,0][0]>data_y[:,0][400:].min():
         return None
     find_range = int(0.1*len(data_y))
-    d = np.gradient(np.gradient(gaussian_filter(data_y[:,0],9)))[find_range:]
+    d = np.gradient(np.gradient(gaussian_filter(data_y[:,0],3)))[find_range:]
     d=d/d.max()*-1
     plt.plot(d)
     p = find_peaks(d,height=0.6,distance=50)[0]+find_range
@@ -234,6 +228,8 @@ def findpeakbottom_cell(fc):
             return None
         b_ = b[i]
         if data_x[b_]-data_x[p_]<130 and p_<b_:
+            if len(fc.data['peakindex'])>0 and data_x[p_]-data_x[fc.data['peakindex'][-1]]<50:
+                continue
             y = rotate(data_x[p_-n:b_],data_y[p_-n:b_],n,-0.07)
             p_ = p_-n+np.argmax(y)
             k = np.polyval(np.polyder(np.polyfit(data_x[b_:b_+300][:,0],data_y[b_:b_+300][:,0],1)),data_x[b_])

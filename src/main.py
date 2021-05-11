@@ -11,9 +11,9 @@ import numpy as np
 import copy
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro import cal_baseline,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,predict,peaknumjudge,slope
-from src.datapro import cal_baseline_cell,findpeakbottom_cell
-smfs_func_lst = [cal_baseline,predict,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,peaknumjudge,slope]
-cell_func_lst = [cal_baseline_cell,findpeakbottom_cell,peaknumjudge]
+from src.datapro import cal_baseline_cell,findpeakbottom_cell,noise_down
+smfs_func_lst = [noise_down,cal_baseline,predict,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,peaknumjudge,slope]
+cell_func_lst = [noise_down,cal_baseline_cell,findpeakbottom_cell,peaknumjudge]
 def process_customize(fc,functions=[0],tasktype='smfs'):
     if tasktype == 'smfs':
         func_lst = smfs_func_lst
@@ -25,7 +25,7 @@ def main_smfs(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
     fc.data['tasktype']='smfs'
-    process_customize(fc, [0, 2, 3, 4, 5, 6, 7, 8])
+    process_customize(fc, [0, 1, 2, 4, 5, 6, 7, 8, 9])
     if not fc.data['peaknum_judge']:
         return None
     process_customize(fc, [1])
@@ -36,7 +36,7 @@ def main_cell(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
     fc.data['tasktype']='cell_curve'
-    process_customize(fc, [0,1,2],'cell_curve')
+    process_customize(fc, [0,1,2,3],'cell_curve')
     if not fc.data['peaknum_judge']:
         return None
     fc.clean_force()
@@ -60,6 +60,8 @@ class programbody():
         self.fc = forcecurve()
         if path.endswith('.DataYee-force'):
             self.zpo = zipfileopera(path)
+            if len(self.zpo)==0:
+                return None
             self.ljp = loadjpkfile(self.zpo.get_sourcepath())
             if 'tasktype' in self.zpo[0].keys():
                 self.tasktype = self.zpo[0]['tasktype']
@@ -69,9 +71,13 @@ class programbody():
             self.ljp = loadjpkfile(path)
             self.ready_run = True
     def curve_change(self):
+        if not self.state:
+            return None
         self.change_dic[self.forcecurve_index]=self.fc.data['datamsg']
         self.zpo.changingforce(self.fc)
     def fc_indexchange(self,n=0):
+        if not self.state:
+            return None
         if self.forcecurve_index+n>len(self.zpo)-1:
             self.forcecurve_index = len(self.zpo)-1
         elif self.forcecurve_index+n<0:
@@ -90,11 +96,15 @@ class programbody():
         else:
             self.forcepeak_index=self.forcepeak_index+n
     def baseline_change(self,n):
+        if not self.state:
+            return None
         self.fc.data['offset']['y'] += n
         self.curve_change()
         if self.tasktype == 'smfs':
             process_customize(self.fc,range(4,8),self.tasktype)
     def pk_delete(self):
+        if not self.state:
+            return None
         if len(self.fc.data['peakindex'])>0:
             del self.fc.data['peakindex'][self.forcepeak_index]
             del self.fc.data['bottomindex'][self.forcepeak_index]
@@ -104,6 +114,8 @@ class programbody():
         self.pk_indexchange(-1)
         self.curve_change()
     def fc_delete(self):
+        if not self.state:
+            return None
         self.forcepeak_index = 0
         self.fc.data['artificial_judge']=False
         self.curve_change()
@@ -124,6 +136,8 @@ class programbody():
         process_customize(self.fc,[6,7],self.tasktype)
         self.curve_change()
     def reset(self):
+        if not self.state:
+            return None
         self.fc.recover_force(self.ljp)
         if self.tasktype == 'smfs':
             process_customize(self.fc,range(2,8),'smfs')
@@ -133,9 +147,13 @@ class programbody():
         self.fc.clean_force()
         self.curve_change()
     def savechange(self,name):
+        if not self.state:
+            return None
         self.zpo.changedforce(name)
         self.change_dict={}
     def plot(self,F):
+        if not self.state:
+            return None
         if self.forcecurve_index in self.change_dic.keys():
             self.fc.data = copy.deepcopy(self.zpo.change[self.change_dic[self.forcecurve_index]].data)
         else:
@@ -143,13 +161,19 @@ class programbody():
         fc = copy.deepcopy(self.fc)
         F.plot(fc,self.forcepeak_index,self.ljp,self.tasktype)
     def drawlabel(self,label,lclplabel):
+        if not self.state:
+            return None
         label.setText('Peak select: {}/{}'.format(self.forcecurve_index,len(self.zpo)-1))
-        if self.tasktype!='smfs':
+        if self.tasktype!='smfs' or not self.state:
             return None
         if self.forcepeak_index<len(self.fc.data['peakindex'])-1:
             lclplabel.setText('Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index]))
         else:
             lclplabel.setText('Lc={:.1f}nm; lp={:.2f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index]))
+    def export_prodata(self):
+        if not self.state:
+            return None
+        pass
     def execu_autostep(self,progress,sel):
         if not self.ready_run:
             return None
