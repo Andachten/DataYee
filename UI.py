@@ -327,6 +327,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.bg.addButton(self.radioButton_2, 0)
         self.bg.addButton(self.tasktype_cell, 1)
         self.bg.buttonClicked.connect(self.rbclicked)
+        self.lineEdit.returnPressed.connect(self.changemark)
 
     def openfile(self):
         fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", '*.txt;;*.jpk-force;;*.jpk-force-map')
@@ -524,7 +525,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def resetslidevalue(self):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
-
+    def changemark(self):
+        mark = self.lineEdit.text()
+        if mark!='':
+            self.pb.changemark(mark)
+            self.displace_result()
     def lcslidechange(self, value):
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()

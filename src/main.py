@@ -121,8 +121,7 @@ class programbody():
             del self.fc.data['bottomindex'][self.forcepeak_index]
         if self.tasktype == 'smfs' and len(self.fc.data['wlcarg'])>0 :
             del self.fc.data['wlcarg'][self.forcepeak_index]
-        if len(self.fc.data['mark'])>self.forcepeak_index and self.tasktype == 'smfs':
-            del self.fc.data['mark'][self.forcepeak_index]
+            process_customize(self.fc,range(7,9),self.tasktype)
             self.fc.data['arg'] = self.taskarg
             process_customize(self.fc,[6,7],self.tasktype)
         self.pk_indexchange(-1)
@@ -140,7 +139,7 @@ class programbody():
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
         self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
                                                  self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp)
-        process_customize(self.fc,[6,7],self.tasktype)
+        process_customize(self.fc,range(6,9),self.tasktype)
         self.curve_change()
     def lc_change(self,dlc=0,amply=1):
         if len(self.fc.data['wlcarg'])==0:
@@ -149,7 +148,7 @@ class programbody():
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
         self.fc.data['wlcarg'][self.forcepeak_index]=(self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][0]+amply*dlc,
                                                  self.fc.data['wlcarg'][self.forcepeak_index][1])
-        process_customize(self.fc,[6,7],self.tasktype)
+        process_customize(self.fc,range(6,9),self.tasktype)
         self.curve_change()
     def reset(self):
         if not self.state:
@@ -170,6 +169,12 @@ class programbody():
             return None
         self.change_dic={}
         self.zpo.changedforce(name)
+    def changemark(self,mark):
+        if not self.state or self.tasktype!='smfs':
+            return None
+        if self.forcepeak_index<len(self.fc.data['mark']):
+            self.fc.data['mark'][self.forcepeak_index]=mark
+            self.curve_change()
     def plot(self,F):
         if not self.state:
             return None
