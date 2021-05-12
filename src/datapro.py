@@ -482,7 +482,7 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
         plt.close()
         return img
     a=ax.hist(x,bins=int(x.max()-x.min()))
-    kde = KernelDensity(kernel='gaussian', bandwidth=1).fit(x.reshape(-1,1))
+    kde = KernelDensity(kernel='gaussian', bandwidth=2).fit(x.reshape(-1,1))
     x_ = np.linspace(x.min(),x.max(),int(x.max()-x.min()))
     log_dens = kde.score_samples(x_.reshape(-1,1))
     p,_ = find_peaks(np.exp(log_dens)/np.exp(log_dens).max(),height=0.15,distance=5)
@@ -499,7 +499,10 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
     lc = popt[::3]
     for i,l in enumerate(lc):
         if i<len(lc)-1:
-            ax.text(l,-15,str(round(lc[i+1]-l,1)),c='b')
+            if i%2==0:
+                ax.text(l,a[0].max()+10,str(round(lc[i+1]-l,1)),c='b')
+            else:
+                ax.text(l,a[0].max()+5,str(round(lc[i+1]-l,1)),c='b')
     fit = mlti_Gaussian(x_, *popt)
     ax.plot(x_, fit , 'r')
     ax.set_xlim((lc[0]-30,lc[-1]+50))
