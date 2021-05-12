@@ -354,8 +354,11 @@ class zipfileopera:
             fc1.data = self[i]
             fc1.recover_force(ljp)
             data = fc1.get_prodata()['retract']
-            data_y = data['vDeflection']*-1e12
-            arr = np.append(arr,data_y.max())
+            data_y = data['vDeflection']*1e12
+            if data_y.max()>=0:
+                arr = np.append(arr,data_y.max())
+            else:
+                arr = np.append(arr,0)
         with open('maxforce.txt','w') as f:
             np.savetxt(f,arr)
         return arr

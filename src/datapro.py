@@ -146,7 +146,7 @@ def noise_down(fc):
     data_y_right_smth = savgol_filter(data_y_right, 99, 2)
     for s in np.arange(30)[3::2]:
         err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
-        if err < 4:
+        if err < 2:
             break
     fc.data['filters']['win_lens'] = s
 
@@ -512,14 +512,17 @@ def plotmap(arr):
     d = arr.reshape((lens,lens))
     fig,ax = plt.subplots(figsize=(8,6),dpi=300)
     plt.axis('off')
-    cmap = plt.get_cmap('YlOrBr')
+    cmap = plt.get_cmap('YlOrBr_r')
     im = ax.pcolormesh(np.arange(lens),np.arange(lens),d,cmap=cmap,shading='auto')
     bar = fig.colorbar(im)
+    bar.set_label('Force(pN)')
     img = fig2img(fig)
+    plt.close()
     return img
     pass
 def plothist(arr):
     fig,ax = plt.subplots(figsize=(8,6),dpi=300)
     ax.hist(arr,bins=50)
     img = fig2img(fig)
+    plt.close()
     return img

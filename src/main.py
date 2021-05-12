@@ -248,7 +248,7 @@ class programbody():
             self.fc.data['arg'] = self.taskarg
             main(self.fc,self.zpo,self.tasktype)
         else:
-            if len(self.change)==0:
+            if len(self.zpo.change)==0:
                 self.state = False
             else:
                 self.state = True

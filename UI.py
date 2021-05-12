@@ -179,7 +179,7 @@ class myFigure(FigureCanvas):
             if self.fc_new.data['mark'] != self.fc_old.data['mark']:
                 self.plotmark()
         if tasktype == 'cell_curve':
-            self.setlim((self.data_x.min(), self.data_x.max() + 500), (self.data_y.min() + 5, self.data_y.max() + 10))
+            self.setlim((self.data_x.min()-20, self.data_x.max() + 300), (self.data_y.min(), self.data_y.max() + 10))
         plt.draw()
         self.fc_old = copy.deepcopy(self.fc_new)
 
