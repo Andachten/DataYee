@@ -119,8 +119,10 @@ class programbody():
         if len(self.fc.data['peakindex'])>0:
             del self.fc.data['peakindex'][self.forcepeak_index]
             del self.fc.data['bottomindex'][self.forcepeak_index]
-        if self.tasktype == 'smfs' and len(self.fc.data['wlcarg'])>0:
+        if self.tasktype == 'smfs' and len(self.fc.data['wlcarg'])>0 :
             del self.fc.data['wlcarg'][self.forcepeak_index]
+        if len(self.fc.data['mark'])>self.forcepeak_index and self.tasktype == 'smfs':
+            del self.fc.data['mark'][self.forcepeak_index]
             self.fc.data['arg'] = self.taskarg
             process_customize(self.fc,[6,7],self.tasktype)
         self.pk_indexchange(-1)
@@ -155,12 +157,14 @@ class programbody():
         self.fc.recover_force(self.ljp)
         self.fc.data['arg'] = self.taskarg
         if self.tasktype == 'smfs':
-            process_customize(self.fc,range(2,8),'smfs')
+            process_customize(self.fc,range(2,9),'smfs')
         elif self.tasktype == 'cell_curve':
             process_customize(self.fc,range(1,3),'cell_curve')
         self.fc.data['artificial_judge'] = True
         self.fc.clean_force()
         self.curve_change()
+        self.zpo.changedforce()
+        self.change_dic={}
     def savechange(self,name):
         if not self.state:
             return None
@@ -230,6 +234,7 @@ class programbody():
         if not self.ready_run:
             return None
         self.zpo.delet_dataYee()
+        self.change_dic = {}
         num = len(self.ljp)
         progress.setWindowTitle("Please Wait")  
         progress.setLabelText("Processing...")
