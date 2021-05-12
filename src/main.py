@@ -3,9 +3,11 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox
 import numpy as np
 import copy
+import pickle
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro import cal_baseline,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,predict,peaknumjudge,slope
 from src.datapro import cal_baseline_cell,findpeakbottom_cell,noise_down
+from src.datapro import Lc_transformer,plotmap,plothist
 smfs_func_lst = [noise_down,cal_baseline,predict,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,peaknumjudge,slope]
 cell_func_lst = [noise_down,cal_baseline_cell,findpeakbottom_cell,peaknumjudge]
 def process_customize(fc,functions=[0],tasktype='smfs'):
@@ -19,12 +21,13 @@ def main_smfs(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
     fc.data['tasktype']='smfs'
-    process_customize(fc, [0, 1, 2, 4, 5, 6, 7, 8, 9])
+    process_customize(fc, [ 1, 3, 4, 5, 6, 7, 8, 9])
     if not fc.data['peaknum_judge']:
         return None
-    process_customize(fc, [1])
+    process_customize(fc, [2])
     if not fc.data['mobilenet_judge']:
         return None
+    fc.clean_force()
     zpo.changingforce(fc)
 def main_cell(fc,zpo):
     if fc.data['rawdata'] == {} or fc.data['rawdata']['retract']['vDeflection'].sum()==0:
@@ -49,6 +52,13 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.change_dic = {}
+        self.taskarg = {'peakH': 50,
+           'sens': 10,
+           'peakN': [0, 8],
+           'xlim': 20,
+           'lp': (0.34, 0.38),
+           'mark': {'GB1': (13, 23), 'I27': (23, 36)},
+           'fitjudge': False}
     def creattask(self,path,tasktype='smfs'):
         self.tasktype = tasktype
         self.fc = forcecurve()
@@ -59,10 +69,14 @@ class programbody():
             self.ljp = loadjpkfile(self.zpo.get_sourcepath())
             if 'tasktype' in self.zpo[0].keys():
                 self.tasktype = self.zpo[0]['tasktype']
+            self.forcecurve_index=0
+            self.forcepeak_index=0
             self.state = True
         else:
             self.zpo= zipfileopera()
             self.ljp = loadjpkfile(path)
+            self.forcecurve_index=0
+            self.forcepeak_index=0
             self.ready_run = True
     def curve_change(self):
         if not self.state:
@@ -95,6 +109,9 @@ class programbody():
         self.fc.data['offset']['y'] += n
         self.curve_change()
         if self.tasktype == 'smfs':
+            if 'retract' not in self.fc.data['rawdata'].keys():
+                self.fc.recover_force(self.ljp)
+            self.fc.data['arg'] = self.taskarg
             process_customize(self.fc,range(4,8),self.tasktype)
     def pk_delete(self):
         if not self.state:
@@ -102,8 +119,9 @@ class programbody():
         if len(self.fc.data['peakindex'])>0:
             del self.fc.data['peakindex'][self.forcepeak_index]
             del self.fc.data['bottomindex'][self.forcepeak_index]
-        if self.tasktype == 'smfs':
+        if self.tasktype == 'smfs' and len(self.fc.data['wlcarg'])>0:
             del self.fc.data['wlcarg'][self.forcepeak_index]
+            self.fc.data['arg'] = self.taskarg
             process_customize(self.fc,[6,7],self.tasktype)
         self.pk_indexchange(-1)
         self.curve_change()
@@ -116,6 +134,7 @@ class programbody():
     def lp_change(self,dlp=0,amply=0.1):
         if len(self.fc.data['wlcarg'])==0:
             return None
+        self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
         self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
                                                  self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp)
@@ -124,6 +143,7 @@ class programbody():
     def lc_change(self,dlc=0,amply=1):
         if len(self.fc.data['wlcarg'])==0:
             return None
+        self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
         self.fc.data['wlcarg'][self.forcepeak_index]=(self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][0]+amply*dlc,
                                                  self.fc.data['wlcarg'][self.forcepeak_index][1])
@@ -133,6 +153,7 @@ class programbody():
         if not self.state:
             return None
         self.fc.recover_force(self.ljp)
+        self.fc.data['arg'] = self.taskarg
         if self.tasktype == 'smfs':
             process_customize(self.fc,range(2,8),'smfs')
         elif self.tasktype == 'cell_curve':
@@ -152,8 +173,42 @@ class programbody():
             self.fc.data = copy.deepcopy(self.zpo.change[self.change_dic[self.forcecurve_index]].data)
         else:
             self.fc.data = self.zpo[self.forcecurve_index]
+        if 'arg' in self.fc.data.keys():
+            self.taskarg = self.fc.data['arg']
+        else:
+            self.fc.data['arg'] = self.taskarg
         fc = copy.deepcopy(self.fc)
         F.plot(fc,self.forcepeak_index,self.ljp,self.tasktype)
+    def plot_contourhist(self):
+        if not self.state or self.tasktype != 'smfs':
+            return None
+        self.fc.recover_force(self.ljp)
+        data = self.fc.get_prodata()['retract']
+        data_y = data['vDeflection']*1e12
+        data_x = data['measuredHeight']*1e9
+        img = Lc_transformer(data_x,data_y)
+        img.show()
+    def plot_contourscatter(self):
+        if not self.state or self.tasktype != 'smfs':
+            return None
+        self.fc.recover_force(self.ljp)
+        data = self.fc.get_prodata()['retract']
+        data_y = data['vDeflection']*1e12
+        data_x = data['measuredHeight']*1e9
+        img = Lc_transformer(data_x,data_y,'scatter')
+        img.show()
+    def adhesionmap(self):
+        if not self.state:
+            return None
+        arr = self.zpo.get_maxforce(self.ljp)
+        img = plotmap(arr)
+        img.show()
+    def adhesionhist(self):
+        if not self.state:
+            return None
+        arr = self.zpo.get_maxforce(self.ljp)
+        img = plothist(arr)
+        img.show()
     def drawlabel(self,label,lclplabel):
         if not self.state:
             return None
@@ -162,15 +217,19 @@ class programbody():
             return None
         if self.forcepeak_index<len(self.fc.data['peakindex'])-1:
             lclplabel.setText('Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index]))
-        else:
+        elif len(self.fc.data['wlcarg'])>0:
             lclplabel.setText('Lc={:.1f}nm; lp={:.2f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index]))
     def export_prodata(self):
         if not self.state:
             return None
-        pass
+        if self.tasktype == 'cell_curve':
+            pass
+        elif self.tasktype == 'smfs':
+            self.zpo.extrac_argdata(self.ljp)
     def execu_autostep(self,progress,sel):
         if not self.ready_run:
             return None
+        self.zpo.delet_dataYee()
         num = len(self.ljp)
         progress.setWindowTitle("Please Wait")  
         progress.setLabelText("Processing...")
@@ -183,15 +242,21 @@ class programbody():
             if progress.wasCanceled():
                 QMessageBox.warning(sel,"Warning!","Failed!")
                 self.zpo.delet_dataYee()
+                self.ready_run = False
                 break
             self.fc.data = data
+            self.fc.data['arg'] = self.taskarg
             main(self.fc,self.zpo,self.tasktype)
         else:
-            self.state = True
+            if len(self.change)==0:
+                self.state = False
+            else:
+                self.state = True
             self.zpo.saveforce()
             progress.setValue(num)
             QMessageBox.information(sel,"Notic","Success")
             self.ready_run = False
+            
 if __name__ == '__main__':
     import time,datetime
     t1 = time.time()

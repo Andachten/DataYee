@@ -155,7 +155,7 @@ class myFigure(FigureCanvas):
     def plot(self, fc, index, ljp, tasktype='smfs'):
         self.ljp = ljp
         self.fc_new = fc
-        if 'retract' not in self.fc_new.data['rawdata'].keys():
+        if 'rawdata' not in self.fc_new.data.keys() or 'retract' not in self.fc_new.data['rawdata'].keys():
             self.fc_new.recover_force(ljp)
         self.getdata()
         if self.index != index:
@@ -312,10 +312,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.lpslide.valueChanged[int].connect(self.lpslidechange)
         self.lcdoubleSpinBox.valueChanged.connect(self.spinbox_changevalue)
         self.lpdoubleSpinBox.valueChanged.connect(self.spinbox_changevalue)
+        self.spinBox_2.valueChanged.connect(self.spinbox_changevalue)
+        self.spinBox_3.valueChanged.connect(self.spinbox_changevalue)
         self.spinBox.valueChanged.connect(self.spinbox_changevalue)
         self.actionexcel.triggered.connect(self.exportexcel)
         self.actionBaseline_plus.triggered.connect(self.baselineplus)
         self.actionBaseline_minus.triggered.connect(self.baselineminus)
+        self.actionHistgram.triggered.connect(self.plot_contourhist)
+        self.actionScatter.triggered.connect(self.plot_contourscatter)
+        self.actionMap.triggered.connect(self.adhesionmap)
+        self.actionHistogram.triggered.connect(self.adhesionhist)
         self.setFocusPolicy(Qt.StrongFocus)
         self.bg = QButtonGroup(self)
         self.bg.addButton(self.radioButton_2, 0)
@@ -550,6 +556,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def resetslide(self):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
+    def plot_contourhist(self):
+        self.pb.plot_contourhist()
+    def plot_contourscatter(self):
+        self.pb.plot_contourscatter()
+    def adhesionmap(self):
+        self.pb.adhesionmap()
+    def adhesionhist(self):
+        self.pb.adhesionhist()
 
     def spinbox_changevalue(self, value):
         sender = self.sender()
@@ -563,6 +577,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             else:
                 self.pb.forcecurve_index = len(self.pb.zpo) - 1
             self.displace_result()
+        elif sender == self.spinBox_2:
+            self.pb.taskarg['peakN'][0] = value
+        elif sender == self.spinBox_3:
+            self.pb.taskarg['peakN'][1] = value
 
     def rbclicked(self):
         sender = self.sender()

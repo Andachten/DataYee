@@ -29,7 +29,7 @@ class forcecurve:
                      'springConstant': 0.01,
                      'datamsg': ('', 0),
                      'offset': {'x': 0, 'y': 0, 'k': 0},
-                     'filters': {'methods': 'savgol', 'win_lens': 3, 'poly': 2},
+                     'filters': {'methods': 'savgol', 'win_lens': 13, 'poly': 2},
                      'mobilenet_judge': True,
                      'peaknum_judge': True,
                      'artificial_judge': True,
@@ -38,7 +38,8 @@ class forcecurve:
                      'wlcarg': [],
                      'dlc': [],
                      'k': [],
-                     'mark': []}
+                     'mark': [],
+                     'arg':{}}
 
     def get_prodata(self, smooth=True, tip_correc=True, s=None):
         data = copy.deepcopy(self.data['rawdata'])
@@ -346,7 +347,18 @@ class zipfileopera:
     def delet_dataYee(self):
         if os.path.isfile(self.fname):
             os.remove(self.fname)
-
+    def get_maxforce(self,ljp,filters=True, filter_lst=['peaknum_judge', 'mobilenet_judge', 'artificial_judge']):
+        arr = np.array([])
+        for i in range(len(self)):
+            fc1 = forcecurve()
+            fc1.data = self[i]
+            fc1.recover_force(ljp)
+            data = fc1.get_prodata()['retract']
+            data_y = data['vDeflection']*-1e12
+            arr = np.append(arr,data_y.max())
+        with open('maxforce.txt','w') as f:
+            np.savetxt(f,arr)
+        return arr
     def extrac_argdata(self, ljp, filters=True, filter_lst=['peaknum_judge', 'mobilenet_judge', 'artificial_judge']):
         wk_i = xlwt.Workbook(encoding='utf-8')
         ws_i_lc = wk_i.add_sheet('lc')

@@ -15,7 +15,7 @@ import torch
 from PIL import Image
 import matplotlib as mpl
 from numba import jit
-
+from sklearn.neighbors import KernelDensity
 mpl.rcParams['font.family'] = 'Arial'
 mpl.rcParams['axes.labelsize'] = 8
 mpl.rcParams['axes.labelweight'] = 'normal'
@@ -23,14 +23,7 @@ mpl.rcParams['axes.linewidth'] = 0.5
 mpl.rcParams['font.size'] = 8
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
-arg_run = {'peakH': 50,
-           'sens': 10,
-           'peakN': (0, 8),
-           'xlim': 20,
-           'lp': (0.34, 0.38),
-           'mark': {'GB1': (13, 23), 'I27': (23, 36)},
-           'fitjudge': False}
-
+    
 
 @jit(nopython=True)
 def func(x, k, b):
@@ -153,7 +146,7 @@ def noise_down(fc):
     data_y_right_smth = savgol_filter(data_y_right, 99, 2)
     for s in np.arange(30)[3::2]:
         err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
-        if err < 2:
+        if err < 4:
             break
     fc.data['filters']['win_lens'] = s
 
@@ -207,7 +200,10 @@ def predict(forcecurve, get_img=False):
 
 
 # execute after calbaseline
-def findpeak(forcecurve, height=arg_run['peakH'], sens=arg_run['sens'], xlim=arg_run['xlim']):
+def findpeak(forcecurve):
+    height=forcecurve.data['arg']['peakH']
+    sens=forcecurve.data['arg']['sens']
+    xlim=forcecurve.data['arg']['xlim']
     forcecurve.data['peakindex'] = []
     data_y = forcecurve.get_prodata(tip_correc=False, s=55)['retract']['vDeflection'][:, 0] * 1e12
     p, _ = find_peaks(data_y, height=height, prominence=sens, width=6, distance=25)
@@ -309,7 +305,8 @@ def findbottom(forcecurve):
 
 
 # must execute after findbottom
-def wlcfit(forcecurve, lp=arg_run['lp']):
+def wlcfit(forcecurve):
+    lp=forcecurve.data['arg']['lp']
     forcecurve.data['wlcarg'] = []
     data = forcecurve.get_prodata()['retract']
     data_y = data['vDeflection'][:, 0] * 1e12
@@ -374,7 +371,8 @@ def countdlc(fc):
             fc.data['dlc'].append(wlcarg[i + 1][0] - wlcarg[i][0])
 
 
-def mkbaseondlc(fc, dic=arg_run['mark']):
+def mkbaseondlc(fc):
+    dic=fc.data['arg']['mark']
     fc.data['mark'] = []
     dlc = fc.data['dlc']
     for i in range(len(dlc)):
@@ -385,9 +383,10 @@ def mkbaseondlc(fc, dic=arg_run['mark']):
             fc.data['mark'].append('none')
 
 
-def peaknumjudge(fc, peakN=arg_run['peakN']):
+def peaknumjudge(fc):
+    peakN=fc.data['arg']['peakN']
     peaknum = len(fc.data['peakindex'])
-    if peaknum > peakN[0] and peaknum < peakN[1]:
+    if peaknum >= peakN[0] and peaknum <= peakN[1]:
         fc.data['peaknum_judge'] = True
     else:
         fc.data['peaknum_judge'] = False
@@ -441,3 +440,86 @@ def graph(forcecurve):
         ax.plot(x_, y_, 'b-.')
     ax.set_ylim([-30, data_y.max() + 40])
     return fig, ax
+def qmWLC_transformer(f,x,thr=30,p=0.36):
+    x = x[np.where(f>thr)]*1e-9
+    f = f[np.where(f>thr)]*1e-12
+    kb = 1.38e-23
+    T = 298
+    p = p*1e-9
+    gama1 = 27.4e-9
+    gama2 = 109.8e-9
+    ff = f*p/kb/T
+    b = np.exp(np.sqrt(900/ff))
+    Lc = x/(4/3-4/3/np.sqrt(ff+1)-10*b/np.sqrt(ff)/((b-1)**2)+ff**1.62/(3.55+3.8*ff**2.2))
+    L_0 = Lc/(1/2/gama1*np.sqrt(gama1**2+4*gama2*f+2*gama2-gama1))
+    state_L = L_0/2/gama2*(np.sqrt(4*f*gama2+gama1**2)-gama1+2*gama2)
+    return f*1e12,state_L*1e13
+def WRC_transformer(f,x,thr=20):
+    b,gama = 0.11e-9,41/180*np.pi
+    kb = 1.38e-23
+    T = 298
+    x = x[np.where(f>thr)]*1e-9
+    f = f[np.where(f>thr)]*1e-12
+    l=b*np.cos(gama/2)/np.abs(np.log(np.cos(gama)))
+    f_b = kb*T*l/b**2
+    x1 = x[np.where(f<f_b)]/(1-(4*f[np.where(f<f_b)]*l/kb/T)**(-0.5))
+    x2 = x[np.where(f>=f_b)]/(1-(2*f[np.where(f>=f_b)]*b/kb/T)**(-1))
+    return np.hstack((f[np.where(f<f_b)],f[np.where(f>=f_b)]))*1e12,np.hstack((x1,x2))*1e9
+def mlti_Gaussian(x, *params):
+    y = np.zeros_like(x)
+    for i in range(0, len(params), 3):
+        ctr = params[i]
+        amp = params[i+1]
+        wid = params[i+2]
+        y = y + amp * np.exp( -((x - ctr)/wid)**2)
+    return y
+def Lc_transformer(data_x,data_y,plottype='hist'):
+    fig,ax = plt.subplots(figsize=(10,6),dpi=300)
+    f,x = WRC_transformer(data_y,data_x)
+    if plottype=='scatter':
+        ax.scatter(x,f,s=2,c='#495057')
+        img = fig2img(fig)
+        plt.close()
+        return img
+    a=ax.hist(x,bins=int(x.max()-x.min()))
+    kde = KernelDensity(kernel='gaussian', bandwidth=1).fit(x.reshape(-1,1))
+    x_ = np.linspace(x.min(),x.max(),int(x.max()-x.min()))
+    log_dens = kde.score_samples(x_.reshape(-1,1))
+    p,_ = find_peaks(np.exp(log_dens)/np.exp(log_dens).max(),height=0.15,distance=5)
+    guess = []
+    bound_start = []
+    bound_end = []
+    for i in p:
+        guess += [x_[i], 25, 1]   
+        bound_start += [x_[i]-20,0,0]
+        bound_end += [x_[i]+20,100,20]
+    X = a[1]
+    Y = np.append(a[0],0)
+    popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
+    lc = popt[::3]
+    for i,l in enumerate(lc):
+        if i<len(lc)-1:
+            ax.text(l,-15,str(round(lc[i+1]-l,1)),c='b')
+    fit = mlti_Gaussian(x_, *popt)
+    ax.plot(x_, fit , 'r')
+    ax.set_xlim((lc[0]-30,lc[-1]+50))
+    img = fig2img(fig)
+    plt.close()
+    return img
+def plotmap(arr):
+    lens = int(np.sqrt(len(arr)))
+    arr = arr[:lens**2]
+    d = arr.reshape((lens,lens))
+    fig,ax = plt.subplots(figsize=(8,6),dpi=300)
+    plt.axis('off')
+    cmap = plt.get_cmap('YlOrBr')
+    im = ax.pcolormesh(np.arange(lens),np.arange(lens),d,cmap=cmap,shading='auto')
+    bar = fig.colorbar(im)
+    img = fig2img(fig)
+    return img
+    pass
+def plothist(arr):
+    fig,ax = plt.subplots(figsize=(8,6),dpi=300)
+    ax.hist(arr,bins=50)
+    img = fig2img(fig)
+    return img
