@@ -11,6 +11,8 @@ from scipy import stats
 import itertools
 from sklearn.metrics import accuracy_score
 from sklearn.linear_model import LogisticRegression
+import toolz
+import dask
 def loadmodel():
     global model,device,transform
     model = torch.load(r'../model/2021-05-03-16-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
@@ -75,24 +77,42 @@ class kmeans:
         self.trainset,self.traintarget = loaddata(self.train,self.value)[1:3]
     def predict(self,x):
         return np.array([self.classfy(i,self.trainset, self.traintarget) for i in x])
-
+@dask.delayed
+def predict_batch(batch):
+    with torch.no_grad():
+        out = model(batch)
+        _, predicted = torch.max(out, 1)
+        predicted = predicted.numpy()
+    return predicted
 class mobilenet:
-    def __init__(self,train,value):
+    def __init__(self,train,value,cpu_num):
+        os.environ ['OMP_NUM_THREADS'] = str(cpu_num)
+        os.environ ['OPENBLAS_NUM_THREADS'] = str(cpu_num)
+        os.environ ['MKL_NUM_THREADS'] = str(cpu_num)
+        os.environ ['VECLIB_MAXIMUM_THREADS'] = str(cpu_num)
+        os.environ ['NUMEXPR_NUM_THREADS'] = str(cpu_num)
+        torch.set_num_threads(1)
         pass
-    def classify(self,img):
+    def predict_batch(self,img_lst):
+        tensors =  [transform(img) for img in img_lst]
+        batches = [dask.delayed(torch.stack)(batch) for batch in toolz.partition_all(10, tensors)]
+        delays = [predict_batch(batch) for batch in batches]
+        res = dask.compute(delays)
+        s = np.append([],res[0][:-1]).astype(np.int32)
+        s = np.append(s,res[0][-1].astype(np.int32))
+        return  s
+    def predict(self,img):
         img = transform(img)
         img = img.unsqueeze(0)
         img = img.to(device)
         with torch.no_grad():
             py = model(img)
-        pb=torch.nn.functional.softmax(py,dim=1)
-        _, predicted = torch.max(pb,1)
+        pb = torch.nn.functional.softmax(py, dim=1)
+        _, predicted = torch.max(pb, 1)
         classIndex_ = predicted[0]
         return classIndex_.item()
-    def predict(self,imglst):
-        return np.array([self.classify(img) for img in imglst])
+    
 
-'''
 if __name__=='__main__':
     train = r'D:\code\py\SMFS\20210503-train-data\train'
     value = r'D:\code\py\SMFS\20210503-train-data\val'
@@ -104,26 +124,22 @@ if __name__=='__main__':
     print("accuracy of svc is {}".format(sum(svc.predict(val_data_array)==val_target_array)/len(val_target_array)))
     rf.fit(data_array,target_array)
     print("accuracy of rf is {}".format(sum(rf.predict(val_data_array)==val_target_array)/len(val_target_array)))
-    m = mobilenet(train,value)
+    m = mobilenet(train,value,8)
     print("accuracy of mb is {}".format(sum(m.predict(val_img_lst)==val_target_array)/len(val_target_array)))
     #k = kmeans(train,value)
     #k.fit()
-    boost = XGBClassifier()
-    boost.fit(data_array,target_array)
-    print("accuracy of boost is {}".format(sum(boost.predict(val_data_array)==val_target_array)/len(val_target_array)))
     lg = LogisticRegression(max_iter=50000)
     lg.fit(data_array,target_array)
     print("accuracy of lg is {}".format(sum(lg.predict(val_data_array)==val_target_array)/len(val_target_array)))
     svc_re = svc.predict(val_data_array)
     rf_re = rf.predict(val_data_array)
     m_re = m.predict(val_img_lst)
-    boost_re = boost.predict(val_data_array)
     lg_re = lg.predict(val_data_array)
-    lst_re = [svc_re,rf_re,m_re,boost_re,lg_re]
     lst_blend = []
     score_max = 0
-    weight_max = np.array([0,0,0,0,0])
-    for weight in itertools.product(np.arange(7),np.arange(7),np.arange(7),np.arange(7),np.arange(7)):
+    weight_max = np.array([0,0,0,0])
+    '''
+    for weight in itertools.product(np.arange(7),np.arange(7),np.arange(7),np.arange(7)):
         #weight = np.random.randint(0,10,size=(5))
         #weight = [1,3, 6, 5, 9]
         weight = np.array(weight)
@@ -160,7 +176,7 @@ if __name__=='__main__':
                             k.predict(val_data_array),
                             lg.predict(val_data_array),
                             lg.predict(val_data_array),
-                            lg.predict(val_data_array)))[0].astype(np.int)'''
-    
+                            lg.predict(val_data_array)))[0].astype(np.int)
+    '''
     #print(sum(np.array([stats.mode(i)[0][0] for i in blendtrain])==val_target_array)/len(val_target_array))
     
