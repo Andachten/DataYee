@@ -3,6 +3,7 @@ import os
 import copy
 
 os.environ['KMP_DUPLICATE_LIB_OK'] = 'True'
+sys.path.append(r'E:\ZB\program\miniconda\envs\en2\Lib\site-packages')
 import numpy as np
 from src.datapro import lcfunc
 from src.loadjpk import forcecurve, loadjpkfile
@@ -179,7 +180,9 @@ class myFigure(FigureCanvas):
             if self.fc_new.data['mark'] != self.fc_old.data['mark']:
                 self.plotmark()
         if tasktype == 'cell_curve':
-            self.setlim((self.data_x.min()-20, self.data_x.max() + 300), (self.data_y.min(), self.data_y.max() + 10))
+            set_range = 0.1
+            ylim_min = self.data_y[int(set_range*len(self.data_y)):].min()-20
+            self.setlim((self.data_x.min()-20, self.data_x.max() + 300), (ylim_min, self.data_y.max() + 10))
         plt.draw()
         self.fc_old = copy.deepcopy(self.fc_new)
 
@@ -330,7 +333,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.lineEdit.returnPressed.connect(self.changemark)
 
     def openfile(self):
-        fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", '*.txt;;*.jpk-force;;*.jpk-force-map')
+        fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", '*.txt;;*.jpk-force;;*.jpk-force-map;;*.spm')
         self.fname = fname
         if fname != '':
             self.pb.creattask(fname)

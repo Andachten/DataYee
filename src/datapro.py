@@ -14,7 +14,6 @@ import torchvision.transforms as transforms
 import torch
 from PIL import Image
 import matplotlib as mpl
-from numba import jit
 from sklearn.neighbors import KernelDensity
 mpl.rcParams['font.family'] = 'Arial'
 mpl.rcParams['axes.labelsize'] = 8
@@ -25,12 +24,9 @@ mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
     
 
-@jit(nopython=True)
 def func(x, k, b):
     return k * x + b
 
-
-@jit(nopython=True)
 def lcfunc(x, lc, lp):
     return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
 
@@ -143,11 +139,12 @@ def noise_down(fc):
     data_y = fc.data['rawdata']['retract']['vDeflection'] * 1e12
     r = 0.9
     data_y_right = data_y[:, 0][int(r * len(data_y)):]
-    data_y_right_smth = savgol_filter(data_y_right, 99, 2)
-    for s in np.arange(30)[3::2]:
+    data_y_right_smth = savgol_filter(data_y_right, 399, 2)
+    for s in np.arange(100)[3::2]:
         err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
         if err < 2:
             break
+    print(s)
     fc.data['filters']['win_lens'] = s
 
 
@@ -173,7 +170,7 @@ def cal_baseline_cell(fc):
     data['vDeflection'] = savgol_filter(data['vDeflection'][:, 0], fc.data['filters']['win_lens'], 2).reshape(
         len(data['vDeflection']), 1) * -1
     
-    left_data = data[int(0.9 * len(data['measuredHeight'])):]
+    left_data = data[int(0.7 * len(data['measuredHeight'])):]
     p = np.polyfit(left_data['measuredHeight'].reshape(-1), left_data['vDeflection'].reshape(-1), 1)
     d = np.polyder(p)
     k = np.polyval(d, left_data['measuredHeight'].reshape(-1)[-1])
@@ -237,7 +234,7 @@ def findpeakbottom_cell(fc):
     if data_y[:, 0][0] > data_y[:, 0][400:].min():
         return None
     find_range = int(0.1 * len(data_y))
-    d = np.gradient(np.gradient(gaussian_filter(data_y[:, 0], 13)))[find_range:]
+    d = np.gradient(np.gradient(gaussian_filter(data_y[:, 0], 39)))[find_range:]
     d = d / d.max() * -1
     p = find_peaks(d, height=0.6, distance=50)[0] + find_range
     b = find_peaks(d * -1, height=0.5, distance=50)[0] + find_range
