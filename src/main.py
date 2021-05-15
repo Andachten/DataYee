@@ -21,10 +21,11 @@ def main_smfs(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
     fc.data['tasktype']='smfs'
-    process_customize(fc, [ 1, 3, 4, 5, 6, 7, 8, 9])
+    process_customize(fc, [ 1, 3, 4, 5, 6, 7, 8, 9,10])
     if not fc.data['peaknum_judge']:
         return None
-    process_customize(fc, [2])
+    if fc.data['arg']['usemodel']:
+        process_customize(fc, [2])
     if not fc.data['mobilenet_judge']:
         return None
     fc.clean_force()
@@ -58,7 +59,8 @@ class programbody():
            'xlim': 20,
            'lp': (0.34, 0.38),
            'mark': {'GB1': (13, 23), 'I27': (23, 36)},
-           'fitjudge': False}
+           'fitjudge': False,
+           'usemodel':True}
     def creattask(self,path,tasktype='smfs'):
         self.tasktype = tasktype
         self.fc = forcecurve()
@@ -119,6 +121,7 @@ class programbody():
         if len(self.fc.data['peakindex'])>0:
             del self.fc.data['peakindex'][self.forcepeak_index]
             del self.fc.data['bottomindex'][self.forcepeak_index]
+            del self.fc.data['k'][self.forcepeak_index]
         if self.tasktype == 'smfs' and len(self.fc.data['wlcarg'])>0 :
             del self.fc.data['wlcarg'][self.forcepeak_index]
             process_customize(self.fc,range(7,9),self.tasktype)
@@ -150,13 +153,20 @@ class programbody():
                                                  self.fc.data['wlcarg'][self.forcepeak_index][1])
         process_customize(self.fc,range(6,9),self.tasktype)
         self.curve_change()
+    def k_change(self,k=1,amply=1):
+        if len(self.fc.data['k'])==0:
+            return None
+        self.fc.data['arg'] = self.taskarg
+        real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
+        self.fc.data['k'][self.forcepeak_index] = self.zpo[self.forcecurve_index]['k'][real_peakindex]+k*amply
+        self.curve_change()
     def reset(self):
         if not self.state:
             return None
         self.fc.recover_force(self.ljp)
         self.fc.data['arg'] = self.taskarg
         if self.tasktype == 'smfs':
-            process_customize(self.fc,range(2,9),'smfs')
+            process_customize(self.fc,list(range(2,9))+list(range(10,11)),'smfs')
         elif self.tasktype == 'cell_curve':
             process_customize(self.fc,range(1,3),'cell_curve')
         self.fc.data['artificial_judge'] = True
@@ -225,9 +235,9 @@ class programbody():
         if self.tasktype!='smfs' or not self.state:
             return None
         if self.forcepeak_index<len(self.fc.data['peakindex'])-1:
-            lclplabel.setText('Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index]))
+            lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
         elif len(self.fc.data['wlcarg'])>0:
-            lclplabel.setText('Lc={:.1f}nm; lp={:.2f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index]))
+            lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
     def export_prodata(self):
         if not self.state:
             return None

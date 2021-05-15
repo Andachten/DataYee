@@ -57,7 +57,8 @@ class myFigure(FigureCanvas):
                         'peak': [],
                         'bottom': [],
                         'mark': [],
-                        'fitcurve': []}
+                        'fitcurve': [],
+                        'k':[]}
         super(myFigure, self).__init__(self.figure)
 
     def getdata(self):
@@ -141,7 +142,18 @@ class myFigure(FigureCanvas):
                 self.content['mark'].append(
                     self.ax.text(self.data_x[peak_index[i]] - 3, -30, '{}.{}'.format(i, mark[i]), font,
                                  horizontalalignment='left'))
-
+    def plotk(self):
+        for line in self.content['k']:
+            line[0].remove()
+        self.content['k'] = []
+        peak_index = self.fc_new.data['peakindex']
+        k_lst = self.fc_new.data['k']
+        for i,p_i in enumerate(peak_index):
+            x,y = self.data_x[p_i],self.data_y[p_i]
+            b = y - k_lst[i]*x
+            x_ = np.linspace(x-5,x+5)
+            y_ = k_lst[i]*x_+b
+            self.content['k'].append(self.ax.plot(x_,y_,'#862e9c',lw=1))
     def changeall(self):
         self.plotcurve()
         if len(self.fc_new.data['peakindex']) > 0:
@@ -152,6 +164,7 @@ class myFigure(FigureCanvas):
         self.plotpeak()
         self.plotbottom()
         self.plotmark()
+        self.plotk()
 
     def plot(self, fc, index, ljp, tasktype='smfs'):
         self.ljp = ljp
@@ -179,6 +192,8 @@ class myFigure(FigureCanvas):
                 self.plotfitcurve()
             if self.fc_new.data['mark'] != self.fc_old.data['mark']:
                 self.plotmark()
+            if self.fc_new.data['k'] != self.fc_old.data['k']:
+                self.plotk()
         if tasktype == 'cell_curve':
             set_range = 0.1
             ylim_min = self.data_y[int(set_range*len(self.data_y)):].min()-20
@@ -291,13 +306,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # self.force_index = 0
         # self.peak_index = 0
         self.F = myFigure()
-        self.lc_value = self.lcdoubleSpinBox.value()
-        self.lp_value = self.lpdoubleSpinBox.value()
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F)
         self.action_init()
 
     def action_init(self):
+        self.lc_value = self.lcdoubleSpinBox.value()
+        self.lp_value = self.lpdoubleSpinBox.value()
+        self.k_value = self.kSpinBox.value()
         self.actionForce_Curve.triggered.connect(self.openfile)
         self.actionSave.triggered.connect(self.savefile)
         self.actionBatch_of_Force_Curve.triggered.connect(self.opendir)
@@ -313,8 +329,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pushButton_2.clicked.connect(self.reset_delete)
         self.lcslide.valueChanged[int].connect(self.lcslidechange)
         self.lpslide.valueChanged[int].connect(self.lpslidechange)
+        self.kSlider.valueChanged[int].connect(self.kslidechange)
         self.lcdoubleSpinBox.valueChanged.connect(self.spinbox_changevalue)
         self.lpdoubleSpinBox.valueChanged.connect(self.spinbox_changevalue)
+        self.kSpinBox.valueChanged.connect(self.spinbox_changevalue)
         self.spinBox_2.valueChanged.connect(self.spinbox_changevalue)
         self.spinBox_3.valueChanged.connect(self.spinbox_changevalue)
         self.spinBox.valueChanged.connect(self.spinbox_changevalue)
@@ -329,7 +347,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.bg = QButtonGroup(self)
         self.bg.addButton(self.radioButton_2, 0)
         self.bg.addButton(self.tasktype_cell, 1)
-        self.bg.buttonClicked.connect(self.rbclicked)
+        self.usemodel_cb.setChecked(True)
+        self.usemodel_cb.stateChanged.connect(self.statemodel)
+        self.fastmode_cb.stateChanged.connect(self.statemodel)
         self.lineEdit.returnPressed.connect(self.changemark)
 
     def openfile(self):
@@ -560,6 +580,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.change_dict[self.force_index] = self.fc.data['datamsg']
         '''
         self.displace_result()
+    def kslidechange(self,value):
+        self.k_value = self.kSpinBox.value()
+        self.pb.k_change(value, self.k_value)
+        self.displace_result()
 
     def resetslide(self):
         self.lcslide.setValue(0)
@@ -579,6 +603,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.lc_value = value
         elif sender == self.lpdoubleSpinBox:
             self.lp_value = value
+        elif sender == self.kSpinBox:
+            self.k_value = value
         elif sender == self.spinBox:
             if value < len(self.pb.zpo):
                 self.pb.forcecurve_index = value
@@ -597,6 +623,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.tasktype = 'smfs'
             elif self.bg.checkedId() == 1:
                 self.tasktype = 'cell_curve'
+    def statemodel(self):
+        self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
+        print(self.pb.taskarg)
 
     def baselineplus(self):
         self.pb.baseline_change(5e-12)
