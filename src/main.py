@@ -53,8 +53,8 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.change_dic = {}
-        self.taskarg = {'peakH': 50,
-           'sens': 10,
+        self.taskarg = {'peakH': 30,
+           'sens': 3,
            'peakN': [0, 8],
            'xlim': 20,
            'lp': (0.34, 0.38),
@@ -161,6 +161,16 @@ class programbody():
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
         self.fc.data['k'][self.forcepeak_index] = self.zpo[self.forcecurve_index]['k'][real_peakindex]+k*amply
         self.curve_change()
+    def pv_change(self,value):
+        if not self.state or len(self.fc.data['peakindex'])==0:
+            None
+        self.fc.recover_force(self.ljp)
+        self.fc.data['peakindex'][self.forcepeak_index]+=value
+        process_customize(self.fc,[4,5,7,8,10],self.tasktype)
+        self.fc.clean_force()
+        self.curve_change()
+        self.zpo.changedforce()
+        self.change_dic={}
     def reset(self):
         if not self.state:
             return None
@@ -246,6 +256,13 @@ class programbody():
             pass
         elif self.tasktype == 'smfs':
             self.zpo.extrac_argdata(self.ljp)
+    def exporttxt(self):
+        if not self.state:
+            return None
+        if self.tasktype == 'cell_curve':
+            pass
+        elif self.tasktype == 'smfs':
+            self.zpo.exporttxt(self.ljp,self.forcecurve_index)
     def execu_autostep(self,progress,sel):
         if not self.ready_run:
             return None

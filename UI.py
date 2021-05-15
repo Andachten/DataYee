@@ -101,10 +101,12 @@ class myFigure(FigureCanvas):
         peak_index = self.fc_new.data['peakindex']
         if len(peak_index) <= 0:
             return None
+        
+        
         self.content['peak'].append(
-            self.ax.plot(self.data_x[peak_index[self.index]], self.data_y[peak_index[self.index]], 'ro', markersize=16))
+            (self.ax.plot(self.data_x[peak_index], self.data_y[peak_index], 'yo', markersize=8)))
         self.content['peak'].append(
-            (self.ax.plot(self.data_x[peak_index], self.data_y[peak_index], 'ro', markersize=8)))
+            self.ax.plot(self.data_x[peak_index[self.index]], self.data_y[peak_index[self.index]],'ro', markersize=8))
 
     def plotbottom(self):
         for line in self.content['bottom']:
@@ -343,6 +345,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actionScatter.triggered.connect(self.plot_contourscatter)
         self.actionMap.triggered.connect(self.adhesionmap)
         self.actionHistogram.triggered.connect(self.adhesionhist)
+        self.actiontxt.triggered.connect(self.exporttxt)
+        self.actionpeakindex_plus.triggered.connect(self.peakvalueplus)
+        self.actionpeakindex_minus.triggered.connect(self.peakvalueminus)
         self.setFocusPolicy(Qt.StrongFocus)
         self.bg = QButtonGroup(self)
         self.bg.addButton(self.radioButton_2, 0)
@@ -472,6 +477,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.resetslide()
             self.displace_result()
         '''
+    def peakvalueplus(self):
+        self.pb.pv_change(4)
+        self.displace_result()
+    def peakvalueminus(self):
+        self.pb.pv_change(-4)
+        self.displace_result()
 
     def peakindexretact(self):
         self.pb.pk_indexchange(-1)
@@ -625,7 +636,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.tasktype = 'cell_curve'
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
-        print(self.pb.taskarg)
 
     def baselineplus(self):
         self.pb.baseline_change(5e-12)
@@ -654,6 +664,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     def exportexcel(self):
         self.pb.export_prodata()
+    def exporttxt(self):
+        self.pb.exporttxt()
 
     def run(self):
         progress = QProgressDialog(self)

@@ -202,21 +202,21 @@ def findpeak(forcecurve):
     sens=forcecurve.data['arg']['sens']
     xlim=forcecurve.data['arg']['xlim']
     forcecurve.data['peakindex'] = []
-    data = forcecurve.get_prodata(tip_correc=False, s=55)['retract']
+    data = forcecurve.get_prodata(tip_correc=False, s=59)['retract']
     data_y = data['vDeflection'][:, 0] * 1e12
     data_x = data['measuredHeight'][:, 0] * 1e9
     distance = len(np.where(data_x>(data_x[-1]-forcecurve.data['arg']['xsens']))[0])
-    p, _ = find_peaks(data_y, height=height, prominence=sens, width=6, distance=distance)
+    p, _ = find_peaks(data_y, height=height, prominence=sens, width=5, distance=distance)
     data = forcecurve.get_prodata(tip_correc=False)['retract']
     data_y = data['vDeflection'][:, 0] * 1e12
     data_x = data['measuredHeight'][:, 0] * 1e9
-    p1, _ = find_peaks(data_y, height=height, prominence=sens, width=6, distance=distance)
+    p1, _ = find_peaks(data_y, height=height, prominence=sens, width=5, distance=distance)
     peak_index = np.array([])
     for n in p:
         idx = (np.abs(p1 - n)).argmin()
         if len(peak_index) != 0:
             temp = (p1[idx] - peak_index)
-            if temp.min() < 25:
+            if temp.min() < 50:
                 if data_y[temp.argmin()] > p1[idx]:
                     continue
                 else:

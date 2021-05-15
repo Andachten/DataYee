@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>../source/DataYee.ico</normaloff>../source/DataYee.ico</iconset>
+    <normaloff>C:/Users/Administrator/.designer/source/DataYee.ico</normaloff>C:/Users/Administrator/.designer/source/DataYee.ico</iconset>
   </property>
   <property name="dockOptions">
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
@@ -84,7 +84,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/left_arrow.ico</normaloff>../source/left_arrow.ico</iconset>
+      <normaloff>C:/Users/Administrator/.designer/source/left_arrow.ico</normaloff>C:/Users/Administrator/.designer/source/left_arrow.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -157,7 +157,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/trash.ico</normaloff>../source/trash.ico</iconset>
+      <normaloff>C:/Users/Administrator/.designer/source/trash.ico</normaloff>C:/Users/Administrator/.designer/source/trash.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -301,7 +301,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/renew.ico</normaloff>../source/renew.ico</iconset>
+      <normaloff>C:/Users/Administrator/.designer/source/renew.ico</normaloff>C:/Users/Administrator/.designer/source/renew.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -324,7 +324,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/right.ico</normaloff>../source/right.ico</iconset>
+      <normaloff>C:/Users/Administrator/.designer/source/right.ico</normaloff>C:/Users/Administrator/.designer/source/right.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -347,7 +347,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/top.ico</normaloff>../source/top.ico</iconset>
+      <normaloff>C:/Users/Administrator/.designer/source/top.ico</normaloff>C:/Users/Administrator/.designer/source/top.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -370,7 +370,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>../source/down.ico</normaloff>../source/down.ico</iconset>
+      <normaloff>C:/Users/Administrator/.designer/source/down.ico</normaloff>C:/Users/Administrator/.designer/source/down.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -745,6 +745,8 @@
     <addaction name="actionDelete"/>
     <addaction name="actionBaseline_plus"/>
     <addaction name="actionBaseline_minus"/>
+    <addaction name="actionpeakindex_plus"/>
+    <addaction name="actionpeakindex_minus"/>
    </widget>
    <widget class="QMenu" name="menuPlot">
     <property name="title">
@@ -965,6 +967,22 @@
   <action name="actionHistogram">
    <property name="text">
     <string>Histogram</string>
+   </property>
+  </action>
+  <action name="actionpeakindex_plus">
+   <property name="text">
+    <string>peakindex_plus</string>
+   </property>
+   <property name="shortcut">
+    <string>+</string>
+   </property>
+  </action>
+  <action name="actionpeakindex_minus">
+   <property name="text">
+    <string>peakindex_minus</string>
+   </property>
+   <property name="shortcut">
+    <string>_</string>
    </property>
   </action>
  </widget>

@@ -363,6 +363,18 @@ class zipfileopera:
         with open('maxforce.txt','w') as f:
             np.savetxt(f,arr)
         return arr
+    def exporttxt(self,ljp,forcecurve_index):
+        fc = forcecurve()
+        fc.data=self[forcecurve_index]
+        fc.recover_force(ljp)
+        data = fc.get_prodata()['retract']
+        data_x = data['measuredHeight']
+        data_y = data['vDeflection']
+        x = np.dstack((data_x[:,0],data_y[:,0]))
+        todir = os.path.dirname(self.fname)
+        name = "{}.txt".format(forcecurve_index)
+        fname = os.path.join(todir, name)
+        np.savetxt(fname,x[0],fmt='%.5e')
     def extrac_argdata(self, ljp, filters=True, filter_lst=['peaknum_judge', 'mobilenet_judge', 'artificial_judge']):
         wk_i = xlwt.Workbook(encoding='utf-8')
         ws_i_lc = wk_i.add_sheet('lc')
@@ -406,5 +418,8 @@ class zipfileopera:
                 ws_m_lp.write(mk_conut[mark[z]], mk_lst.index(mark[z]), lp[z])
                 ws_m_force.write(mk_conut[mark[z]], mk_lst.index(mark[z]), force[z])
             col_count += 1
-        wk_i.save('outputdata base on index of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
-        wk_m.save('outputdata base on mark of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
+        todir = os.path.dirname(self.fname)
+        wk_i_svname = os.path.join(todir, 'outputdata base on index of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
+        wk_m_svname = os.path.join(todir, 'outputdata base on mark of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
+        wk_i.save(wk_i_svname)
+        wk_m.save(wk_m_svname)
