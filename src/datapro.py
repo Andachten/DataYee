@@ -202,12 +202,15 @@ def findpeak(forcecurve):
     sens=forcecurve.data['arg']['sens']
     xlim=forcecurve.data['arg']['xlim']
     forcecurve.data['peakindex'] = []
-    data_y = forcecurve.get_prodata(tip_correc=False, s=55)['retract']['vDeflection'][:, 0] * 1e12
-    p, _ = find_peaks(data_y, height=height, prominence=sens, width=6, distance=25)
+    data = forcecurve.get_prodata(tip_correc=False, s=55)['retract']
+    data_y = data['vDeflection'][:, 0] * 1e12
+    data_x = data['measuredHeight'][:, 0] * 1e9
+    distance = len(np.where(data_x>(data_x[-1]-forcecurve.data['arg']['xsens']))[0])
+    p, _ = find_peaks(data_y, height=height, prominence=sens, width=6, distance=distance)
     data = forcecurve.get_prodata(tip_correc=False)['retract']
     data_y = data['vDeflection'][:, 0] * 1e12
     data_x = data['measuredHeight'][:, 0] * 1e9
-    p1, _ = find_peaks(data_y, height=height, prominence=sens, width=6, distance=25)
+    p1, _ = find_peaks(data_y, height=height, prominence=sens, width=6, distance=distance)
     peak_index = np.array([])
     for n in p:
         idx = (np.abs(p1 - n)).argmin()
