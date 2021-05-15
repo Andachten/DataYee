@@ -254,7 +254,7 @@ class loadjpkfile(forcecurve):
                                                  i)
                     with open(fname, 'wb') as f:
                         pickle.dump(dic, f)
-            elif filename.endswith('.jpk-force-map'):
+            elif filename.endswith('.jpk-force'):
                 jpk = JPKFile(filename)
                 try:
                     springConstant = float(
@@ -264,6 +264,8 @@ class loadjpkfile(forcecurve):
                     continue
                 dic['springConstant'] = springConstant
                 fname = "{}-{}.datay".format(os.path.splitext(os.path.basename(filename))[0], 0)
+                for i, segment in jpk.segments.items():
+                    dic['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight', 'vDeflection'])[0]
                 with open(fname, 'wb') as f:
                     pickle.dump(dic, f)
 
