@@ -365,6 +365,24 @@ class zipfileopera:
         with open('maxforce.txt','w') as f:
             np.savetxt(f,arr)
         return arr
+    def split_bypeakN(self):
+        fc = forcecurve()
+        dic = {}
+        pure_fname = os.path.splitext(self.fname)[0]
+        for i,data in enumerate(self):
+            fc.data = data
+            peakN = fc.data['peakindex']
+            if len(peakN) not in dic.keys():
+                dic[peakN] = []
+            dic[peakN].append(fc)
+        for k,v in dic.items():
+            fname = '{}-peakN-{}.DataYee-Force'.format(pure_fname,k)
+            with ZipFile(fname, 'a', zipfile.ZIP_DEFLATED) as zips:
+                for fc in v:
+                    o = os.path.splitext(os.path.basename(fc.data['datamsg'][0]))[0] + '-s-' + str(
+                        fc.data['datamsg'][1]) + '.pkl'
+                    pkl = pickle.dumps(fc.data)
+                    zips.writestr(o, pkl)
     def exporttxt(self,ljp,forcecurve_index):
         fc = forcecurve()
         fc.data=self[forcecurve_index]
