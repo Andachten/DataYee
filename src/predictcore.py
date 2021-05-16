@@ -14,6 +14,9 @@ import torchvision.transforms as transforms
 import toolz
 import dask
 import pickle
+from scipy import signal
+from scipy.ndimage import gaussian_filter
+import matplotlib.pyplot as plt
 
 '''
 def loaddata(train,value,imgsize=8):
@@ -73,6 +76,26 @@ class kmeans:
     def predict(self,x):
         return np.array([self.classfy(i,self.trainset, self.traintarget) for i in x])
 '''
+b, a = signal.butter(8, 0.08, 'lowpass')
+def feature_extract(fc):
+    data = fc.get_prodata(tip_correc=False)['retract']
+    data_y = data['vDeflection']*1e12
+    d = np.diff(data_y.reshape(-1),prepend=data_y[0])
+    p,_ = signal.find_peaks(gaussian_filter(data_y.reshape(-1),11),height=20,prominence=10,width=10)
+    data_y[np.delete(np.arange(len(data_y)),p)] = 0
+    data_y = data_y/data_y.max()
+    d = signal.filtfilt(b, a, d)
+    d = d/np.abs(d).max()
+    d[np.where(d>-0.11)] = 0
+    fig,ax = plt.subplots(figsize=(2.24, 2.24))
+    plt.axis('off')
+    plt.subplots_adjust(top=1, bottom=0.1, right=1, left=0.1)
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    ax.plot(data_y, color='#FF0000', linewidth=0.8)
+    ax.plot(d , '#0000FF', linewidth=0.8)
+    plt.close()
+    return fig
 class VotingClassify:
     def __init__(self,modeldir='../model/voting_clf_20210514_acc0.80_svm_lr_rf.model'):
         self.modeldir = modeldir
