@@ -232,7 +232,6 @@ class loadjpkfile(forcecurve):
     def extract_all_map2datay(self, todir):
         dic = self.data_structure
         for filename in self.filelst:
-            print(filename)
             if filename.endswith('.jpk-force-map'):
                 jpks = JPKMap(filename)
                 for i in range(len(jpks.flat_indices)):
@@ -264,7 +263,7 @@ class loadjpkfile(forcecurve):
                 except:
                     continue
                 dic['springConstant'] = springConstant
-                fname = "{}-{}.datay".format(os.path.splitext(os.path.basename(filename))[0], 0)
+                fname = "{}-{}.datay".format(os.path.join(todir, os.path.splitext(os.path.basename(filename))[0]),0)
                 for i, segment in jpk.segments.items():
                     dic['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight', 'vDeflection'])[0]
                 with open(fname, 'wb') as f:
