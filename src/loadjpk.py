@@ -398,9 +398,10 @@ class zipfileopera:
         np.savetxt(fname,x[0],fmt='%.5e')
     def get_arg(self,ljp):
         arg_dic = {'dlc':[],'lc':[],'p':[],'force':[],'k':[],'lens':[]}
-        mark_lst = []
         mark_data = {}
         fc = forcecurve()
+        max_mark = 0
+        pd.set_option('precision', 4)
         for i,data in enumerate(self):
             dlc,lc,p,f,k=[],[],[],[],[]
             if data['artificial_judge']:
@@ -410,14 +411,26 @@ class zipfileopera:
                 for index,p_i in enumerate(fc.data['peakindex']):
                     if index<len(fc.data['dlc']):
                         dlc.append(fc.data['dlc'][index])
-                        if fc.data['mark'][index] not in mark_lst:
-                            mark_lst.append(fc.data['mark'][index])
+                        if fc.data['mark'][index] not in mark_data.keys():
+                            mark_data[fc.data['mark'][index]]={}
+                            mark_data[fc.data['mark'][index]]['dlc']=[]
+                            mark_data[fc.data['mark'][index]]['lc'] =[]
+                            mark_data[fc.data['mark'][index]]['p'] =[]
+                            mark_data[fc.data['mark'][index]]['k'] =[]
+                            mark_data[fc.data['mark'][index]]['force'] =[]
+                        mark_data[fc.data['mark'][index]]['dlc'].append(fc.data['dlc'][index])
+                        mark_data[fc.data['mark'][index]]['lc'].append(fc.data['wlcarg'][index][0])
+                        mark_data[fc.data['mark'][index]]['p'].append(fc.data['wlcarg'][index][1])
+                        mark_data[fc.data['mark'][index]]['k'].append(fc.data['k'][index])
+                        mark_data[fc.data['mark'][index]]['force'].append(data_y[:,0][p_i])
+                        max_mark = max(max_mark,len(mark_data[fc.data['mark'][index]]['dlc']))
                     lc.append(fc.data['wlcarg'][index][0])
                     p.append(fc.data['wlcarg'][index][1])
                     k.append(fc.data['k'][index])
                     f.append(data_y[:,0][p_i])
             arg_dic['dlc'].append(dlc)
             arg_dic['k'].append(k)
+            #print(f,arg_dic['force'])
             arg_dic['force'].append(f)
             arg_dic['lc'].append(lc)
             arg_dic['p'].append(p)
@@ -431,11 +444,26 @@ class zipfileopera:
             arg_dic['lc'][i]+=['']*n
             arg_dic['p'][i]+=['']*n
         del arg_dic['lens']
-        fname = os.path.join(os.path.dirname(self.fname),"INDEX:{}.xlsx".format(os.path.splitext(os.path.basename()[0])))
+        #return arg_dic
+        fname = os.path.join(os.path.dirname(self.fname),"INDEX-{}.xlsx".format(os.path.splitext(os.path.basename(self.fname))[0]))
+        if os.path.isfile(fname):
+            os.remove(fname)
         writer = pd.ExcelWriter(fname)
         for k,v in arg_dic.items():
-            data_frame = pd.DataFrame(v)
+            data_frame = pd.DataFrame(v).round(2)
             data_frame.to_excel(writer,sheet_name=k)
+        writer.close()
+        fname = os.path.join(os.path.dirname(self.fname),"MARK-{}.xlsx".format(os.path.splitext(os.path.basename(self.fname))[0]))
+        if os.path.isfile(fname):
+            os.remove(fname)
+        writer = pd.ExcelWriter(fname)
+        for mark,item in mark_data.items():
+            for k,v in item.items():
+                item[k]+=['']*(max_mark-len(v))
+            data_frame = pd.DataFrame(item).round(2)
+            data_frame.to_excel(writer,sheet_name=mark)
+        writer.close()
+            
             
             
                 
