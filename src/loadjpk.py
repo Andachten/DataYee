@@ -8,6 +8,7 @@ import time
 import numpy as np
 import pickle
 import xlwt
+import pandas as pd
 from jpkfile import JPKFile, JPKMap
 import zipfile
 from zipfile import ZipFile
@@ -395,6 +396,43 @@ class zipfileopera:
         name = "{}.txt".format(forcecurve_index)
         fname = os.path.join(todir, name)
         np.savetxt(fname,x[0],fmt='%.5e')
+    def get_arg(self,ljp):
+        arg_dic = {'dlc':[],'lc':[],'p':[],'force':[],'k':[],'mark':[],'lens':[]}
+        fc = forcecurve()
+        for i,data in enumerate(self):
+            dlc,lc,p,f,k,mark=[],[],[],[],[],[]
+            if data['artificial_judge']:
+                fc.data = data
+                fc.recover_force(ljp)
+                data_y = fc.get_prodata()['retract']['vDeflection']*1e12
+                for index,p_i in enumerate(fc.data['peakindex']):
+                    if index<len(fc.data['dlc']):
+                        dlc.append(fc.data['dlc'][index])
+                        mark.append(fc.data['mark'][index])
+                    lc.append(fc.data['wlcarg'][index][0])
+                    p.append(fc.data['wlcarg'][index][1])
+                    k.append(fc.data['k'][index])
+                    f.append(data_y[:,0][p_i])
+            arg_dic['dlc'].append(dlc)
+            arg_dic['mark'].append(mark)
+            arg_dic['k'].append(k)
+            arg_dic['force'].append(f)
+            arg_dic['lc'].append(lc)
+            arg_dic['p'].append(p)
+            arg_dic['lens'].append(len(f))
+        max_len = max(arg_dic['lens'])
+        for i,lens in enumerate(arg_dic['lens']):
+            n = max_len - lens
+            arg_dic['dlc'][i]+=['']*(n-1)
+            arg_dic['mark'][i]+=['']*n
+            arg_dic['k'][i]+=['']*n
+            arg_dic['force'][i]+=['']*n
+            arg_dic['lc'][i]+=['']*n
+            arg_dic['p'][i]+=['']*n
+            arg_dic['lens'][i]+=['']*n
+            
+                
+            
     def extrac_argdata(self, ljp, filters=True, filter_lst=['peaknum_judge', 'mobilenet_judge', 'artificial_judge']):
         wk_i = xlwt.Workbook(encoding='utf-8')
         ws_i_lc = wk_i.add_sheet('lc')
