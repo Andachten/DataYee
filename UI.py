@@ -348,6 +348,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actiontxt.triggered.connect(self.exporttxt)
         self.actionpeakindex_plus.triggered.connect(self.peakvalueplus)
         self.actionpeakindex_minus.triggered.connect(self.peakvalueminus)
+        self.actionfigure.triggered.connect(self.export_figure)
         self.setFocusPolicy(Qt.StrongFocus)
         self.bg = QButtonGroup(self)
         self.bg.addButton(self.radioButton_2, 0)
@@ -666,7 +667,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.export_prodata()
     def exporttxt(self):
         self.pb.exporttxt()
-
+    def export_figure(self):
+        self.pb.export_figure(self.F.figure)
     def run(self):
         progress = QProgressDialog(self)
         self.pb.tasktype = self.tasktype

@@ -92,8 +92,8 @@ def feature_extract(fc):
     plt.subplots_adjust(top=1, bottom=0.1, right=1, left=0.1)
     plt.gca().xaxis.set_major_locator(plt.NullLocator())
     plt.gca().yaxis.set_major_locator(plt.NullLocator())
-    ax.plot(data_y, color='#FF0000', linewidth=0.8)
-    ax.plot(d , '#0000FF', linewidth=0.8)
+    ax.plot(data_y, color='#364fc7', linewidth=1)
+    ax.plot(d , '#c92a2a', linewidth=1)
     plt.close()
     return fig
 class VotingClassify:

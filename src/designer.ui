@@ -21,7 +21,7 @@
   </property>
   <property name="windowIcon">
    <iconset>
-    <normaloff>C:/Users/Administrator/.designer/source/DataYee.ico</normaloff>C:/Users/Administrator/.designer/source/DataYee.ico</iconset>
+    <normaloff>../source/DataYee.ico</normaloff>../source/DataYee.ico</iconset>
   </property>
   <property name="dockOptions">
    <set>QMainWindow::AllowNestedDocks|QMainWindow::AllowTabbedDocks|QMainWindow::AnimatedDocks</set>
@@ -84,7 +84,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>C:/Users/Administrator/.designer/source/left_arrow.ico</normaloff>C:/Users/Administrator/.designer/source/left_arrow.ico</iconset>
+      <normaloff>../source/left_arrow.ico</normaloff>../source/left_arrow.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -157,7 +157,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>C:/Users/Administrator/.designer/source/trash.ico</normaloff>C:/Users/Administrator/.designer/source/trash.ico</iconset>
+      <normaloff>../source/trash.ico</normaloff>../source/trash.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -301,7 +301,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>C:/Users/Administrator/.designer/source/renew.ico</normaloff>C:/Users/Administrator/.designer/source/renew.ico</iconset>
+      <normaloff>../source/renew.ico</normaloff>../source/renew.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -324,7 +324,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>C:/Users/Administrator/.designer/source/right.ico</normaloff>C:/Users/Administrator/.designer/source/right.ico</iconset>
+      <normaloff>../source/right.ico</normaloff>../source/right.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -347,7 +347,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>C:/Users/Administrator/.designer/source/top.ico</normaloff>C:/Users/Administrator/.designer/source/top.ico</iconset>
+      <normaloff>../source/top.ico</normaloff>../source/top.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -370,7 +370,7 @@
     </property>
     <property name="icon">
      <iconset>
-      <normaloff>C:/Users/Administrator/.designer/source/down.ico</normaloff>C:/Users/Administrator/.designer/source/down.ico</iconset>
+      <normaloff>../source/down.ico</normaloff>../source/down.ico</iconset>
     </property>
     <property name="iconSize">
      <size>
@@ -723,6 +723,7 @@
      </property>
      <addaction name="actiontxt"/>
      <addaction name="actionexcel"/>
+     <addaction name="actionfigure"/>
     </widget>
     <addaction name="menuOpen"/>
     <addaction name="actionSave"/>
@@ -983,6 +984,11 @@
    </property>
    <property name="shortcut">
     <string>_</string>
+   </property>
+  </action>
+  <action name="actionfigure">
+   <property name="text">
+    <string>figure</string>
    </property>
   </action>
  </widget>

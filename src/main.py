@@ -3,6 +3,7 @@ from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QMessageBox
 import numpy as np
 import copy
+import os
 import pickle
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro import cal_baseline,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,predict,peaknumjudge,slope
@@ -53,15 +54,15 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.change_dic = {}
-        self.taskarg = {'peakH': 30,
-           'sens': 3,
-           'peakN': [0, 8],
+        self.taskarg = {'peakH': 40,
+           'sens': 10,
+           'peakN': [1, 6],
            'xlim': 20,
            'lp': (0.34, 0.38),
            'mark': {'GB1': (13, 23), 'I27': (23, 36)},
            'fitjudge': False,
            'usemodel':True,
-           'xsens':2}
+           'xsens':3}
     def creattask(self,path,tasktype='smfs'):
         self.tasktype = tasktype
         self.fc = forcecurve()
@@ -263,6 +264,12 @@ class programbody():
             pass
         elif self.tasktype == 'smfs':
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
+    def export_figure(self,figure):
+        if not self.state:
+            return None
+        todir = os.path.dirname(self.zpo.fname)
+        fname = os.path.join(todir,'{}.png'.format(self.forcecurve_index))
+        figure.savefig(fname,bbox_inches='tight',transparent=True)
     def execu_autostep(self,progress,sel):
         if not self.ready_run:
             return None
