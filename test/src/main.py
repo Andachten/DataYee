@@ -180,7 +180,7 @@ class programbody():
         if self.tasktype == 'smfs':
             process_customize(self.fc,list(range(2,9))+list(range(10,11)),'smfs')
         elif self.tasktype == 'cell_curve':
-            process_customize(self.fc,range(1,4),'cell_curve')
+            process_customize(self.fc,range(1,5),'cell_curve')
         self.fc.data['artificial_judge'] = True
         self.fc.clean_force()
         self.curve_change()
@@ -250,18 +250,20 @@ class programbody():
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
         elif len(self.fc.data['wlcarg'])>0:
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
-    def export_prodata(self):
+    def export_prodata(self,sel):
         if not self.state:
             return None
         if self.tasktype == 'cell_curve':
-            pass
+            T = self.zpo.export_celldata(self.ljp)
         elif self.tasktype == 'smfs':
-            self.zpo.extrac_argdata(self.ljp)
+            T = self.zpo.extrac_argdata(self.ljp)
+        if not T:
+            QMessageBox.information(sel,"Warning","Failed!")
     def exporttxt(self):
         if not self.state:
             return None
         if self.tasktype == 'cell_curve':
-            pass
+            self.zpo.exporttxt(self.ljp,self.forcecurve_index)
         elif self.tasktype == 'smfs':
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
     def export_figure(self,figure):

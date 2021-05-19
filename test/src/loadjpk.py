@@ -518,5 +518,48 @@ class zipfileopera:
         todir = os.path.dirname(self.fname)
         wk_i_svname = os.path.join(todir, 'outputdata base on index of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
         wk_m_svname = os.path.join(todir, 'outputdata base on mark of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
-        wk_i.save(wk_i_svname)
-        wk_m.save(wk_m_svname)
+        try:
+            wk_i.save(wk_i_svname)
+            wk_m.save(wk_m_svname)
+        except:
+            return False
+        return True
+    def export_celldata(self,ljp):
+        fc = forcecurve()
+        dic = {'abs force':[],'force':[],'k':[],'lens':[]}
+        for i,data in enumerate(self):
+            fc.data = data
+            fc.recover_force(ljp)
+            data = fc.get_prodata()['retract']
+            data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
+            af,f,k=[],[],[]
+            if not fc.data['artificial_judge']:
+                dic['abs force'].append(af)
+                dic['force'].append(f)
+                dic['k'].append(k)
+                dic['lens'].append(0)
+                continue
+            for i,p_i in  enumerate(fc.data['peakindex']):
+                af.append(data_y[p_i][0])
+                f.append((data_y[p_i]-data_y[fc.data['bottomindex'][i]])[0])
+                k.append(fc.data['k'][i])
+            dic['abs force'].append(af)
+            dic['force'].append(f)
+            dic['k'].append(k)
+            dic['lens'].append(len(fc.data['peakindex']))
+        max_lens = max(dic['lens'])
+        for i,lens in enumerate(dic['lens']):
+            dic['abs force'][i] +=['']*(max_lens-lens)
+            dic['force'][i] +=['']*(max_lens-lens)
+            dic['k'][i] +=['']*(max_lens-lens)
+        todir = os.path.dirname(self.fname)
+        fname = os.path.join(todir,"cell_curve-{}.xlsx".format(os.path.splitext(os.path.basename(self.fname))[0]))
+        try:
+            writer = pd.ExcelWriter(fname)
+        except:
+            return False
+        for sheet_name,data in dic.items():
+            data_frame = pd.DataFrame(data).round(2)
+            data_frame.to_excel(writer,sheet_name=sheet_name)
+        writer.close()
+        return True

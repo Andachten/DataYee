@@ -444,7 +444,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.displace_result()
 
     def exportexcel(self):
-        self.pb.export_prodata()
+        self.pb.export_prodata(self)
     def exporttxt(self):
         self.pb.exporttxt()
     def export_figure(self):
