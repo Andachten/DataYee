@@ -54,7 +54,7 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.change_dic = {}
-        self.taskarg = {'peakH': 40,
+        self.taskarg = {'peakH': 30,
            'sens': 10,
            'peakN': [1, 6],
            'xlim': 20,
@@ -62,7 +62,7 @@ class programbody():
            'mark': {'GB1': (13, 23), 'I27': (23, 36)},
            'fitjudge': False,
            'usemodel':True,
-           'xsens':3}
+           'xsens':2}
     def creattask(self,path,tasktype='smfs'):
         self.tasktype = tasktype
         self.fc = forcecurve()
@@ -111,12 +111,13 @@ class programbody():
         if not self.state:
             return None
         self.fc.data['offset']['y'] += n
-        self.curve_change()
         if self.tasktype == 'smfs':
             if 'retract' not in self.fc.data['rawdata'].keys():
                 self.fc.recover_force(self.ljp)
             self.fc.data['arg'] = self.taskarg
+            cal_baseline(self.fc,only_x=True)
             process_customize(self.fc,range(4,8),self.tasktype)
+        self.curve_change()
     def pk_delete(self):
         if not self.state:
             return None
@@ -170,8 +171,8 @@ class programbody():
         process_customize(self.fc,[4,5,7,8,10],self.tasktype)
         self.fc.clean_force()
         self.curve_change()
-        self.zpo.changedforce()
-        self.change_dic={}
+        #self.zpo.changedforce()
+        #self.change_dic={}
     def reset(self):
         if not self.state:
             return None
@@ -186,11 +187,11 @@ class programbody():
         self.curve_change()
         self.zpo.changedforce()
         self.change_dic={}
-    def savechange(self,name):
+    def savechange(self,name,saveas=False):
         if not self.state:
             return None
         self.change_dic={}
-        self.zpo.changedforce(name)
+        self.zpo.changedforce(name,saveas)
     def changemark(self,mark):
         if not self.state or self.tasktype!='smfs':
             return None
@@ -250,6 +251,17 @@ class programbody():
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
         elif len(self.fc.data['wlcarg'])>0:
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
+    def copypeak(self):
+        if not self.state:
+            return None
+        if self.forcepeak_index>=0 and self.tasktype=='smfs':
+            self.fc.data['peakindex'] = np.insert(self.fc.data['peakindex'],self.forcepeak_index,self.fc.data['peakindex'][self.forcepeak_index]-10)
+            self.fc.recover_force(self.ljp)
+            process_customize(self.fc,[4,5,7,8,10],self.tasktype)
+            self.fc.clean_force()
+            self.curve_change()
+            self.zpo.changedforce()
+            self.change_dic={}
     def export_prodata(self,sel):
         if not self.state:
             return None

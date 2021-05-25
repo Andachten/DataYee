@@ -148,7 +148,7 @@ def noise_down(fc):
     fc.data['filters']['win_lens'] = s
 
 
-def cal_baseline(forcecurve,hightspeed=False):
+def cal_baseline(forcecurve,hightspeed=False,only_x=False):
     data = copy.deepcopy(forcecurve.data['rawdata']['retract'])
     data['vDeflection'] = savgol_filter(data['vDeflection'][:, 0], 29, 2).reshape(len(data['vDeflection']), 1)
     if hightspeed:
@@ -156,8 +156,9 @@ def cal_baseline(forcecurve,hightspeed=False):
         data_extend['vDeflection'] = savgol_filter(data_extend['vDeflection'][:,0],29,2).reshape(len(data_extend['vDeflection']),1)
         corr = data_extend['vDeflection'][int(0.1*len(data_extend['measuredHeight'])):].mean()-\
             data['vDeflection'][int(0.9*len(data['vDeflection'])):].mean()
-    xy_data = data[int(0.9 * len(data['measuredHeight'])):]
-    forcecurve.data['offset']['y'] = xy_data['vDeflection'].mean()
+    if not only_x:
+        xy_data = data[int(0.9 * len(data['measuredHeight'])):]
+        forcecurve.data['offset']['y'] = xy_data['vDeflection'].mean()
     data['vDeflection'] = data['vDeflection'] - forcecurve.data['offset']['y']
     for i, v in enumerate(data['vDeflection']):
         if v * data['vDeflection'][i + 1] < 0:
@@ -207,7 +208,7 @@ def findpeak(forcecurve):
     sens=forcecurve.data['arg']['sens']
     xlim=forcecurve.data['arg']['xlim']
     forcecurve.data['peakindex'] = []
-    data = forcecurve.get_prodata(tip_correc=False, s=59)['retract']
+    data = forcecurve.get_prodata(tip_correc=False, s=29)['retract']
     data_y = data['vDeflection'][:, 0] * 1e12
     data_x = data['measuredHeight'][:, 0] * 1e9
     distance = len(np.where(data_x>(data_x[-1]-forcecurve.data['arg']['xsens']))[0])
@@ -221,7 +222,7 @@ def findpeak(forcecurve):
         idx = (np.abs(p1 - n)).argmin()
         if len(peak_index) != 0:
             temp = (p1[idx] - peak_index)
-            if temp.min() < 50:
+            if temp.min() < 25:
                 if data_y[temp.argmin()] > p1[idx]:
                     continue
                 else:
@@ -270,7 +271,6 @@ def findpeakbottom_cell(fc):
             y = rotate(data_x[p_:b_ + n], data_y[p_:b_ + n], b_ - p_, k - 0.07)
             b_ = p_ + np.argmin(y)
             if data_y[p_] - data_y[b_] > f_boundary and data_y[p_] - data_y[b_:b_ + 40].max() > f_boundary:
-                print(data_y[p_] - data_y[b_:b_ + 40].max())
                 fc.data['peakindex'].append(p_)
                 fc.data['bottomindex'].append(b_)
     '''
@@ -330,10 +330,11 @@ def wlcfit(forcecurve):
         b_i = bottom_index[i]
         if data_y[p_i] > boundary_force:
             y_distance = data_y[p_i] - data_y[b_i]
-            y_fitpoint = data_y[b_i] + 0.3 * y_distance
-            if len(np.where(data_y[b_i:] > y_fitpoint)[0]) != 0:
-                fitpoint = np.where(data_y[b_i:] > y_fitpoint)[0][0] + b_i
+            y_fitpoint = data_y[b_i] + 0.4 * y_distance
+            if len(np.where(data_y[:p_i] < y_fitpoint)[0]) != 0:
+                fitpoint = np.where(data_y[:p_i] < y_fitpoint)[0][-1]
             else:
+                print('no')
                 x_distance = data_x[p_i] - data_x[b_i]
                 x_fitpoint = data_x[b_i] + 0.4 * x_distance
                 fitpoint = np.where(data_x[b_i:] > x_fitpoint)[0][0] + b_i

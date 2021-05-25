@@ -7,8 +7,9 @@ from src.datapro import lcfunc
 from src.loadjpk import forcecurve, loadjpkfile
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressDialog, QGridLayout, \
-    QButtonGroup
+    QButtonGroup,QDialog
 from src.designer import Ui_MainWindow
+from src.parameters import Ui_Dialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
@@ -200,7 +201,28 @@ class myFigure(FigureCanvas):
             self.setlim((self.data_x.min()-20, self.data_x.max() + 0.1*(self.data_x.max()-self.data_x.min())), (ylim_min, self.data_y.max() + 10))
         plt.draw()
         self.fc_old = copy.deepcopy(self.fc_new)
-
+class para_window(QDialog,Ui_Dialog):
+    def __init__(self,pb):
+        super(para_window, self).__init__()
+        self.setupUi(self)
+        self.pb=pb
+        self.action_init()
+    def action_init(self):
+        self.sens.valueChanged.connect(self.spinbox_changevalue)
+        self.xlimit.valueChanged.connect(self.spinbox_changevalue)
+        self.xsens.valueChanged.connect(self.spinbox_changevalue)
+        self.peakH.valueChanged.connect(self.spinbox_changevalue)
+        pass
+    def spinbox_changevalue(self, value):
+        sender = self.sender()
+        if sender == self.sens:
+            self.pb.taskarg['sens'] = value
+        elif sender == self.xlimit:
+            self.pb.taskarg['xlim'] = value
+        elif sender == self.xsens:
+            self.pb.taskarg['xsens'] = value
+        elif sender == self.peakH:
+            self.pb.taskarg['peakH'] = value
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -228,6 +250,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.k_value = self.kSpinBox.value()
         self.actionForce_Curve.triggered.connect(self.openfile)
         self.actionSave.triggered.connect(self.savefile)
+        self.actionSave_as.triggered.connect(self.saveasfile)
         self.actionBatch_of_Force_Curve.triggered.connect(self.opendir)
         self.actionDataYee_Force.triggered.connect(self.openfile_DataYee)
         self.actionDataYee.triggered.connect(self.aboutprogramm)
@@ -258,6 +281,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actiontxt.triggered.connect(self.exporttxt)
         self.actionpeakindex_plus.triggered.connect(self.peakvalueplus)
         self.actionpeakindex_minus.triggered.connect(self.peakvalueminus)
+        self.actioncopy_peak.triggered.connect(self.copypeak)
         self.actionfigure.triggered.connect(self.export_figure)
         self.setFocusPolicy(Qt.StrongFocus)
         self.bg = QButtonGroup(self)
@@ -298,6 +322,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.svfname, _ = QFileDialog.getSaveFileName(self, 'Save DataYee Force', '*.DataYee-force')
         self.pb.savechange(self.svfname)
         # self.change_dict={}
+    def saveasfile(self):
+        self.svfname = self.pb.zpo.fname
+        self.svfname, _ = QFileDialog.getSaveFileName(self, 'Save DataYee Force', '*.DataYee-force')
+        self.pb.savechange(self.svfname,saveas=True)
 
     def aboutprogramm(self):
         _ = QMessageBox.information(self, 'DataYee', 'Programm Version:0.1', QMessageBox.Ok | QMessageBox.Close,
@@ -432,6 +460,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.tasktype = 'smfs'
             elif self.bg.checkedId() == 1:
                 self.tasktype = 'cell_curve'
+    def copypeak(self):
+        self.pb.copypeak()
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
 
@@ -460,6 +490,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
+    child_window = para_window(myWin.pb)
+    myWin.actionparameters_setting.triggered.connect(child_window.show)
     myWin.show()
     sys.exit(app.exec_())
     plt.close()
+    

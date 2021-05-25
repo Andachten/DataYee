@@ -323,8 +323,8 @@ class zipfileopera:
         #        bup.clean_force()
         self.change[fc.data['datamsg']] = bup
 
-    def changedforce(self, svfname=''):
-        if len(self.change) == 0:
+    def changedforce(self, svfname='',saveas=False):
+        if len(self.change) == 0 and not saveas:
             return None
         with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
             lst = copy.deepcopy(zips.namelist())
