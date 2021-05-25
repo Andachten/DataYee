@@ -111,6 +111,13 @@ class Ui_Dialog(object):
         font.setPointSize(12)
         self.label_8.setFont(font)
         self.label_8.setObjectName("label_8")
+        self.highspeed = QtWidgets.QRadioButton(Dialog)
+        self.highspeed.setGeometry(QtCore.QRect(400, 40, 131, 31))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(14)
+        self.highspeed.setFont(font)
+        self.highspeed.setObjectName("highspeed")
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)
@@ -128,4 +135,5 @@ class Ui_Dialog(object):
         self.label_6.setText(_translate("Dialog", "nm"))
         self.label_7.setText(_translate("Dialog", "Force threshold"))
         self.label_8.setText(_translate("Dialog", "pN"))
+        self.highspeed.setText(_translate("Dialog", "High Speed"))
 

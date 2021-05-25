@@ -275,6 +275,25 @@
     <string>pN</string>
    </property>
   </widget>
+  <widget class="QRadioButton" name="highspeed">
+   <property name="geometry">
+    <rect>
+     <x>400</x>
+     <y>40</y>
+     <width>131</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>14</pointsize>
+    </font>
+   </property>
+   <property name="text">
+    <string>High Speed</string>
+   </property>
+  </widget>
  </widget>
  <resources/>
  <connections>

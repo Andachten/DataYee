@@ -148,14 +148,18 @@ def noise_down(fc):
     fc.data['filters']['win_lens'] = s
 
 
-def cal_baseline(forcecurve,hightspeed=False,only_x=False):
+def cal_baseline(forcecurve,only_x=False):
     data = copy.deepcopy(forcecurve.data['rawdata']['retract'])
     data['vDeflection'] = savgol_filter(data['vDeflection'][:, 0], 29, 2).reshape(len(data['vDeflection']), 1)
-    if hightspeed:
+    if 'highspeed' in forcecurve.data['arg'].keys() and forcecurve.data['arg']['highspeed']:
+        highspeed_limit=20e-12
         data_extend = copy.deepcopy(forcecurve.data['rawdata']['extend'])
-        data_extend['vDeflection'] = savgol_filter(data_extend['vDeflection'][:,0],29,2).reshape(len(data_extend['vDeflection']),1)
-        corr = data_extend['vDeflection'][int(0.1*len(data_extend['measuredHeight'])):].mean()-\
-            data['vDeflection'][int(0.9*len(data['vDeflection'])):].mean()
+        data_extend['vDeflection'] = savgol_filter(data_extend['vDeflection'][:,0],3,2).reshape(len(data_extend['vDeflection']),1)
+        if data_extend['measuredHeight'][0]>data['measuredHeight'][int(0.9*len(data['vDeflection']))]:
+            corr = data_extend['vDeflection'][:int(0.1*len(data_extend['measuredHeight']))].mean()-\
+                data['vDeflection'][int(0.9*len(data['vDeflection'])):].mean()
+            if 0.5*corr<highspeed_limit:
+                forcecurve.data['offset']['highspeed']=0.5*corr
     if not only_x:
         xy_data = data[int(0.9 * len(data['measuredHeight'])):]
         forcecurve.data['offset']['y'] = xy_data['vDeflection'].mean()
