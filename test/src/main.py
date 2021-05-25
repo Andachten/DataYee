@@ -54,6 +54,7 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.change_dic = {}
+        self.highspeedcorr = np.array([])
         self.taskarg = {'peakH': 30,
            'sens': 10,
            'peakN': [1, 6],
@@ -62,7 +63,8 @@ class programbody():
            'mark': {'GB1': (13, 23), 'I27': (23, 36)},
            'fitjudge': False,
            'usemodel':True,
-           'xsens':2}
+           'xsens':2,
+           'highspeed':False}
     def creattask(self,path,tasktype='smfs'):
         self.tasktype = tasktype
         self.fc = forcecurve()
@@ -265,10 +267,13 @@ class programbody():
     def export_prodata(self,sel):
         if not self.state:
             return None
+        highspeed=0
+        if self.taskarg['highspeed'] and len(self.highspeedcorr)>0:
+            highspeed=self.highspeedcorr.mean()*1e12
         if self.tasktype == 'cell_curve':
-            T = self.zpo.export_celldata(self.ljp)
+            T = self.zpo.export_celldata(self.ljp,highspeed=highspeed)
         elif self.tasktype == 'smfs':
-            T = self.zpo.extrac_argdata(self.ljp)
+            T = self.zpo.extrac_argdata(self.ljp,highspeed=highspeed)
         if not T:
             QMessageBox.information(sel,"Warning","Failed!")
     def exporttxt(self):
@@ -289,6 +294,7 @@ class programbody():
             return None
         self.zpo.delet_dataYee()
         self.change_dic = {}
+        self.highspeedcorr = np.array([])
         num = len(self.ljp)
         progress.setWindowTitle("Please Wait")  
         progress.setLabelText("Processing...")
@@ -301,12 +307,18 @@ class programbody():
             if progress.wasCanceled():
                 QMessageBox.warning(sel,"Warning!","Failed!")
                 self.zpo.delet_dataYee()
-                self.ready_run = False
+                self.change={}
+                self.ready_run = True
                 break
             self.fc.data = data
             self.fc.data['arg'] = self.taskarg
             main(self.fc,self.zpo,self.tasktype)
+            if self.taskarg['highspeed'] and self.fc.data['offset']['highspeed']>0:
+                self.highspeedcorr=np.append(self.highspeedcorr,self.fc.data['offset']['highspeed'])
         else:
+            if self.taskarg['highspeed'] and len(self.highspeedcorr)!=0:
+                for k,v in self.zpo.change.items():
+                    self.zpo.change[k].data['offset']['highspeed']=self.highspeedcorr.mean()
             if len(self.zpo.change)==0:
                 self.state = False
             else:

@@ -212,6 +212,7 @@ class para_window(QDialog,Ui_Dialog):
         self.xlimit.valueChanged.connect(self.spinbox_changevalue)
         self.xsens.valueChanged.connect(self.spinbox_changevalue)
         self.peakH.valueChanged.connect(self.spinbox_changevalue)
+        self.highspeed.toggled.connect(self.hispeedcorrect)
         pass
     def spinbox_changevalue(self, value):
         sender = self.sender()
@@ -223,6 +224,12 @@ class para_window(QDialog,Ui_Dialog):
             self.pb.taskarg['xsens'] = value
         elif sender == self.peakH:
             self.pb.taskarg['peakH'] = value
+    def hispeedcorrect(self):
+        if self.highspeed.isChecked()==True:
+            self.pb.taskarg['highspeed']=True
+        else:
+            self.pb.taskarg['highspeed']=False
+        print(self.pb.taskarg)
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):

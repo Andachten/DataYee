@@ -29,7 +29,7 @@ class forcecurve:
                      'path': '',
                      'springConstant': 0.01,
                      'datamsg': ('', 0),
-                     'offset': {'x': 0, 'y': 0, 'k': 0},
+                     'offset': {'x': 0, 'y': 0, 'k': 0,'highspeed':0},
                      'filters': {'methods': 'savgol', 'win_lens': 13, 'poly': 2},
                      'mobilenet_judge': True,
                      'peaknum_judge': True,
@@ -358,6 +358,11 @@ class zipfileopera:
             fc1.recover_force(ljp)
             data = fc1.get_prodata()['retract']
             data_y = data['vDeflection']*1e12
+            if len(fc1.data['peakindex'])==0:
+                arr = np.append(arr,data_y[int(0.8*len(data_y)):].max())
+            else:
+                arr = np.append(arr,data_y[fc1.data['peakindex']].max())
+            continue
             if data_y.max()>=0:
                 arr = np.append(arr,data_y.max())
             else:
@@ -422,12 +427,12 @@ class zipfileopera:
                         mark_data[fc.data['mark'][index]]['lc'].append(fc.data['wlcarg'][index][0])
                         mark_data[fc.data['mark'][index]]['p'].append(fc.data['wlcarg'][index][1])
                         mark_data[fc.data['mark'][index]]['k'].append(fc.data['k'][index])
-                        mark_data[fc.data['mark'][index]]['force'].append(data_y[:,0][p_i])
+                        mark_data[fc.data['mark'][index]]['force'].append(data_y[:,0][p_i]+fc.data['offset']['highspeed']*1e12)
                         max_mark = max(max_mark,len(mark_data[fc.data['mark'][index]]['dlc']))
                     lc.append(fc.data['wlcarg'][index][0])
                     p.append(fc.data['wlcarg'][index][1])
                     k.append(fc.data['k'][index])
-                    f.append(data_y[:,0][p_i])
+                    f.append(data_y[:,0][p_i]+fc.data['offset']['highspeed']*1e12)
             arg_dic['dlc'].append(dlc)
             arg_dic['k'].append(k)
             #print(f,arg_dic['force'])
@@ -492,7 +497,7 @@ class zipfileopera:
             fc1.recover_force(ljp)
             if filters and sum([fc1.data[t] for t in filter_lst]) < len(filter_lst):
                 continue
-            force = fc1.get_prodata()['retract']['vDeflection'][:, 0][fc1.data['peakindex']] * 1e12
+            force = fc1.get_prodata()['retract']['vDeflection'][:, 0][fc1.data['peakindex']] * 1e12+fc1.data['offset']['highspeed']*1e12
             lc, lp = np.array(fc1.data['wlcarg'])[:, 0], np.array(fc1.data['wlcarg'])[:, 1]
             dlc = fc1.data['dlc']
             mark = fc1.data['mark']
@@ -541,7 +546,7 @@ class zipfileopera:
                 continue
             for i,p_i in  enumerate(fc.data['peakindex']):
                 af.append(data_y[p_i][0])
-                f.append((data_y[p_i]-data_y[fc.data['bottomindex'][i]])[0])
+                f.append((data_y[p_i]-data_y[fc.data['bottomindex'][i]])[0]+fc.data['offset']['highspeed']*1e12)
                 k.append(fc.data['k'][i])
             dic['abs force'].append(af)
             dic['force'].append(f)
