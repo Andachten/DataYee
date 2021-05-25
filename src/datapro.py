@@ -495,7 +495,20 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
         bound_end += [x_[i]+20,100,20]
     X = a[1]
     Y = np.append(a[0],0)
-    popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
+    try:
+        popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
+    except:
+        guess = []
+        bound_start = []
+        bound_end = []
+        for i in p:
+            guess += [x_[i], 25, 10]   
+            bound_start += [x_[i]-40,0,0]
+            bound_end += [x_[i]+40,200,40]
+        X = a[1]
+        Y = np.append(a[0],0)
+        popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
+    
     lc = popt[::3]
     for i,l in enumerate(lc):
         if i<len(lc)-1:

@@ -54,8 +54,8 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.change_dic = {}
-        self.taskarg = {'peakH': 40,
-           'sens': 10,
+        self.taskarg = {'peakH': 50,
+           'sens': 20,
            'peakN': [1, 6],
            'xlim': 20,
            'lp': (0.34, 0.38),

@@ -28,6 +28,7 @@ mpl.rcParams['axes.spines.top'] = False
 mpl.rcParams['figure.subplot.left'] = 0.05
 mpl.rcParams['figure.subplot.right'] = 1
 color_lsts = ['#f76707', '#74b816', '#f59f00', '#1098ad', '#0ca678', '#f03e3e']
+color_lsts = ['#1971c2']*5
 
 
 # plt.ion()
@@ -155,7 +156,7 @@ class myFigure(FigureCanvas):
             b = y - k_lst[i]*x
             x_ = np.linspace(x-5,x+5)
             y_ = k_lst[i]*x_+b
-            self.content['k'].append(self.ax.plot(x_,y_,'#862e9c',lw=0.5))
+            self.content['k'].append(self.ax.plot(x_,y_,'#c2255c',lw=0.7))
     def changeall(self):
         self.plotcurve()
         if len(self.fc_new.data['peakindex']) > 0:

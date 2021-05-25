@@ -418,7 +418,7 @@ def slope(fc):
         re = np.polyfit(x, y, 1)
         d = np.polyder(re)
         k = np.polyval(d, data_x[peak_index[i]])
-        if k<0:
+        if k<0 or k>50:
             k=5
         #b = data_y[peak_index[i]] - k * data_x[peak_index[i]]
         fc.data['k'].append(k)
