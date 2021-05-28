@@ -106,7 +106,7 @@ class myFigure(FigureCanvas):
             (self.ax.plot(self.data_x[peak_index], self.data_y[peak_index], 'yo', markersize=8)))
         self.content['peak'].append(
             self.ax.plot(self.data_x[peak_index[self.index]], self.data_y[peak_index[self.index]],'ro', markersize=8))
-
+        '''
     def plotbottom(self):
         for line in self.content['bottom']:
             line[0].remove()
@@ -116,7 +116,7 @@ class myFigure(FigureCanvas):
             return None
         self.content['bottom'].append(
             self.ax.plot(self.data_x[bottom_index], self.data_y[bottom_index], 'g*', markersize=8))
-
+        '''
     def plotmark(self):
         for line in self.content['mark']:
             line.remove()
@@ -163,7 +163,7 @@ class myFigure(FigureCanvas):
             self.setlim((-10, self.data_x.max() + 30), (-90, self.data_y.max() + 40))
         self.plotfitcurve()
         self.plotpeak()
-        self.plotbottom()
+        #self.plotbottom()
         self.plotmark()
         self.plotk()
 
