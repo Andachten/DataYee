@@ -11,8 +11,8 @@ import torchvision.transforms as transforms
 #import itertools
 #from sklearn.metrics import accuracy_score
 #from sklearn.linear_model import LogisticRegression
-import toolz
-import dask
+#import toolz
+#import dask
 import pickle
 from scipy import signal
 from scipy.ndimage import gaussian_filter
@@ -105,9 +105,30 @@ class VotingClassify:
             self.model = pickle.load(f)
     def predict_batchs(self,data_array):
         return self.model.predict(data_array)
+b, a = signal.butter(8, 0.08, 'lowpass')
+def feature_extract(fc):
+    #methods=1.0
+    data = fc.get_prodata(tip_correc=False)['retract']
+    data_y = data['vDeflection']*1e12
+    d = np.diff(data_y.reshape(-1),prepend=data_y[0])
+    p,_ = signal.find_peaks(gaussian_filter(data_y.reshape(-1),11),height=20,prominence=10,width=10)
+    data_y[np.delete(np.arange(len(data_y)),p)] = 0
+    data_y = data_y/data_y.max()
+    d = signal.filtfilt(b, a, d)
+    d = d/np.abs(d).max()
+    d[np.where(d>-0.11)] = 0
+    fig,ax = plt.subplots(figsize=(2.24, 2.24))
+    plt.axis('off')
+    plt.subplots_adjust(top=1, bottom=0.1, right=1, left=0.1)
+    plt.gca().xaxis.set_major_locator(plt.NullLocator())
+    plt.gca().yaxis.set_major_locator(plt.NullLocator())
+    ax.plot(data_y, color='#364fc7', linewidth=1)
+    ax.plot(d , '#c92a2a', linewidth=1)
+    plt.close()
+    return fig
 
 class MobileNet:
-    def __init__(self,modeldir=r'../model/2021-05-03-16-mobilenet_v2-1.7.1-model.pkl'):
+    def __init__(self,modeldir=r'./model/2021-05-20-08-method1.0-acc82-1.7.1+cpu.model'):
         self.modeldir = modeldir
         self.loadmodel()
         pass
@@ -117,13 +138,14 @@ class MobileNet:
         self.model = self.model.to(self.device)
         self.model.eval()
         self.transform = transforms.Compose([transforms.Resize(224), transforms.ToTensor(), ])
-    @dask.delayed
+    #@dask.delayed
     def predict_batch(self,batch):
         with torch.no_grad():
             out = self.model(batch)
             _, predicted = torch.max(out, 1)
             predicted = predicted.numpy()
         return predicted
+    '''
     def predict_batchs(self,img_lst):
         tensors =  [self.transform(img) for img in img_lst]
         batches = [dask.delayed(torch.stack)(batch) for batch in toolz.partition_all(10, tensors)]
@@ -132,6 +154,7 @@ class MobileNet:
         s = np.append([],res[0][:-1]).astype(np.int32)
         s = np.append(s,res[0][-1].astype(np.int32))
         return  s
+    '''
     def predict(self,img):
         img = self.transform(img)
         img = img.unsqueeze(0)

@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox,
 from src.designer import Ui_MainWindow
 from src.parameters import Ui_Dialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from src.main import programbody
+from src.main_new import programbody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.style as mplstyle
@@ -187,8 +187,6 @@ class myFigure(FigureCanvas):
                 self.plotpeak()
             if self.fc_new.data['artificial_judge'] != self.fc_old.data['artificial_judge']:
                 self.plotcurve()
-            if self.fc_new.data['bottomindex'] != self.fc_old.data['bottomindex']:
-                self.plotbottom()
             if self.fc_new.data['wlcarg'] != self.fc_old.data['wlcarg']:
                 self.plotfitcurve()
             if self.fc_new.data['mark'] != self.fc_old.data['mark']:
@@ -202,10 +200,11 @@ class myFigure(FigureCanvas):
         plt.draw()
         self.fc_old = copy.deepcopy(self.fc_new)
 class para_window(QDialog,Ui_Dialog):
-    def __init__(self,pb):
+    def __init__(self,pb,myWin):
         super(para_window, self).__init__()
         self.setupUi(self)
         self.pb=pb
+        self.myWin = myWin
         self.action_init()
     def action_init(self):
         self.sens.valueChanged.connect(self.spinbox_changevalue)
@@ -213,6 +212,7 @@ class para_window(QDialog,Ui_Dialog):
         self.xsens.valueChanged.connect(self.spinbox_changevalue)
         self.peakH.valueChanged.connect(self.spinbox_changevalue)
         self.highspeed.toggled.connect(self.hispeedcorrect)
+        self.spinBox.valueChanged.connect(self.spinbox_changevalue)
         pass
     def spinbox_changevalue(self, value):
         sender = self.sender()
@@ -224,6 +224,8 @@ class para_window(QDialog,Ui_Dialog):
             self.pb.taskarg['xsens'] = value
         elif sender == self.peakH:
             self.pb.taskarg['peakH'] = value
+        elif sender == self.spinBox:
+            self.myWin.siglestep = value
     def hispeedcorrect(self):
         if self.highspeed.isChecked()==True:
             self.pb.taskarg['highspeed']=True
@@ -252,6 +254,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.action_init()
 
     def action_init(self):
+        self.siglestep = 5
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         self.k_value = self.kSpinBox.value()
@@ -368,10 +371,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.resetslide()
         self.displace_result()
     def peakvalueplus(self):
-        self.pb.pv_change(4)
+        self.pb.pv_change(self.siglestep)
         self.displace_result()
     def peakvalueminus(self):
-        self.pb.pv_change(-4)
+        self.pb.pv_change(self.siglestep*-1)
         self.displace_result()
 
     def peakindexretact(self):
@@ -497,7 +500,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
-    child_window = para_window(myWin.pb)
+    child_window = para_window(myWin.pb,myWin)
     myWin.actionparameters_setting.triggered.connect(child_window.show)
     myWin.show()
     sys.exit(app.exec_())
