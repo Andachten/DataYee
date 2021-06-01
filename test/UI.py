@@ -26,7 +26,7 @@ mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
 mpl.rcParams['figure.subplot.left'] = 0.05
 mpl.rcParams['figure.subplot.right'] = 1
-color_lsts = ['#f76707', '#74b816', '#f59f00', '#1098ad', '#0ca678', '#f03e3e']
+color_lsts = ['#f76707']*9
 
 
 # plt.ion()
@@ -149,12 +149,17 @@ class myFigure(FigureCanvas):
         self.content['k'] = []
         peak_index = self.fc_new.data['peakindex']
         k_lst = self.fc_new.data['k']
+        xrange = (self.data_x[peak_index[-1]]-self.data_x[0])*0.04
+        yrange = (self.data_y.max()-self.data_y.min())*0.08
         for i,p_i in enumerate(peak_index):
             x,y = self.data_x[p_i],self.data_y[p_i]
             b = y - k_lst[i]*x
-            x_ = np.linspace(x-5,x+5)
+            x_ = np.linspace(x-xrange,x+xrange)
             y_ = k_lst[i]*x_+b
-            self.content['k'].append(self.ax.plot(x_,y_,'#862e9c',lw=0.5))
+            xyrange_index = np.where((y_<y+yrange)&(y_>y-yrange))[0]
+            x_ = x_[xyrange_index]
+            y_ = y_[xyrange_index]
+            self.content['k'].append(self.ax.plot(x_,y_,'b',lw=1))
     def changeall(self):
         self.plotcurve()
         if len(self.fc_new.data['peakindex']) > 0:
