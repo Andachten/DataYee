@@ -147,15 +147,17 @@ def wlcfit(fc):
             b_i = fc.data['bottomindex'][b_i[-1]]
         else:
             temp = p_i
-            while True:
+            while temp-n>0:
                 k = get_slope(data_x[temp - n:temp], data_y[temp - n:temp])
                 if k < 0.01 or data_x[temp] < 10:
                     if temp == p_i:
                         temp -= 10
-                    b_i = temp
                     break
                 else:
                     temp -= n
+            b_i = temp
+            if b_i==p_i:
+                b_i-=3
         if data_y[p_i]>150:
             dy = data_y[p_i]-data_y[b_i]
             fitpoint = np.where(data_y[b_i:]>data_y[b_i]+0.5*dy)[0][0]+b_i
@@ -211,8 +213,8 @@ def mkbaseondlc(fc):
         if len(fc.data['mark']) - 1 != i:
             fc.data['mark'].append('none')
 def findpeak_smallrange(data_y,height=10):
-    for prominence in range(3,40,2):
-        p,_ = find_peaks(data_y,height=height,prominence=15,distance=10)
+    for prominence in range(3,60,2):
+        p,h = find_peaks(data_y,height=height,prominence=15,distance=10)
         if len(p)<3:
             break
     return p

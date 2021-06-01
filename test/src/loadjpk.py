@@ -412,7 +412,6 @@ class zipfileopera:
         fc = forcecurve()
         max_mark = 0
         pd.set_option('precision', 4)
-        t1=time.time()
         for i,data in enumerate(self):
             dlc,lc,p,f,k=[],[],[],[],[]
             if data['artificial_judge']:
@@ -455,8 +454,6 @@ class zipfileopera:
             arg_dic['lc'][i]+=['']*n
             arg_dic['p'][i]+=['']*n
         del arg_dic['lens']
-        t2=time.time()
-        print(t2-t1)
         #return arg_dic
         fname = os.path.join(os.path.dirname(self.fname),"INDEX-{}.xlsx".format(os.path.splitext(os.path.basename(self.fname))[0]))
         if os.path.isfile(fname):
@@ -476,8 +473,7 @@ class zipfileopera:
             data_frame = pd.DataFrame(item).round(2)
             data_frame.to_excel(writer,sheet_name=mark)
         writer.close()
-        t3=time.time()
-        print(t3-t2)
+        return True
             
             
             

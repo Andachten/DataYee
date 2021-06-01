@@ -148,6 +148,8 @@ class myFigure(FigureCanvas):
             line[0].remove()
         self.content['k'] = []
         peak_index = self.fc_new.data['peakindex']
+        if len(peak_index)==0:
+            return None
         k_lst = self.fc_new.data['k']
         xrange = (self.data_x[peak_index[-1]]-self.data_x[0])*0.04
         yrange = (self.data_y.max()-self.data_y.min())*0.08

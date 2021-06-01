@@ -262,20 +262,16 @@ class programbody():
         data = self.fc.get_prodata()['retract']
         data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
         if self.forcepeak_index==0:
-            index = np.where(data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]])[0]
+            index = np.where(data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]]-self.taskarg['xsens'])[0]
         else:
-            index = np.where((data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]])&(data_x>data_x[self.fc.data['peakindex'][self.forcepeak_index-1]]))[0]
+            index = np.where((data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]]-self.taskarg['xsens'])&(data_x>data_x[self.fc.data['peakindex'][self.forcepeak_index-1]]+self.taskarg['xsens']))[0]
         p = findpeak_smallrange(data_y[index])
-        print(p)
-        print(index)
         if len(p)==0:
-            v=1
+            v=index[-1]-1
         else:
-            v=len(index)-p[0]
-        print(v)
+            v=index[0]+p[-1]
         if self.forcepeak_index>=0 and self.tasktype=='smfs':
-            self.fc.data['peakindex'].insert(self.forcepeak_index,self.fc.data['peakindex'][self.forcepeak_index]-v)
-            self.fc.recover_force(self.ljp)
+            self.fc.data['peakindex'].insert(self.forcepeak_index,v)
             process_customize(self.fc,[8,10,11,12])
             self.fc.clean_force()
             self.curve_change()
@@ -288,7 +284,8 @@ class programbody():
         if self.tasktype == 'cell_curve':
             T = self.zpo.export_celldata(self.ljp)
         elif self.tasktype == 'smfs':
-            T = self.zpo.extrac_argdata(self.ljp)
+            T = self.zpo.get_arg(self.ljp)
+            #T = self.zpo.extrac_argdata(self.ljp)
         if not T:
             QMessageBox.information(sel,"Warning","Failed!")
     def exporttxt(self):
