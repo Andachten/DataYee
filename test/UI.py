@@ -3,7 +3,7 @@ import copy
 
 
 import numpy as np
-from src.datapro import lcfunc
+from src.datapro_new import lcfunc
 from src.loadjpk import forcecurve, loadjpkfile
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressDialog, QGridLayout, \
@@ -477,6 +477,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.tasktype = 'cell_curve'
     def copypeak(self):
         self.pb.copypeak()
+        self.displace_result()
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
 

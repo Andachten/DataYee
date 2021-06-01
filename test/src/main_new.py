@@ -8,7 +8,7 @@ import pickle
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro_new import noise_down,cal_baseline_drift,cal_baseline_x,cal_baseline_y,\
     cal_highspeed_drift,predict,findpeak,wlcfit,peakH,peakN,slope,countdlc,mkbaseondlc
-from src.datapro_new import Lc_transformer,plotmap,plothist
+from src.datapro_new import Lc_transformer,plotmap,plothist,findpeak_smallrange
 func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
     cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
 def process_customize(fc,functions=[0]):
@@ -209,6 +209,8 @@ class programbody():
             self.taskarg = self.fc.data['arg']
         else:
             self.fc.data['arg'] = self.taskarg
+        if self.forcepeak_index>len(self.fc.data['peakindex'])-1:
+            self.forcepeak_index = len(self.fc.data['peakindex'])-1
         fc = copy.deepcopy(self.fc)
         F.plot(fc,self.forcepeak_index,self.ljp,self.tasktype)
     def plot_contourhist(self):
@@ -254,24 +256,39 @@ class programbody():
     def copypeak(self):
         if not self.state:
             return None
+        if len(self.fc.data['peakindex'])==0:
+            return None
+        self.fc.recover_force(self.ljp)
+        data = self.fc.get_prodata()['retract']
+        data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
+        if self.forcepeak_index==0:
+            index = np.where(data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]])[0]
+        else:
+            index = np.where((data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]])&(data_x>data_x[self.fc.data['peakindex'][self.forcepeak_index-1]]))[0]
+        p = findpeak_smallrange(data_y[index])
+        print(p)
+        print(index)
+        if len(p)==0:
+            v=1
+        else:
+            v=len(index)-p[0]
+        print(v)
         if self.forcepeak_index>=0 and self.tasktype=='smfs':
-            self.fc.data['peakindex'].insert(self.forcepeak_index,self.fc.data['peakindex'][self.forcepeak_index]-10)
+            self.fc.data['peakindex'].insert(self.forcepeak_index,self.fc.data['peakindex'][self.forcepeak_index]-v)
             self.fc.recover_force(self.ljp)
             process_customize(self.fc,[8,10,11,12])
             self.fc.clean_force()
             self.curve_change()
             self.zpo.changedforce()
             self.change_dic={}
+        self.fc.clean_force()
     def export_prodata(self,sel):
         if not self.state:
             return None
-        highspeed=0
-        if self.taskarg['highspeed'] and len(self.highspeedcorr)>0:
-            highspeed=self.highspeedcorr.mean()*1e12
         if self.tasktype == 'cell_curve':
-            T = self.zpo.export_celldata(self.ljp,highspeed=highspeed)
+            T = self.zpo.export_celldata(self.ljp)
         elif self.tasktype == 'smfs':
-            T = self.zpo.extrac_argdata(self.ljp,highspeed=highspeed)
+            T = self.zpo.extrac_argdata(self.ljp)
         if not T:
             QMessageBox.information(sel,"Warning","Failed!")
     def exporttxt(self):

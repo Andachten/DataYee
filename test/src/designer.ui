@@ -675,7 +675,7 @@
      <x>0</x>
      <y>0</y>
      <width>1291</width>
-     <height>45</height>
+     <height>37</height>
     </rect>
    </property>
    <property name="font">
@@ -778,8 +778,8 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>177</width>
-       <height>120</height>
+       <width>146</width>
+       <height>102</height>
       </rect>
      </property>
      <property name="font">
@@ -1053,6 +1053,9 @@
      <pointsize>12</pointsize>
     </font>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
   </action>
   <action name="actionparameters_setting">
    <property name="text">
@@ -1063,6 +1066,9 @@
      <family>Arial</family>
      <pointsize>12</pointsize>
     </font>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
    </property>
   </action>
  </widget>

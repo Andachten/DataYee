@@ -80,7 +80,7 @@ def cal_highspeed_drift(fc):
     fc.data['offset']['highspeed'] = 0
     if not fc.data['arg']['highspeed']:
         return None
-    data = fc.get_prodata()['retract']
+    data = fc.get_prodata()
     data_retract_y,data_extend_y = data['retract']['vDeflection'],data['extend']['vDeflection']
     data_retract_x,data_extend_x = data['retract']['measuredHeight'],data['extend']['measuredHeight']
     retract_index,extend_index = int(0.9*len(data_retract_y)),int(0.1*len(data_extend_y))
@@ -100,6 +100,7 @@ def predict(fc):
         fc.data['mobilenet_judge']=False
 def findpeak(fc):
     fc.data['peakindex'] = np.array([])
+    fc.data['bottomindex'] = np.array([])
     data = fc.get_prodata(tip_correc=False)['retract']
     data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
     d = np.gradient(np.gradient(gaussian_filter(data_y[:, 0], 13)))
@@ -209,6 +210,12 @@ def mkbaseondlc(fc):
                 fc.data['mark'].append(m)
         if len(fc.data['mark']) - 1 != i:
             fc.data['mark'].append('none')
+def findpeak_smallrange(data_y,height=10):
+    for prominence in range(3,40,2):
+        p,_ = find_peaks(data_y,height=height,prominence=15,distance=10)
+        if len(p)<3:
+            break
+    return p
 def allrun(fc):
     noise_down(fc)
     cal_baseline_drift(fc)

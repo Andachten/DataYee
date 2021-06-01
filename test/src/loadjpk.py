@@ -185,7 +185,10 @@ class loadjpkfile(forcecurve):
                                                    dtype=[('measuredHeight', '<f8'), ('vDeflection', '<f8')])
 
     def extract_force_data(self, filename, index):
-        jpk = JPKFile(filename)
+        try:
+            jpk = JPKFile(filename)
+        except:
+            return None
         try:
             springConstant = float(
                 jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling'][
@@ -197,7 +200,10 @@ class loadjpkfile(forcecurve):
             self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight', 'vDeflection'])[0]
 
     def extract_map_data(self, filename, index):
-        jpks = JPKMap(filename)
+        try:
+            jpks = JPKMap(filename)
+        except:
+            return None
         jpk = jpks.get_single_pixel(index)
         try:
             springConstant = float(
