@@ -265,13 +265,10 @@ class programbody():
     def export_prodata(self,sel):
         if not self.state:
             return None
-        highspeed=0
-        if self.taskarg['highspeed'] and len(self.highspeedcorr)>0:
-            highspeed=self.highspeedcorr.mean()*1e12
         if self.tasktype == 'cell_curve':
-            T = self.zpo.export_celldata(self.ljp,highspeed=highspeed)
+            T = self.zpo.export_celldata(self.ljp)
         elif self.tasktype == 'smfs':
-            T = self.zpo.extrac_argdata(self.ljp,highspeed=highspeed)
+            T = self.zpo.extrac_argdata(self.ljp)
         if not T:
             QMessageBox.information(sel,"Warning","Failed!")
     def exporttxt(self):
