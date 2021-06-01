@@ -94,7 +94,11 @@ def predict(fc):
     fig = feature_extract(fc)
     img = fig2img(fig)
     score = m.predict(img)
-    if score<=2:
+    if fc.data['arg']['modelstrict']:
+        v = 1
+    else:
+        v = 2
+    if score<=v:
         fc.data['mobilenet_judge']=True
     else:
         fc.data['mobilenet_judge']=False

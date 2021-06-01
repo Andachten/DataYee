@@ -238,7 +238,6 @@ class para_window(QDialog,Ui_Dialog):
             self.pb.taskarg['highspeed']=True
         else:
             self.pb.taskarg['highspeed']=False
-        print(self.pb.taskarg)
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
@@ -307,7 +306,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.bg.buttonClicked.connect(self.rbclicked)
         self.usemodel_cb.setChecked(True)
         self.usemodel_cb.stateChanged.connect(self.statemodel)
-        self.fastmode_cb.stateChanged.connect(self.statemodel)
+        self.stickmodel.setChecked(False)
+        self.stickmodel.stateChanged.connect(self.statemodel)
         self.lineEdit.returnPressed.connect(self.changemark)
 
     def openfile(self):
@@ -482,6 +482,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.displace_result()
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
+        self.pb.taskarg['modelstrict'] = self.stickmodel.isChecked()
 
     def baselineplus(self):
         self.pb.baseline_change(5e-12)

@@ -654,7 +654,7 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QCheckBox" name="fastmode_cb">
+   <widget class="QCheckBox" name="stickmodel">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -664,7 +664,7 @@
      </rect>
     </property>
     <property name="text">
-     <string>FAST MODE</string>
+     <string>Strick</string>
     </property>
    </widget>
   </widget>
