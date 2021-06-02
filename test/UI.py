@@ -40,15 +40,16 @@ def getfitcurve(wlcarg, peakindex, data_x):
         arg_lst.append((x_, y_))
     return arg_lst
 
-
 class myFigure(FigureCanvas):
     def __init__(self):
-        self.figure = plt.figure()
-        self.ax = self.figure.add_subplot(111)
+        #self.figure = mpl.figure.Figure()
+        self.canvas = FigureCanvas(mpl.figure.Figure())
+        #self.figure = self.canvas.figure
+        self.ax = self.canvas.figure.add_subplot()
         self.ax.plot([-1e4, 1e4], [0, 0], lw=1.5, c='#ff8787')
         self.ax.plot([0, 0], [-50, 50], 'r-', lw=1)
-        self.figure.patch.set_facecolor('None')
-        self.figure.patch.set_alpha(0)
+        #self.figure.patch.set_facecolor('None')
+        #self.figure.patch.set_alpha(0)
         self.fc_old = forcecurve()
         self.fc_new = forcecurve()
         self.index = 0
@@ -58,7 +59,7 @@ class myFigure(FigureCanvas):
                         'mark': [],
                         'fitcurve': [],
                         'k':[]}
-        super(myFigure, self).__init__(self.figure)
+        super(myFigure, self).__init__(self.canvas.figure)
 
     def getdata(self):
         data = self.fc_new.get_prodata()['retract']
@@ -256,10 +257,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # self.peak_index = 0
         self.F = myFigure()
         self.gridlayout = QGridLayout(self.groupBox)
-        self.gridlayout.addWidget(self.F)
+        self.gridlayout.addWidget(self.F.canvas)
         self.action_init()
 
     def action_init(self):
+        self.F.canvas.mpl_connect("button_press_event", self.on_press)
+        #self.canvas.mpl_connect("button_release_event", self.on_release)
+        #self.canvas.mpl_connect("motion_notify_event", self.on_move)
         self.siglestep = 5
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
@@ -309,6 +313,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.stickmodel.setChecked(False)
         self.stickmodel.stateChanged.connect(self.statemodel)
         self.lineEdit.returnPressed.connect(self.changemark)
+    def on_press(self, event):
+        #print("press")
+        if event.xdata==None or event.ydata==None:
+            return None
+        self.xdata = event.xdata
+        self.ydata = event.ydata
+        self.pb.pk_indexchange(n=None,coor=(self.xdata,self.ydata))
+        #print("event.xdata", event.xdata)
+        #print("event.ydata", event.ydata)
+        #print("event.inaxes", event.inaxes)
+        #print("x", event.x)
+        #print("y", event.y)
 
     def openfile(self):
         fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", '*.txt;;*.jpk-force;;*.jpk-force-map;;*.spm')
@@ -349,7 +365,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                                     QMessageBox.Close)
 
     def displace_result(self):
-        self.gridlayout.removeWidget(self.F)
+        self.gridlayout.removeWidget(self.F.canvas)
         # plt.close()
         # sip.delete(self.F)
         # self.F = MyFigure()
@@ -358,8 +374,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # self.F.plot(self.fc,self.peak_index)
         self.pb.drawlabel(self.label, self.lclplabel)
         # self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
-
-        self.gridlayout.addWidget(self.F)
+        self.F.canvas.draw()
+        self.gridlayout.addWidget(self.F.canvas)
 
     def indexplus(self):
         self.pb.fc_indexchange(1)
@@ -478,7 +494,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             elif self.bg.checkedId() == 1:
                 self.tasktype = 'cell_curve'
     def copypeak(self):
-        self.pb.copypeak()
+        self.pb.copypeak(self.xdata,self.ydata)
         self.displace_result()
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()

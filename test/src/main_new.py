@@ -96,10 +96,21 @@ class programbody():
         else:
             self.forcecurve_index = self.forcecurve_index+n
         self.forcepeak_index = 0
-    def pk_indexchange(self,n):
+    def pk_indexchange(self,n,coor=(None,None)):
+        if not self.state:
+            return None
         peaklength = len(self.fc.data['peakindex'])
         if peaklength == 0:
             return None
+        if n==None and coor[0]!=None and coor[1]!=None:
+            print('ok')
+            datax,datay=coor
+            self.fc.recover_force(self.ljp)
+            data = self.fc.get_prodata()['retract']
+            data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
+            index = np.argmin(np.abs(np.argmin(np.abs(datax-data_x))-data_x[self.fc.data['peakindex']]))
+            self.forcepeak_index=index
+            return True
         if self.forcepeak_index+n >peaklength-1:
             self.forcepeak_index = peaklength-1
         elif self.forcepeak_index+n<0:
@@ -254,7 +265,7 @@ class programbody():
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
         elif len(self.fc.data['wlcarg'])>0:
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
-    def copypeak(self):
+    def copypeak_(self):
         if not self.state:
             return None
         if len(self.fc.data['peakindex'])==0:
@@ -278,6 +289,23 @@ class programbody():
             self.curve_change()
             self.zpo.changedforce()
             self.change_dic={}
+        self.fc.clean_force()
+    def copypeak(self,xdata,ydata):
+        if not self.state:
+            return None
+        self.fc.recover_force(self.ljp)
+        data = self.fc.get_prodata()['retract']
+        data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
+        index = np.argmin(np.abs(data_x-xdata))
+        i = len(np.where(self.fc.data['peakindex']<index)[0])
+        if self.forcepeak_index>=0 and self.tasktype=='smfs':
+            self.fc.data['peakindex'].insert(i,index)
+            process_customize(self.fc,[8,10,11,12])
+            self.fc.clean_force()
+            self.curve_change()
+            self.zpo.changedforce()
+            self.change_dic={}
+            self.forcepeak_index=i
         self.fc.clean_force()
     def export_prodata(self,sel):
         if not self.state:

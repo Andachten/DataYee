@@ -58,8 +58,8 @@ def wlc_dist(s1,s2,dlc_thre=5,f_thre=30):
     score = max(len(s1_dlc),len(s2_dlc))
     s1_ = np.tile(s1,(len(s2),1))
     s2_ = np.tile(s2.reshape(-1,1),(1,len(s1)))
-    matric_dlc = np.abs(s1_-s2_)
-    arr_coor = np.dstack(np.where(matric_dlc<=dlc_thre))[0]
+    matrix_dlc = np.abs(s1_-s2_)
+    arr_coor = np.dstack(np.where(matrix_dlc<=dlc_thre))[0]
     return arr_coor
     count = count_0(arr_coor)
     return score-count
