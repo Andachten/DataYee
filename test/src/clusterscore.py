@@ -9,7 +9,7 @@ import numpy as np
 from scipy.signal import find_peaks
 from tslearn.metrics import cdist_dtw
 from loadjpk import forcecurve,loadjpkfile,zipfileopera
-from datapro_new import *
+from numba import njit
 def WRC_transformer(f,x,thr=20):
     b,gama = 0.11e-9,41/180*np.pi
     kb = 1.38e-23
@@ -39,30 +39,27 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
             index = np.where(lc[i]<x_)[0]
         f_max = np.append(f_max,f[index].max())
     return dlc,f_max
-def count_0(arr_coor):
-    count_lst = []
-    for a in arr_coor:
-        count = 1
-        j,i=a
-        for b in arr_coor:
-            if n<=b[0] or m<=b[1]:
-                continue
-            n,m=b
-            if n>j and m>i:
-                count+=1
-        count_lst.append(count)
-    return max(count_lst)
+
+#@njit
+def count_0(x):
+    x_ = np.array([])
+    for i in x:
+        if len(x_)==0:
+            x_ = i.reshape(1,2)
+        if i[0]>x_[:,0].max() and i[1]>x_[:,1].max():
+            x_ = np.vstack((x_,i))
+    return len(x_)
+
 def wlc_dist(s1,s2,dlc_thre=5,f_thre=30):
     s1,s2 = np.delete(s1,np.where(s1==0)[0]),np.delete(s2,np.where(s2==0)[0])
     s1_dlc,s2_dlc = s1[:len(s1)//2],s2[:len(s1)//2]
     score = max(len(s1_dlc),len(s2_dlc))
-    s1_ = np.tile(s1,(len(s2),1))
-    s2_ = np.tile(s2.reshape(-1,1),(1,len(s1)))
+    s1_ = np.tile(s1_dlc,(len(s2_dlc),1))
+    s2_ = np.tile(s2_dlc.reshape(-1,1),(1,len(s1_dlc)))
     matrix_dlc = np.abs(s1_-s2_)
     arr_coor = np.dstack(np.where(matrix_dlc<=dlc_thre))[0]
-    return arr_coor
-    count = count_0(arr_coor)
-    return score-count
+    reduct = max(count_0(arr_coor),count_0(arr_coor[arr_coor[:,1].argsort()]))
+    return 1-reduct/score
 '''
 if __name__=='__main__':
     ljp = loadjpkfile(r'D:\jpkdata\20201201-COH-(I29)3-NGL-0_4UMS')

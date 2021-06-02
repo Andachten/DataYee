@@ -88,6 +88,8 @@ def cal_highspeed_drift(fc):
         corr = data_extend_y[:extend_index].mean()-data_retract_y[retract_index:].mean()
     else:
         corr = 0
+    if corr>40e-12 or corr<0:
+        return None
     fc.data['offset']['highspeed'] = 0.5*corr
     pass
 def predict(fc):
@@ -195,12 +197,22 @@ def peakN(fc):
 def slope(fc):
     fc.data['k'] = np.array([])
     data = fc.get_prodata()['retract']
-    data_x = data['measuredHeight'].reshape(-1)*1e9
-    for i,arg in enumerate(fc.data['slopepre']):
-        k = lcfunc1d(data_x[fc.data['peakindex'][i]],*arg)
-        fc.data['k'] = np.append(fc.data['k'],k)
+    data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
+    if fc.data['tasktype']=='smfs':
+        for i,arg in enumerate(fc.data['slopepre']):
+            k = lcfunc1d(data_x[fc.data['peakindex'][i]],*arg)
+            fc.data['k'] = np.append(fc.data['k'],k)
+        del fc.data['slopepre']
+    elif fc.data['tasktype']=='cell_curve':
+        n = int(0.05*len(data_x))
+        for i,p_i in enumerate(fc.data['peakindex']):
+            if len(data_x[p_i-n:p_i])>0:
+                x,y = data_x[p_i-n:p_i],data_y[p_i-n:p_i]
+                k = get_slope(x, y)
+            else:
+                k = 5
+            fc.data['k'] = np.append(fc.data['k'],k)
     fc.data['k'] = list(fc.data['k'])
-    del fc.data['slopepre']
 def countdlc(fc):
     lc = np.array([])
     for arg in fc.data['wlcarg']:

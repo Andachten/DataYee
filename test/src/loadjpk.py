@@ -547,8 +547,9 @@ class zipfileopera:
                 dic['lens'].append(0)
                 continue
             for i,p_i in  enumerate(fc.data['peakindex']):
-                af.append(data_y[p_i][0])
-                f.append((data_y[p_i]-data_y[fc.data['bottomindex'][i]])[0]+fc.data['offset']['highspeed']*1e12)
+                af.append(data_y[p_i][0]+fc.data['offset']['highspeed']*1e12)
+                b_i = fc.data['bottomindex'][np.argmin(np.abs(p_i-fc.data['bottomindex']))]
+                f.append((data_y[p_i]-data_y[b_i])[0]+fc.data['offset']['highspeed']*1e12)
                 k.append(fc.data['k'][i])
             dic['abs force'].append(af)
             dic['force'].append(f)

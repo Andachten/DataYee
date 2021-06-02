@@ -103,13 +103,13 @@ class programbody():
         if peaklength == 0:
             return None
         if n==None and coor[0]!=None and coor[1]!=None:
-            print('ok')
             datax,datay=coor
             self.fc.recover_force(self.ljp)
             data = self.fc.get_prodata()['retract']
             data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
-            index = np.argmin(np.abs(np.argmin(np.abs(datax-data_x))-data_x[self.fc.data['peakindex']]))
+            index = np.argmin(np.abs(data_x[np.argmin(np.abs(datax-data_x))]-data_x[self.fc.data['peakindex']]))
             self.forcepeak_index=index
+            self.fc.clean_force()
             return True
         if self.forcepeak_index+n >peaklength-1:
             self.forcepeak_index = peaklength-1
@@ -180,7 +180,10 @@ class programbody():
         if self.forcepeak_index+1<len(self.fc.data['peakindex']) and res_index>self.fc.data['peakindex'][self.forcepeak_index+1]:
             return None
         self.fc.data['peakindex'][self.forcepeak_index]=res_index
-        process_customize(self.fc,[8,10,11,12])
+        if self.fc.data['tasktype']=='smfs':
+            process_customize(self.fc,[8,10,11,12])
+        elif self.fc.data['tasktype']=='cell_curve':
+            process_customize(self.fc,[9,10])
         self.fc.clean_force()
         self.curve_change()
         self.zpo.changedforce()
@@ -298,14 +301,17 @@ class programbody():
         data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
         index = np.argmin(np.abs(data_x-xdata))
         i = len(np.where(self.fc.data['peakindex']<index)[0])
-        if self.forcepeak_index>=0 and self.tasktype=='smfs':
+        if self.forcepeak_index>=0:
             self.fc.data['peakindex'].insert(i,index)
+        if  self.fc.data['tasktype']=='smfs':
             process_customize(self.fc,[8,10,11,12])
-            self.fc.clean_force()
-            self.curve_change()
-            self.zpo.changedforce()
-            self.change_dic={}
-            self.forcepeak_index=i
+        elif self.fc.data['tasktype']=='cell_curve':
+            process_customize(self.fc,[9,10])
+        self.fc.clean_force()
+        self.curve_change()
+        self.zpo.changedforce()
+        self.change_dic={}
+        self.forcepeak_index=i
         self.fc.clean_force()
     def export_prodata(self,sel):
         if not self.state:
