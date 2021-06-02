@@ -103,13 +103,13 @@ class programbody():
         if peaklength == 0:
             return None
         if n==None and coor[0]!=None and coor[1]!=None:
-            print('ok')
             datax,datay=coor
             self.fc.recover_force(self.ljp)
             data = self.fc.get_prodata()['retract']
             data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
-            index = np.argmin(np.abs(np.argmin(np.abs(datax-data_x))-data_x[self.fc.data['peakindex']]))
+            index = np.argmin(np.abs(data_x[np.argmin(np.abs(datax-data_x))]-data_x[self.fc.data['peakindex']]))
             self.forcepeak_index=index
+            self.fc.clean_force()
             return True
         if self.forcepeak_index+n >peaklength-1:
             self.forcepeak_index = peaklength-1

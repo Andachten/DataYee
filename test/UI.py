@@ -259,6 +259,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F.canvas)
         self.action_init()
+        self.xdata=None
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
@@ -320,6 +321,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.xdata = event.xdata
         self.ydata = event.ydata
         self.pb.pk_indexchange(n=None,coor=(self.xdata,self.ydata))
+        self.displace_result()
         #print("event.xdata", event.xdata)
         #print("event.ydata", event.ydata)
         #print("event.inaxes", event.inaxes)
@@ -494,6 +496,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             elif self.bg.checkedId() == 1:
                 self.tasktype = 'cell_curve'
     def copypeak(self):
+        if self.xdata==None:
+            return None
         self.pb.copypeak(self.xdata,self.ydata)
         self.displace_result()
     def statemodel(self):
