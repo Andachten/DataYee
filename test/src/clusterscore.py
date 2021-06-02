@@ -39,14 +39,33 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
             index = np.where(lc[i]<x_)[0]
         f_max = np.append(f_max,f[index].max())
     return dlc,f_max
+def count_0(arr_coor):
+    count_lst = []
+    for a in arr_coor:
+        count = 1
+        j,i=a
+        for b in arr_coor:
+            if n<=b[0] or m<=b[1]:
+                continue
+            n,m=b
+            if n>j and m>i:
+                count+=1
+        count_lst.append(count)
+    return max(count_lst)
 def wlc_dist(s1,s2,dlc_thre=5,f_thre=30):
     s1,s2 = np.delete(s1,np.where(s1==0)[0]),np.delete(s2,np.where(s2==0)[0])
-    s1_dlc,s1_f = s1[:len(s1)//2],s1[len(s1)//2:]
-    s2_dlc,s2_f = s2[:len(s1)//2],s2[len(s1)//2:]
-    return cdist_dtw(s1_dlc,s2_dlc),cdist_dtw(s1_f,s2_f)
-    pass
+    s1_dlc,s2_dlc = s1[:len(s1)//2],s2[:len(s1)//2]
+    score = max(len(s1_dlc),len(s2_dlc))
+    s1_ = np.tile(s1,(len(s2),1))
+    s2_ = np.tile(s2.reshape(-1,1),(1,len(s1)))
+    matric_dlc = np.abs(s1_-s2_)
+    arr_coor = np.dstack(np.where(matric_dlc<=dlc_thre))[0]
+    return arr_coor
+    count = count_0(arr_coor)
+    return score-count
+'''
 if __name__=='__main__':
-    ljp = loadjpkfile(r'E:\ZB\jpkdata\20201201-COH-(I29)3-NGL-0_4UMS')
+    ljp = loadjpkfile(r'D:\jpkdata\20201201-COH-(I29)3-NGL-0_4UMS')
     fc = forcecurve()
     arr = np.array([])
     for i,data in enumerate(ljp):
@@ -63,4 +82,5 @@ if __name__=='__main__':
             arr = res
         else:
             arr = np.vstack((arr,res))
+            '''
         

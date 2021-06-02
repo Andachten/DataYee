@@ -11,7 +11,7 @@ from scipy.optimize import curve_fit
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 from PIL import Image
-from src.predictcore import feature_extract,MobileNet
+from predictcore import feature_extract,MobileNet
 import matplotlib as mpl
 from sklearn.neighbors import KernelDensity
 mpl.rcParams['font.family'] = 'Arial'
