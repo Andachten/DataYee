@@ -319,7 +319,7 @@ class programbody():
         if self.tasktype == 'cell_curve':
             T = self.zpo.export_celldata(self.ljp)
         elif self.tasktype == 'smfs':
-            T = self.zpo.get_arg(self.ljp)
+            T = self.zpo.get_arg(self.ljp,f_index=self.forcecurve_index)
             #T = self.zpo.extrac_argdata(self.ljp)
         if not T:
             QMessageBox.information(sel,"Warning","Failed!")
@@ -330,6 +330,11 @@ class programbody():
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
         elif self.tasktype == 'smfs':
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
+    def exportbatchtxt(self):
+        if not self.state:
+            return None
+        for i in range(self.forcecurve_index+1):
+            self.zpo.exporttxt(self.ljp,i,tip_correc=False)
     def export_figure(self,figure):
         if not self.state:
             return None

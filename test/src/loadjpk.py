@@ -394,19 +394,31 @@ class zipfileopera:
                         fc.data['datamsg'][1]) + '.pkl'
                     pkl = pickle.dumps(fc.data)
                     zips.writestr(o, pkl)
-    def exporttxt(self,ljp,forcecurve_index):
+    def exporttxt(self,ljp,forcecurve_index,tip_correc=True):
         fc = forcecurve()
         fc.data=self[forcecurve_index]
+        if not fc.data['artificial_judge']:
+            return None
         fc.recover_force(ljp)
-        data = fc.get_prodata()['retract']
-        data_x = data['measuredHeight']
-        data_y = data['vDeflection']
-        x = np.dstack((data_x[:,0],data_y[:,0]))
-        todir = os.path.dirname(self.fname)
+        data = fc.get_prodata(tip_correc=tip_correc)
+        data_x = data['retract']['measuredHeight']
+        data_y = data['retract']['vDeflection']
+        x = np.dstack((data_x[:,0],data_y[:,0]))[0]
+        if 'extend' in data.keys():
+            data_x_e = data['extend']['measuredHeight']
+            data_y_e = data['extend']['vDeflection']
+            e = np.dstack((data_x_e[:,0],data_y_e[:,0]))[0]
+            x = pd.DataFrame(np.vstack((e,np.array([np.nan,np.nan]),x)))
+        else:
+            x = pd.DataFrame(np.vstack((np.array([[0,0],[np.nan,np.nan]]),x)))
+        todir = os.path.join(os.path.dirname(self.fname),'txt_out')
+        if not os.path.isdir(todir):
+            os.makedirs(todir)
         name = "{}.txt".format(forcecurve_index)
         fname = os.path.join(todir, name)
-        np.savetxt(fname,x[0],fmt='%.5e')
-    def get_arg(self,ljp):
+        header = ['#','SpringConstant: {:.4f}'.format(fc.data['springConstant'])]
+        x.to_csv(fname,sep=' ',float_format='%.5e',index=False,header=header)
+    def get_arg(self,ljp,f_index=None):
         arg_dic = {'dlc':[],'lc':[],'p':[],'force':[],'k':[],'lens':[]}
         mark_data = {}
         fc = forcecurve()
@@ -445,6 +457,8 @@ class zipfileopera:
             arg_dic['lc'].append(lc)
             arg_dic['p'].append(p)
             arg_dic['lens'].append(len(f))
+            if f_index!=None and i==f_index:
+                break
         max_len = max(arg_dic['lens'])
         for i,lens in enumerate(arg_dic['lens']):
             n = max_len - lens

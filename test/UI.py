@@ -165,10 +165,10 @@ class myFigure(FigureCanvas):
             self.content['k'].append(self.ax.plot(x_,y_,'b',lw=1))
     def changeall(self):
         self.plotcurve()
-        dx = np.abs(self.data_x.max())-np.abs(self.data_x.min())
-        dy = np.abs(self.data_y.max())-np.abs(self.data_y.min())
+        dx = np.abs(self.data_x.max())-self.data_x.min()
+        dy = np.abs(self.data_y.max())-self.data_y.min()
         if len(self.fc_new.data['peakindex']) > 0:
-            self.setlim((-10, self.data_x[self.fc_new.data['peakindex'][-1]] + 0.05*dx), (-90, self.data_y.max() + 0.05*dy))
+            self.setlim((-10, self.data_x[self.fc_new.data['peakindex'][-1]] + 0.05*dx), (-90, self.data_y.max() + 0.1*dy))
         else:
             self.setlim((-10, self.data_x.max() + 30), (-90, self.data_y.max() + 40))
         self.plotfitcurve()
@@ -302,6 +302,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actionMap.triggered.connect(self.adhesionmap)
         self.actionHistogram.triggered.connect(self.adhesionhist)
         self.actiontxt.triggered.connect(self.exporttxt)
+        self.actionbatch_of_txt.triggered.connect(self.exportbatchtxt)
         self.actionpeakindex_plus.triggered.connect(self.peakvalueplus)
         self.actionpeakindex_minus.triggered.connect(self.peakvalueminus)
         self.actioncopy_peak.triggered.connect(self.copypeak)
@@ -518,6 +519,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.export_prodata(self)
     def exporttxt(self):
         self.pb.exporttxt()
+    def exportbatchtxt(self):
+        self.pb.exportbatchtxt()
     def export_figure(self):
         self.pb.export_figure(self.F.figure)
     def run(self):
