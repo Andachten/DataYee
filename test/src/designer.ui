@@ -675,7 +675,7 @@
      <x>0</x>
      <y>0</y>
      <width>1291</width>
-     <height>37</height>
+     <height>45</height>
     </rect>
    </property>
    <property name="font">
@@ -724,6 +724,7 @@
      <addaction name="actiontxt"/>
      <addaction name="actionexcel"/>
      <addaction name="actionfigure"/>
+     <addaction name="actionbatch_of_txt"/>
     </widget>
     <addaction name="menuOpen"/>
     <addaction name="actionSave"/>
@@ -778,8 +779,8 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>146</width>
-       <height>102</height>
+       <width>166</width>
+       <height>120</height>
       </rect>
      </property>
      <property name="font">
@@ -1069,6 +1070,11 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionbatch_of_txt">
+   <property name="text">
+    <string>batch of txt</string>
    </property>
   </action>
  </widget>

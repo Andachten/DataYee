@@ -302,6 +302,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actionMap.triggered.connect(self.adhesionmap)
         self.actionHistogram.triggered.connect(self.adhesionhist)
         self.actiontxt.triggered.connect(self.exporttxt)
+        self.actionbatch_of_txt.triggered.connect(self.exportbatchtxt)
         self.actionpeakindex_plus.triggered.connect(self.peakvalueplus)
         self.actionpeakindex_minus.triggered.connect(self.peakvalueminus)
         self.actioncopy_peak.triggered.connect(self.copypeak)
@@ -518,6 +519,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.export_prodata(self)
     def exporttxt(self):
         self.pb.exporttxt()
+    def exportbatchtxt(self):
+        self.pb.exportbatchtxt()
     def export_figure(self):
         self.pb.export_figure(self.F.figure)
     def run(self):

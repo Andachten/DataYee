@@ -10,6 +10,7 @@ from scipy.signal import find_peaks
 from tslearn.metrics import cdist_dtw
 from loadjpk import forcecurve,loadjpkfile,zipfileopera
 from numba import njit
+from datapro_new import *
 def WRC_transformer(f,x,thr=20):
     b,gama = 0.11e-9,41/180*np.pi
     kb = 1.38e-23
@@ -60,7 +61,6 @@ def wlc_dist(s1,s2,dlc_thre=5,f_thre=30):
     arr_coor = np.dstack(np.where(matrix_dlc<=dlc_thre))[0]
     reduct = max(count_0(arr_coor),count_0(arr_coor[arr_coor[:,1].argsort()]))
     return 1-reduct/score
-'''
 if __name__=='__main__':
     ljp = loadjpkfile(r'D:\jpkdata\20201201-COH-(I29)3-NGL-0_4UMS')
     fc = forcecurve()
@@ -79,5 +79,4 @@ if __name__=='__main__':
             arr = res
         else:
             arr = np.vstack((arr,res))
-            '''
         

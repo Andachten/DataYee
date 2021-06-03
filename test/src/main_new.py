@@ -330,6 +330,11 @@ class programbody():
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
         elif self.tasktype == 'smfs':
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
+    def exportbatchtxt(self):
+        if not self.state:
+            return None
+        for i in range(self.forcecurve_index+1):
+            self.zpo.exporttxt(self.ljp,i)
     def export_figure(self,figure):
         if not self.state:
             return None
