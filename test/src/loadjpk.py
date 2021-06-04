@@ -402,11 +402,11 @@ class zipfileopera:
         fc.recover_force(ljp)
         data = fc.get_prodata(tip_correc=tip_correc)
         data_x = data['retract']['measuredHeight']
-        data_y = data['retract']['vDeflection']
+        data_y = data['retract']['vDeflection']*-1
         x = np.dstack((data_x[:,0],data_y[:,0]))[0]
         if 'extend' in data.keys():
             data_x_e = data['extend']['measuredHeight']
-            data_y_e = data['extend']['vDeflection']
+            data_y_e = data['extend']['vDeflection']*-1
             e = np.dstack((data_x_e[:,0],data_y_e[:,0]))[0]
             x = pd.DataFrame(np.vstack((e,np.array([np.nan,np.nan]),x)))
         else:
