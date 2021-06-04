@@ -568,7 +568,7 @@
       <x>640</x>
       <y>590</y>
       <width>141</width>
-      <height>151</height>
+      <height>91</height>
      </rect>
     </property>
     <property name="font">
@@ -666,6 +666,50 @@
     <property name="text">
      <string>Strick</string>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_5">
+    <property name="geometry">
+     <rect>
+      <x>640</x>
+      <y>690</y>
+      <width>141</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>ZOOM</string>
+    </property>
+    <widget class="QCheckBox" name="zoomx">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>40</y>
+       <width>91</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string> X</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="zoomy">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>40</y>
+       <width>91</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Y</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
