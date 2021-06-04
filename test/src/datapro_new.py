@@ -171,8 +171,12 @@ def wlcfit(fc):
             fitpoint = p_i
         if fitpoint==b_i:
             fitpoint+=20
+
         popt, _ = curve_fit(lcfunc, data_x[b_i:fitpoint], data_y[b_i:fitpoint],
                                     bounds=([data_x[p_i], lp[0]], [data_x[p_i] + 50, lp[1]]))
+
+        #popt = (WRC_transformer(data_y[b_i:fitpoint],data_x[b_i:fitpoint],thr=5)[1].mean(),0.36)
+        
         popt_pre, _ = curve_fit(lcfunc, data_x[b_i:p_i], data_y[b_i:p_i],
                                     bounds=([data_x[p_i], 0], [data_x[p_i] + 50, 0.5]))
         lc, p = popt

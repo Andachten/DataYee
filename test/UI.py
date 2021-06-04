@@ -84,6 +84,16 @@ class myFigure(FigureCanvas):
         if zoomy_state:
             self.ax.set_ylim([ydata - cur_yrange*scale_factor,
                      ydata + cur_yrange*scale_factor])
+    def motion(self,dx,dy):
+        cur_xlim = self.ax.get_xlim()
+        cur_ylim = self.ax.get_ylim()
+        x = (cur_xlim[1] + cur_xlim[0])*0.5-dx
+        y = (cur_ylim[1] + cur_ylim[0])*0.5-dy
+        cur_xrange = (cur_xlim[1] - cur_xlim[0])*.5
+        cur_yrange = (cur_ylim[1] - cur_ylim[0])*.5
+        self.ax.set_ylim([y - cur_yrange,y + cur_yrange])
+        self.ax.set_xlim([x - cur_xrange,x + cur_xrange])
+        
     def getdata(self):
         data = self.fc_new.get_prodata()['retract']
         self.data_y = data['vDeflection'][:, 0] * 1e12
@@ -287,11 +297,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.xdata = None
         self.zoomx_state =True
         self.zoomy_state = True
+        self.press=False
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
         self.F.canvas.mpl_connect('scroll_event',self.scroll_event)
-        #self.canvas.mpl_connect("button_release_event", self.on_release)
+        self.F.canvas.mpl_connect('motion_notify_event',self.onmotion_event)
+        self.F.canvas.mpl_connect("button_release_event", self.on_release)
         #self.canvas.mpl_connect("motion_notify_event", self.on_move)
         self.siglestep = 5
         self.lc_value = self.lcdoubleSpinBox.value()
@@ -347,6 +359,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.zoomy.setChecked(True)
         self.zoomx.stateChanged.connect(self.choose_zoom)
         self.zoomy.stateChanged.connect(self.choose_zoom)
+    def onmotion_event(self,event):
+        if self.press:
+            dx = event.xdata-self.xdata
+            dy = event.ydata-self.ydata
+            self.F.motion(dx, dy)
+            self.displace_result()
+    def on_release(self,event):
+        self.press=False
     def choose_zoom(self):
         if self.zoomy.isChecked():
             self.zoomy_state = True
@@ -357,7 +377,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         else:
             self.zoomx_state = False  
     def on_press(self, event):
-        #print("press")
+        self.press=True
         if event.xdata==None or event.ydata==None:
             return None
         self.xdata = event.xdata
