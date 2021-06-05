@@ -8,7 +8,7 @@ import pickle
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro_new import noise_down,cal_baseline_drift,cal_baseline_x,cal_baseline_y,\
     cal_highspeed_drift,predict,findpeak,wlcfit,peakH,peakN,slope,countdlc,mkbaseondlc
-from src.datapro_new import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_slope
+from src.datapro_new import Lc_transformer,plotmap,plothist,findpeak_smallrange
 func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
     cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
 def process_customize(fc,functions=[0]):
@@ -128,26 +128,6 @@ class programbody():
             cal_baseline_x(self.fc)
             process_customize(self.fc,range(6,13))
         self.curve_change()
-    def rebaseline_cal(self,datax1,datax2):
-        if not self.state:
-            return None
-        if datax1==datax2:
-            return None
-        self.fc.recover_force(self.ljp)
-        data = self.fc.get_prodata()['retract']
-        data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
-        if datax2>datax1:
-            datax2,datax1=datax1,datax2
-        i_start = np.where(data_x>datax2)[0]
-        i_end = np.where(data_x<datax1)[0]
-        if len(i_start)==0 or len(i_end)==0:
-            return None
-        else:
-            i_start = i_start[0]
-            i_end = i_end[-1]
-        if i_end-i_start<5:
-            return None
-        self.fc.clean_force()
     def pk_delete(self):
         if not self.state:
             return None
