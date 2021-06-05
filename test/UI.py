@@ -261,7 +261,14 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F.canvas)
         self.action_init()
+<<<<<<< HEAD
         self.xdata=None
+=======
+        self.xdata = None
+        self.zoomx_state =True
+        self.zoomy_state = True
+        self.press=False
+>>>>>>> parent of 7e8dcc7 (Merge remote-tracking branch 'origin/main' into main)
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
@@ -317,6 +324,30 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.stickmodel.setChecked(False)
         self.stickmodel.stateChanged.connect(self.statemodel)
         self.lineEdit.returnPressed.connect(self.changemark)
+<<<<<<< HEAD
+=======
+        self.zoomx.setChecked(True)
+        self.zoomy.setChecked(True)
+        self.zoomx.stateChanged.connect(self.choose_zoom)
+        self.zoomy.stateChanged.connect(self.choose_zoom)
+    def onmotion_event(self,event):
+        if self.press:
+            dx = event.xdata-self.xdata
+            dy = event.ydata-self.ydata
+            self.F.motion(dx, dy)
+            self.displace_result()
+    def on_release(self,event):
+        self.press=False
+    def choose_zoom(self):
+        if self.zoomy.isChecked():
+            self.zoomy_state = True
+        else:
+            self.zoomy_state = False
+        if self.zoomx.isChecked():
+            self.zoomx_state = True
+        else:
+            self.zoomx_state = False  
+>>>>>>> parent of 7e8dcc7 (Merge remote-tracking branch 'origin/main' into main)
     def on_press(self, event):
         #print("press")
         if event.xdata==None or event.ydata==None:
