@@ -61,13 +61,8 @@ class forcecurve:
                 data[k]['measuredHeight'] = data[k]['measuredHeight'] - data[k]['vDeflection'] / self.data[
                     'springConstant']
             if 'k' in self.data['offset'].keys():
-                if 'rotate_index' in self.data['offset'].keys():
-                    rotate_index = self.fc.data['offset']['rotate_index']
-                else:
-                    rotate_index = -1
                 data[k]['vDeflection'] = rotate(data[k]['measuredHeight'].reshape(-1),
-                                                data[k]['vDeflection'].reshape(-1),
-                                                rotate_index,
+                                                data[k]['vDeflection'].reshape(-1), -1,
                                                 self.data['offset']['k']).reshape(-1, 1)
         return data
 
