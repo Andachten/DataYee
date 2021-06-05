@@ -45,7 +45,7 @@ def getfitcurve(wlcarg, peakindex, data_x):
 class myFigure(FigureCanvas):
     def __init__(self):
         #self.figure = mpl.figure.Figure()
-        self.canvas = FigureCanvas(mpl.figure.Figure())
+        self.canvas = FigureCanvas(mpl.figure.Figure(dpi=100))
         #self.figure = self.canvas.figure
         self.ax = self.canvas.figure.add_subplot()
         self.ax.plot([-1e4, 1e4], [0, 0], lw=1.5, c='#ff8787')
@@ -294,10 +294,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F.canvas)
         self.action_init()
-        self.xdata = None
+        self.xdata,self.xdata_r = None,None
+        self.ydata,self.ydata_r = None,None
         self.zoomx_state =True
         self.zoomy_state = True
         self.press=False
+        self.control = False
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
@@ -360,13 +362,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.zoomx.stateChanged.connect(self.choose_zoom)
         self.zoomy.stateChanged.connect(self.choose_zoom)
     def onmotion_event(self,event):
-        if self.press:
+        if self.press and not self.control and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
             dx = event.xdata-self.xdata
             dy = event.ydata-self.ydata
             self.F.motion(dx, dy)
             self.displace_result()
     def on_release(self,event):
         self.press=False
+        self.xdata_r,self.ydata_r = event.xdata,event.ydata
+        if self.control and None not in[self.xdata_r,self.xdata]:
+            self.pb.rebaseline_cal(self.xdata,self.ydata)
+            self.displace_result()
     def choose_zoom(self):
         if self.zoomy.isChecked():
             self.zoomy_state = True
@@ -499,7 +505,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.peakindexplus()
         elif e.key() == Qt.Key_Delete:
             self.peakdelete()
-
+        elif e.key()==Qt.Key_Control:
+            self.control = True
+    def keyReleaseEvent(self,e):
+        if e.key()==Qt.Key_Control:
+            self.control = False
     def resetslidevalue(self):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
