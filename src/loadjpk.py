@@ -29,7 +29,7 @@ class forcecurve:
                      'path': '',
                      'springConstant': 0.01,
                      'datamsg': ('', 0),
-                     'offset': {'x': 0, 'y': 0, 'k': 0},
+                     'offset': {'x': 0, 'y': 0, 'k': 0,'highspeed':0},
                      'filters': {'methods': 'savgol', 'win_lens': 13, 'poly': 2},
                      'mobilenet_judge': True,
                      'peaknum_judge': True,
@@ -61,8 +61,13 @@ class forcecurve:
                 data[k]['measuredHeight'] = data[k]['measuredHeight'] - data[k]['vDeflection'] / self.data[
                     'springConstant']
             if 'k' in self.data['offset'].keys():
+                if 'rotate_index' in self.data['offset'].keys():
+                    rotate_index = self.fc.data['offset']['rotate_index']
+                else:
+                    rotate_index = -1
                 data[k]['vDeflection'] = rotate(data[k]['measuredHeight'].reshape(-1),
-                                                data[k]['vDeflection'].reshape(-1), -1,
+                                                data[k]['vDeflection'].reshape(-1),
+                                                rotate_index,
                                                 self.data['offset']['k']).reshape(-1, 1)
         return data
 
@@ -185,7 +190,10 @@ class loadjpkfile(forcecurve):
                                                    dtype=[('measuredHeight', '<f8'), ('vDeflection', '<f8')])
 
     def extract_force_data(self, filename, index):
-        jpk = JPKFile(filename)
+        try:
+            jpk = JPKFile(filename)
+        except:
+            return None
         try:
             springConstant = float(
                 jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling'][
@@ -197,7 +205,10 @@ class loadjpkfile(forcecurve):
             self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight', 'vDeflection'])[0]
 
     def extract_map_data(self, filename, index):
-        jpks = JPKMap(filename)
+        try:
+            jpks = JPKMap(filename)
+        except:
+            return None
         jpk = jpks.get_single_pixel(index)
         try:
             springConstant = float(
@@ -323,8 +334,8 @@ class zipfileopera:
         #        bup.clean_force()
         self.change[fc.data['datamsg']] = bup
 
-    def changedforce(self, svfname=''):
-        if len(self.change) == 0:
+    def changedforce(self, svfname='',saveas=False):
+        if len(self.change) == 0 and not saveas:
             return None
         with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
             lst = copy.deepcopy(zips.namelist())
@@ -358,6 +369,11 @@ class zipfileopera:
             fc1.recover_force(ljp)
             data = fc1.get_prodata()['retract']
             data_y = data['vDeflection']*1e12
+            if len(fc1.data['peakindex'])==0:
+                arr = np.append(arr,data_y[int(0.8*len(data_y)):].max())
+            else:
+                arr = np.append(arr,data_y[fc1.data['peakindex']].max())
+            continue
             if data_y.max()>=0:
                 arr = np.append(arr,data_y.max())
             else:
@@ -383,25 +399,36 @@ class zipfileopera:
                         fc.data['datamsg'][1]) + '.pkl'
                     pkl = pickle.dumps(fc.data)
                     zips.writestr(o, pkl)
-    def exporttxt(self,ljp,forcecurve_index):
+    def exporttxt(self,ljp,forcecurve_index,tip_correc=True):
         fc = forcecurve()
         fc.data=self[forcecurve_index]
+        if not fc.data['artificial_judge']:
+            return None
         fc.recover_force(ljp)
-        data = fc.get_prodata()['retract']
-        data_x = data['measuredHeight']
-        data_y = data['vDeflection']
-        x = np.dstack((data_x[:,0],data_y[:,0]))
-        todir = os.path.dirname(self.fname)
+        data = fc.get_prodata(tip_correc=tip_correc)
+        data_x = data['retract']['measuredHeight']
+        data_y = data['retract']['vDeflection']*-1
+        x = np.dstack((data_x[:,0],data_y[:,0]))[0]
+        if 'extend' in data.keys():
+            data_x_e = data['extend']['measuredHeight']
+            data_y_e = data['extend']['vDeflection']*-1
+            e = np.dstack((data_x_e[:,0],data_y_e[:,0]))[0]
+            x = pd.DataFrame(np.vstack((e,np.array([np.nan,np.nan]),x)))
+        else:
+            x = pd.DataFrame(np.vstack((np.array([[0,0],[np.nan,np.nan]]),x)))
+        todir = os.path.join(os.path.dirname(self.fname),'txt_out')
+        if not os.path.isdir(todir):
+            os.makedirs(todir)
         name = "{}.txt".format(forcecurve_index)
         fname = os.path.join(todir, name)
-        np.savetxt(fname,x[0],fmt='%.5e')
-    def get_arg(self,ljp):
+        header = ['#','SpringConstant: {:.4f}'.format(fc.data['springConstant'])]
+        x.to_csv(fname,sep=' ',float_format='%.5e',index=False,header=header)
+    def get_arg(self,ljp,f_index=None):
         arg_dic = {'dlc':[],'lc':[],'p':[],'force':[],'k':[],'lens':[]}
         mark_data = {}
         fc = forcecurve()
         max_mark = 0
         pd.set_option('precision', 4)
-        t1=time.time()
         for i,data in enumerate(self):
             dlc,lc,p,f,k=[],[],[],[],[]
             if data['artificial_judge']:
@@ -422,12 +449,12 @@ class zipfileopera:
                         mark_data[fc.data['mark'][index]]['lc'].append(fc.data['wlcarg'][index][0])
                         mark_data[fc.data['mark'][index]]['p'].append(fc.data['wlcarg'][index][1])
                         mark_data[fc.data['mark'][index]]['k'].append(fc.data['k'][index])
-                        mark_data[fc.data['mark'][index]]['force'].append(data_y[:,0][p_i])
+                        mark_data[fc.data['mark'][index]]['force'].append(data_y[:,0][p_i]+fc.data['offset']['highspeed']*1e12)
                         max_mark = max(max_mark,len(mark_data[fc.data['mark'][index]]['dlc']))
                     lc.append(fc.data['wlcarg'][index][0])
                     p.append(fc.data['wlcarg'][index][1])
                     k.append(fc.data['k'][index])
-                    f.append(data_y[:,0][p_i])
+                    f.append(data_y[:,0][p_i]+fc.data['offset']['highspeed']*1e12)
             arg_dic['dlc'].append(dlc)
             arg_dic['k'].append(k)
             #print(f,arg_dic['force'])
@@ -435,6 +462,8 @@ class zipfileopera:
             arg_dic['lc'].append(lc)
             arg_dic['p'].append(p)
             arg_dic['lens'].append(len(f))
+            if f_index!=None and i==f_index:
+                break
         max_len = max(arg_dic['lens'])
         for i,lens in enumerate(arg_dic['lens']):
             n = max_len - lens
@@ -444,8 +473,6 @@ class zipfileopera:
             arg_dic['lc'][i]+=['']*n
             arg_dic['p'][i]+=['']*n
         del arg_dic['lens']
-        t2=time.time()
-        print(t2-t1)
         #return arg_dic
         fname = os.path.join(os.path.dirname(self.fname),"INDEX-{}.xlsx".format(os.path.splitext(os.path.basename(self.fname))[0]))
         if os.path.isfile(fname):
@@ -465,8 +492,7 @@ class zipfileopera:
             data_frame = pd.DataFrame(item).round(2)
             data_frame.to_excel(writer,sheet_name=mark)
         writer.close()
-        t3=time.time()
-        print(t3-t2)
+        return True
             
             
             
@@ -492,7 +518,7 @@ class zipfileopera:
             fc1.recover_force(ljp)
             if filters and sum([fc1.data[t] for t in filter_lst]) < len(filter_lst):
                 continue
-            force = fc1.get_prodata()['retract']['vDeflection'][:, 0][fc1.data['peakindex']] * 1e12
+            force = fc1.get_prodata()['retract']['vDeflection'][:, 0][fc1.data['peakindex']] * 1e12+fc1.data['offset']['highspeed']*1e12
             lc, lp = np.array(fc1.data['wlcarg'])[:, 0], np.array(fc1.data['wlcarg'])[:, 1]
             dlc = fc1.data['dlc']
             mark = fc1.data['mark']
@@ -518,5 +544,49 @@ class zipfileopera:
         todir = os.path.dirname(self.fname)
         wk_i_svname = os.path.join(todir, 'outputdata base on index of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
         wk_m_svname = os.path.join(todir, 'outputdata base on mark of {}.xls'.format(os.path.splitext(os.path.basename(self.fname))[0]))
-        wk_i.save(wk_i_svname)
-        wk_m.save(wk_m_svname)
+        try:
+            wk_i.save(wk_i_svname)
+            wk_m.save(wk_m_svname)
+        except:
+            return False
+        return True
+    def export_celldata(self,ljp):
+        fc = forcecurve()
+        dic = {'abs force':[],'force':[],'k':[],'lens':[]}
+        for i,data in enumerate(self):
+            fc.data = data
+            fc.recover_force(ljp)
+            data = fc.get_prodata()['retract']
+            data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
+            af,f,k=[],[],[]
+            if not fc.data['artificial_judge']:
+                dic['abs force'].append(af)
+                dic['force'].append(f)
+                dic['k'].append(k)
+                dic['lens'].append(0)
+                continue
+            for i,p_i in  enumerate(fc.data['peakindex']):
+                af.append(data_y[p_i][0]+fc.data['offset']['highspeed']*1e12)
+                b_i = fc.data['bottomindex'][np.argmin(np.abs(p_i-fc.data['bottomindex']))]
+                f.append((data_y[p_i]-data_y[b_i])[0]+fc.data['offset']['highspeed']*1e12)
+                k.append(fc.data['k'][i])
+            dic['abs force'].append(af)
+            dic['force'].append(f)
+            dic['k'].append(k)
+            dic['lens'].append(len(fc.data['peakindex']))
+        max_lens = max(dic['lens'])
+        for i,lens in enumerate(dic['lens']):
+            dic['abs force'][i] +=['']*(max_lens-lens)
+            dic['force'][i] +=['']*(max_lens-lens)
+            dic['k'][i] +=['']*(max_lens-lens)
+        todir = os.path.dirname(self.fname)
+        fname = os.path.join(todir,"cell_curve-{}.xlsx".format(os.path.splitext(os.path.basename(self.fname))[0]))
+        try:
+            writer = pd.ExcelWriter(fname)
+        except:
+            return False
+        for sheet_name,data in dic.items():
+            data_frame = pd.DataFrame(data).round(2)
+            data_frame.to_excel(writer,sheet_name=sheet_name)
+        writer.close()
+        return True

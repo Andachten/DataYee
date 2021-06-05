@@ -7,10 +7,10 @@ import os
 import pickle
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro import cal_baseline,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,predict,peaknumjudge,slope
-from src.datapro import cal_baseline_cell,findpeakbottom_cell,noise_down
+from src.datapro import cal_baseline_cell,findpeakbottom_cell,noise_down,slope_cell
 from src.datapro import Lc_transformer,plotmap,plothist
 smfs_func_lst = [noise_down,cal_baseline,predict,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,peaknumjudge,slope]
-cell_func_lst = [noise_down,cal_baseline_cell,findpeakbottom_cell,peaknumjudge]
+cell_func_lst = [noise_down,cal_baseline_cell,findpeakbottom_cell,peaknumjudge,slope_cell]
 def process_customize(fc,functions=[0],tasktype='smfs'):
     if tasktype == 'smfs':
         func_lst = smfs_func_lst
@@ -35,7 +35,7 @@ def main_cell(fc,zpo):
     if fc.data['rawdata'] == {} or fc.data['rawdata']['retract']['vDeflection'].sum()==0:
         return None
     fc.data['tasktype']='cell_curve'
-    process_customize(fc, [0,1,2,3],'cell_curve')
+    process_customize(fc, [0,1,2,3,4],'cell_curve')
     if not fc.data['peaknum_judge']:
         return None
     fc.clean_force()
@@ -54,15 +54,18 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.change_dic = {}
-        self.taskarg = {'peakH': 50,
-           'sens': 20,
+        self.highspeedcorr = np.array([])
+        self.taskarg = {'peakH': 30,
+           'sens': 10,
            'peakN': [1, 6],
            'xlim': 20,
            'lp': (0.34, 0.38),
            'mark': {'GB1': (13, 23), 'I27': (23, 36)},
            'fitjudge': False,
            'usemodel':True,
-           'xsens':3}
+           'xsens':2,
+           'highspeed':False,
+           'modelstrict':False}
     def creattask(self,path,tasktype='smfs'):
         self.tasktype = tasktype
         self.fc = forcecurve()
@@ -111,12 +114,13 @@ class programbody():
         if not self.state:
             return None
         self.fc.data['offset']['y'] += n
-        self.curve_change()
         if self.tasktype == 'smfs':
             if 'retract' not in self.fc.data['rawdata'].keys():
                 self.fc.recover_force(self.ljp)
             self.fc.data['arg'] = self.taskarg
+            cal_baseline(self.fc,only_x=True)
             process_customize(self.fc,range(4,8),self.tasktype)
+        self.curve_change()
     def pk_delete(self):
         if not self.state:
             return None
@@ -170,8 +174,8 @@ class programbody():
         process_customize(self.fc,[4,5,7,8,10],self.tasktype)
         self.fc.clean_force()
         self.curve_change()
-        self.zpo.changedforce()
-        self.change_dic={}
+        #self.zpo.changedforce()
+        #self.change_dic={}
     def reset(self):
         if not self.state:
             return None
@@ -180,17 +184,17 @@ class programbody():
         if self.tasktype == 'smfs':
             process_customize(self.fc,list(range(2,9))+list(range(10,11)),'smfs')
         elif self.tasktype == 'cell_curve':
-            process_customize(self.fc,range(1,3),'cell_curve')
+            process_customize(self.fc,range(1,5),'cell_curve')
         self.fc.data['artificial_judge'] = True
         self.fc.clean_force()
         self.curve_change()
         self.zpo.changedforce()
         self.change_dic={}
-    def savechange(self,name):
+    def savechange(self,name,saveas=False):
         if not self.state:
             return None
         self.change_dic={}
-        self.zpo.changedforce(name)
+        self.zpo.changedforce(name,saveas)
     def changemark(self,mark):
         if not self.state or self.tasktype!='smfs':
             return None
@@ -250,18 +254,34 @@ class programbody():
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
         elif len(self.fc.data['wlcarg'])>0:
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
-    def export_prodata(self):
+    def copypeak(self):
         if not self.state:
             return None
+        if self.forcepeak_index>=0 and self.tasktype=='smfs':
+            self.fc.data['peakindex'] = np.insert(self.fc.data['peakindex'],self.forcepeak_index,self.fc.data['peakindex'][self.forcepeak_index]-10)
+            self.fc.recover_force(self.ljp)
+            process_customize(self.fc,[4,5,7,8,10],self.tasktype)
+            self.fc.clean_force()
+            self.curve_change()
+            self.zpo.changedforce()
+            self.change_dic={}
+    def export_prodata(self,sel):
+        if not self.state:
+            return None
+        highspeed=0
+        if self.taskarg['highspeed'] and len(self.highspeedcorr)>0:
+            highspeed=self.highspeedcorr.mean()*1e12
         if self.tasktype == 'cell_curve':
-            pass
+            T = self.zpo.export_celldata(self.ljp,highspeed=highspeed)
         elif self.tasktype == 'smfs':
-            self.zpo.extrac_argdata(self.ljp)
+            T = self.zpo.extrac_argdata(self.ljp,highspeed=highspeed)
+        if not T:
+            QMessageBox.information(sel,"Warning","Failed!")
     def exporttxt(self):
         if not self.state:
             return None
         if self.tasktype == 'cell_curve':
-            pass
+            self.zpo.exporttxt(self.ljp,self.forcecurve_index)
         elif self.tasktype == 'smfs':
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
     def export_figure(self,figure):
@@ -275,6 +295,7 @@ class programbody():
             return None
         self.zpo.delet_dataYee()
         self.change_dic = {}
+        self.highspeedcorr = np.array([])
         num = len(self.ljp)
         progress.setWindowTitle("Please Wait")  
         progress.setLabelText("Processing...")
@@ -287,12 +308,18 @@ class programbody():
             if progress.wasCanceled():
                 QMessageBox.warning(sel,"Warning!","Failed!")
                 self.zpo.delet_dataYee()
-                self.ready_run = False
+                self.change={}
+                self.ready_run = True
                 break
             self.fc.data = data
             self.fc.data['arg'] = self.taskarg
             main(self.fc,self.zpo,self.tasktype)
+            if self.taskarg['highspeed'] and self.fc.data['offset']['highspeed']>0:
+                self.highspeedcorr=np.append(self.highspeedcorr,self.fc.data['offset']['highspeed'])
         else:
+            if self.taskarg['highspeed'] and len(self.highspeedcorr)!=0:
+                for k,v in self.zpo.change.items():
+                    self.zpo.change[k].data['offset']['highspeed']=self.highspeedcorr.mean()
             if len(self.zpo.change)==0:
                 self.state = False
             else:

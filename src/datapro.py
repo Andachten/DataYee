@@ -38,7 +38,7 @@ def rotate(data_x, data_y, index, k):
 
 def loadmodel():
     global model, device, transform
-    model = torch.load(r'./model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
+    model = torch.load(r'../model/2021-04-26-01-mobilenet_v2-1.7.1-model.pkl', map_location='cpu')
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     model.eval()
@@ -140,7 +140,7 @@ def noise_down(fc):
     r = 0.9
     data_y_right = data_y[:, 0][int(r * len(data_y)):]
     data_y_right_smth = savgol_filter(data_y_right, 399, 2)
-    for s in np.arange(100)[3::2]:
+    for s in np.arange(30)[3::2]:
         err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
         if err < 2:
             break
@@ -148,11 +148,21 @@ def noise_down(fc):
     fc.data['filters']['win_lens'] = s
 
 
-def cal_baseline(forcecurve):
+def cal_baseline(forcecurve,only_x=False):
     data = copy.deepcopy(forcecurve.data['rawdata']['retract'])
     data['vDeflection'] = savgol_filter(data['vDeflection'][:, 0], 29, 2).reshape(len(data['vDeflection']), 1)
-    xy_data = data[int(0.9 * len(data['measuredHeight'])):]
-    forcecurve.data['offset']['y'] = xy_data['vDeflection'].mean()
+    if 'highspeed' in forcecurve.data['arg'].keys() and forcecurve.data['arg']['highspeed']:
+        highspeed_limit=20e-12
+        data_extend = copy.deepcopy(forcecurve.data['rawdata']['extend'])
+        data_extend['vDeflection'] = savgol_filter(data_extend['vDeflection'][:,0],3,2).reshape(len(data_extend['vDeflection']),1)
+        if data_extend['measuredHeight'][0]>data['measuredHeight'][int(0.9*len(data['vDeflection']))]:
+            corr = data_extend['vDeflection'][:int(0.1*len(data_extend['measuredHeight']))].mean()-\
+                data['vDeflection'][int(0.9*len(data['vDeflection'])):].mean()
+            if 0.5*corr<highspeed_limit:
+                forcecurve.data['offset']['highspeed']=0.5*corr
+    if not only_x:
+        xy_data = data[int(0.9 * len(data['measuredHeight'])):]
+        forcecurve.data['offset']['y'] = xy_data['vDeflection'].mean()
     data['vDeflection'] = data['vDeflection'] - forcecurve.data['offset']['y']
     for i, v in enumerate(data['vDeflection']):
         if v * data['vDeflection'][i + 1] < 0:
@@ -202,7 +212,7 @@ def findpeak(forcecurve):
     sens=forcecurve.data['arg']['sens']
     xlim=forcecurve.data['arg']['xlim']
     forcecurve.data['peakindex'] = []
-    data = forcecurve.get_prodata(tip_correc=False, s=59)['retract']
+    data = forcecurve.get_prodata(tip_correc=False, s=29)['retract']
     data_y = data['vDeflection'][:, 0] * 1e12
     data_x = data['measuredHeight'][:, 0] * 1e9
     distance = len(np.where(data_x>(data_x[-1]-forcecurve.data['arg']['xsens']))[0])
@@ -216,7 +226,7 @@ def findpeak(forcecurve):
         idx = (np.abs(p1 - n)).argmin()
         if len(peak_index) != 0:
             temp = (p1[idx] - peak_index)
-            if temp.min() < 50:
+            if temp.min() < 25:
                 if data_y[temp.argmin()] > p1[idx]:
                     continue
                 else:
@@ -231,18 +241,25 @@ def findpeak(forcecurve):
 
 # must after cal_baseline_cell
 def findpeakbottom_cell(fc):
+    fc.data['peakindex']=[]
     data = fc.get_prodata()['retract']
     data_y = data['vDeflection'] * 1e12
     data_x = data['measuredHeight'] * 1e9
     if data_y[:, 0][0] > data_y[:, 0][400:].min():
         return None
     find_range = int(0.1 * len(data_y))
-    d = np.gradient(np.gradient(gaussian_filter(data_y[:, 0], 39)))[find_range:]
+    if (data_y.max()-data_y[-1])>100:
+        n=9
+    else:
+        n=39
+    d = np.gradient(np.gradient(gaussian_filter(data_y[:, 0], n)))[find_range:]
     d = d / d.max() * -1
-    p = find_peaks(d, height=0.6, distance=50)[0] + find_range
-    b = find_peaks(d * -1, height=0.5, distance=50)[0] + find_range
-    n = 100
-    f_boundary = 10
+    height = d[int(0.9*len(d)):][np.where(d[int(0.9*len(d)):]>0)].mean()*3
+    p = find_peaks(d, height=height, distance=10)[0] + find_range
+    height = d[int(0.9*len(d)):][np.where(d[int(0.9*len(d)):]<0)].mean()*3
+    b = find_peaks(d * -1, height=height*-1, distance=10)[0] + find_range
+    n = 30
+    f_boundary = 15
     for p_ in p:
         temp_array = data_x[b] - data_x[p_]
         i = np.where(temp_array > 0, temp_array, np.inf)
@@ -252,8 +269,6 @@ def findpeakbottom_cell(fc):
             return None
         b_ = b[i]
         if data_x[b_][0]-data_x[p_][0]<80 and p_ < b_:
-            if len(fc.data['peakindex']) > 0 and data_x[p_] - data_x[fc.data['peakindex'][-1]] < 50:
-                continue
             y = rotate(data_x[p_ - n:b_], data_y[p_ - n:b_], n, -0.07)
             p_ = p_ - n + np.argmax(y)
             k = np.polyval(np.polyder(np.polyfit(data_x[b_:b_ + 300][:, 0], data_y[b_:b_ + 300][:, 0], 1)), data_x[b_])
@@ -319,10 +334,11 @@ def wlcfit(forcecurve):
         b_i = bottom_index[i]
         if data_y[p_i] > boundary_force:
             y_distance = data_y[p_i] - data_y[b_i]
-            y_fitpoint = data_y[b_i] + 0.3 * y_distance
-            if len(np.where(data_y[b_i:] > y_fitpoint)[0]) != 0:
-                fitpoint = np.where(data_y[b_i:] > y_fitpoint)[0][0] + b_i
+            y_fitpoint = data_y[b_i] + 0.4 * y_distance
+            if len(np.where(data_y[:p_i] < y_fitpoint)[0]) != 0:
+                fitpoint = np.where(data_y[:p_i] < y_fitpoint)[0][-1]
             else:
+                print('no')
                 x_distance = data_x[p_i] - data_x[b_i]
                 x_fitpoint = data_x[b_i] + 0.4 * x_distance
                 fitpoint = np.where(data_x[b_i:] > x_fitpoint)[0][0] + b_i
@@ -401,17 +417,32 @@ def slope(fc):
     data_x = data['measuredHeight'][:, 0] * 1e9
     for i in range(len(peak_index)):
         x, y = data_x[bottom_index[i]:peak_index[i]], data_y[bottom_index[i]:peak_index[i]]
-        if len(x) > 150:
-            deg = 5
-        else:
-            deg = 1
-        re = np.polyfit(x, y, deg)
-
+        x = x[np.where(y>y.max()-0.3*(y.max()-y.min()))[0]]
+        y = y[np.where(y>y.max()-0.3*(y.max()-y.min()))[0]]
+        re = np.polyfit(x, y, 1)
         d = np.polyder(re)
         k = np.polyval(d, data_x[peak_index[i]])
+        if k<0 or k>50:
+            k=5
         #b = data_y[peak_index[i]] - k * data_x[peak_index[i]]
         fc.data['k'].append(k)
-
+def slope_cell(fc):
+    fc.data['k']=[]
+    peak_index = fc.data['peakindex']
+    data = fc.get_prodata()['retract']
+    data_y = data['vDeflection'][:, 0] * 1e12
+    data_x = data['measuredHeight'][:, 0] * 1e9
+    for p_i in peak_index:
+        s_i = np.where(data_x>data_x[p_i]-20)[0].min()
+        x = data_x[s_i:p_i]
+        y = data_y[s_i:p_i]
+        re = np.polyfit(x, y, 1)
+        d = np.polyder(re)
+        k = np.polyval(d, data_x[p_i])
+        if k<0:
+            k=5
+        #b = data_y[peak_index[i]] - k * data_x[peak_index[i]]
+        fc.data['k'].append(k)
 
 def graph(forcecurve):
     fig, ax = plt.subplots(dpi=300, figsize=(8, 5))
@@ -495,20 +526,7 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
         bound_end += [x_[i]+20,100,20]
     X = a[1]
     Y = np.append(a[0],0)
-    try:
-        popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
-    except:
-        guess = []
-        bound_start = []
-        bound_end = []
-        for i in p:
-            guess += [x_[i], 25, 10]   
-            bound_start += [x_[i]-40,0,0]
-            bound_end += [x_[i]+40,200,40]
-        X = a[1]
-        Y = np.append(a[0],0)
-        popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
-    
+    popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
     lc = popt[::3]
     for i,l in enumerate(lc):
         if i<len(lc)-1:

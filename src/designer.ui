@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1291</width>
-    <height>836</height>
+    <height>843</height>
    </rect>
   </property>
   <property name="font">
@@ -267,7 +267,7 @@
       <x>790</x>
       <y>580</y>
       <width>16</width>
-      <height>191</height>
+      <height>221</height>
      </rect>
     </property>
     <property name="orientation">
@@ -280,7 +280,7 @@
       <x>1170</x>
       <y>580</y>
       <width>20</width>
-      <height>191</height>
+      <height>221</height>
      </rect>
     </property>
     <property name="orientation">
@@ -383,9 +383,9 @@
     <property name="geometry">
      <rect>
       <x>240</x>
-      <y>760</y>
+      <y>790</y>
       <width>1031</width>
-      <height>20</height>
+      <height>21</height>
      </rect>
     </property>
     <property name="orientation">
@@ -416,7 +416,7 @@
       <x>230</x>
       <y>580</y>
       <width>20</width>
-      <height>191</height>
+      <height>211</height>
      </rect>
     </property>
     <property name="orientation">
@@ -568,7 +568,7 @@
       <x>640</x>
       <y>590</y>
       <width>141</width>
-      <height>151</height>
+      <height>91</height>
      </rect>
     </property>
     <property name="font">
@@ -654,7 +654,7 @@
      <bool>false</bool>
     </property>
    </widget>
-   <widget class="QCheckBox" name="fastmode_cb">
+   <widget class="QCheckBox" name="stickmodel">
     <property name="geometry">
      <rect>
       <x>30</x>
@@ -664,8 +664,52 @@
      </rect>
     </property>
     <property name="text">
-     <string>FAST MODE</string>
+     <string>Strick</string>
     </property>
+   </widget>
+   <widget class="QGroupBox" name="groupBox_5">
+    <property name="geometry">
+     <rect>
+      <x>640</x>
+      <y>690</y>
+      <width>141</width>
+      <height>91</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
+    <property name="title">
+     <string>ZOOM</string>
+    </property>
+    <widget class="QCheckBox" name="zoomx">
+     <property name="geometry">
+      <rect>
+       <x>20</x>
+       <y>40</y>
+       <width>91</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string> X</string>
+     </property>
+    </widget>
+    <widget class="QCheckBox" name="zoomy">
+     <property name="geometry">
+      <rect>
+       <x>80</x>
+       <y>40</y>
+       <width>91</width>
+       <height>19</height>
+      </rect>
+     </property>
+     <property name="text">
+      <string>Y</string>
+     </property>
+    </widget>
    </widget>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -675,7 +719,7 @@
      <x>0</x>
      <y>0</y>
      <width>1291</width>
-     <height>37</height>
+     <height>45</height>
     </rect>
    </property>
    <property name="font">
@@ -724,6 +768,7 @@
      <addaction name="actiontxt"/>
      <addaction name="actionexcel"/>
      <addaction name="actionfigure"/>
+     <addaction name="actionbatch_of_txt"/>
     </widget>
     <addaction name="menuOpen"/>
     <addaction name="actionSave"/>
@@ -743,21 +788,49 @@
     <property name="title">
      <string>Edit</string>
     </property>
+    <widget class="QMenu" name="menuAction">
+     <property name="font">
+      <font>
+       <family>Arial</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="title">
+      <string>Action</string>
+     </property>
+     <addaction name="actionBaseline_plus"/>
+     <addaction name="actionBaseline_minus"/>
+     <addaction name="actionpeakindex_plus"/>
+     <addaction name="actionpeakindex_minus"/>
+     <addaction name="actioncopy_peak"/>
+    </widget>
+    <widget class="QMenu" name="menu_2">
+     <property name="title">
+      <string>在这里输入</string>
+     </property>
+    </widget>
     <addaction name="actionDelete"/>
-    <addaction name="actionBaseline_plus"/>
-    <addaction name="actionBaseline_minus"/>
-    <addaction name="actionpeakindex_plus"/>
-    <addaction name="actionpeakindex_minus"/>
+    <addaction name="actionparameters_setting"/>
+    <addaction name="menuAction"/>
+    <addaction name="menu_2"/>
    </widget>
    <widget class="QMenu" name="menuPlot">
     <property name="title">
      <string>Plot</string>
     </property>
     <widget class="QMenu" name="menucontour_lenght">
+     <property name="geometry">
+      <rect>
+       <x>0</x>
+       <y>0</y>
+       <width>166</width>
+       <height>120</height>
+      </rect>
+     </property>
      <property name="font">
       <font>
        <family>Arial</family>
-       <pointsize>14</pointsize>
+       <pointsize>12</pointsize>
       </font>
      </property>
      <property name="title">
@@ -926,6 +999,12 @@
    <property name="text">
     <string>Baseline plus</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="shortcut">
     <string>Ctrl+=</string>
    </property>
@@ -933,6 +1012,12 @@
   <action name="actionBaseline_minus">
    <property name="text">
     <string>Baseline minus</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
    </property>
    <property name="shortcut">
     <string>Ctrl+-</string>
@@ -974,6 +1059,12 @@
    <property name="text">
     <string>peakindex_plus</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="shortcut">
     <string>+</string>
    </property>
@@ -982,6 +1073,12 @@
    <property name="text">
     <string>peakindex_minus</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
    <property name="shortcut">
     <string>_</string>
    </property>
@@ -989,6 +1086,39 @@
   <action name="actionfigure">
    <property name="text">
     <string>figure</string>
+   </property>
+  </action>
+  <action name="actioncopy_peak">
+   <property name="text">
+    <string>copy peak</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+C</string>
+   </property>
+  </action>
+  <action name="actionparameters_setting">
+   <property name="text">
+    <string>parameters setting</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+P</string>
+   </property>
+  </action>
+  <action name="actionbatch_of_txt">
+   <property name="text">
+    <string>batch of txt</string>
    </property>
   </action>
  </widget>
