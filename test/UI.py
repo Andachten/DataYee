@@ -26,8 +26,6 @@ mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
 mpl.rcParams['figure.subplot.left'] = 0.05
 mpl.rcParams['figure.subplot.right'] = 1
-mpl.rcParams['figure.subplot.top'] = 1
-mpl.rcParams['figure.subplot.bottom'] = 0.05
 color_lsts = ['#f76707']*9
 
 
@@ -45,12 +43,11 @@ def getfitcurve(wlcarg, peakindex, data_x):
 class myFigure(FigureCanvas):
     def __init__(self):
         #self.figure = mpl.figure.Figure()
-        self.canvas = FigureCanvas(mpl.figure.Figure(dpi=100))
+        self.canvas = FigureCanvas(mpl.figure.Figure())
         #self.figure = self.canvas.figure
         self.ax = self.canvas.figure.add_subplot()
         self.ax.plot([-1e4, 1e4], [0, 0], lw=1.5, c='#ff8787')
         self.ax.plot([0, 0], [-50, 50], 'r-', lw=1)
-        plt.subplots_adjust(left=0, bottom=0, right=1, top=0.5,hspace=0.1,wspace=0.1)
         #self.figure.patch.set_facecolor('None')
         #self.figure.patch.set_alpha(0)
         self.fc_old = forcecurve()
@@ -63,37 +60,7 @@ class myFigure(FigureCanvas):
                         'fitcurve': [],
                         'k':[]}
         super(myFigure, self).__init__(self.canvas.figure)
-    def zoom_func(self,event,base_scale = 1.1,zoomx_state=True,zoomy_state=True):
-        if not zoomx_state and not zoomy_state:
-            return None
-        cur_xlim = self.ax.get_xlim()
-        cur_ylim = self.ax.get_ylim()
-        cur_xrange = (cur_xlim[1] - cur_xlim[0])*.5
-        cur_yrange = (cur_ylim[1] - cur_ylim[0])*.5
-        xdata = event.xdata # get event x location
-        ydata = event.ydata
-        if event.button == 'up':
-            scale_factor = 1/base_scale
-        elif event.button == 'down':
-            scale_factor = base_scale
-        else:
-            scale_factor = 1
-        if zoomx_state:
-            self.ax.set_xlim([xdata - cur_xrange*scale_factor,
-                     xdata + cur_xrange*scale_factor])
-        if zoomy_state:
-            self.ax.set_ylim([ydata - cur_yrange*scale_factor,
-                     ydata + cur_yrange*scale_factor])
-    def motion(self,dx,dy):
-        cur_xlim = self.ax.get_xlim()
-        cur_ylim = self.ax.get_ylim()
-        x = (cur_xlim[1] + cur_xlim[0])*0.5-dx
-        y = (cur_ylim[1] + cur_ylim[0])*0.5-dy
-        cur_xrange = (cur_xlim[1] - cur_xlim[0])*.5
-        cur_yrange = (cur_ylim[1] - cur_ylim[0])*.5
-        self.ax.set_ylim([y - cur_yrange,y + cur_yrange])
-        self.ax.set_xlim([x - cur_xrange,x + cur_xrange])
-        
+
     def getdata(self):
         data = self.fc_new.get_prodata()['retract']
         self.data_y = data['vDeflection'][:, 0] * 1e12
@@ -294,18 +261,11 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F.canvas)
         self.action_init()
-        self.xdata,self.xdata_r = None,None
-        self.ydata,self.ydata_r = None,None
-        self.zoomx_state =True
-        self.zoomy_state = True
-        self.press=False
-        self.control = False
+        self.xdata=None
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
-        self.F.canvas.mpl_connect('scroll_event',self.scroll_event)
-        self.F.canvas.mpl_connect('motion_notify_event',self.onmotion_event)
-        self.F.canvas.mpl_connect("button_release_event", self.on_release)
+        #self.canvas.mpl_connect("button_release_event", self.on_release)
         #self.canvas.mpl_connect("motion_notify_event", self.on_move)
         self.siglestep = 5
         self.lc_value = self.lcdoubleSpinBox.value()
@@ -357,33 +317,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.stickmodel.setChecked(False)
         self.stickmodel.stateChanged.connect(self.statemodel)
         self.lineEdit.returnPressed.connect(self.changemark)
-        self.zoomx.setChecked(True)
-        self.zoomy.setChecked(True)
-        self.zoomx.stateChanged.connect(self.choose_zoom)
-        self.zoomy.stateChanged.connect(self.choose_zoom)
-    def onmotion_event(self,event):
-        if self.press and not self.control and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
-            dx = event.xdata-self.xdata
-            dy = event.ydata-self.ydata
-            self.F.motion(dx, dy)
-            self.displace_result()
-    def on_release(self,event):
-        self.press=False
-        self.xdata_r,self.ydata_r = event.xdata,event.ydata
-        if self.control and None not in[self.xdata_r,self.xdata]:
-            self.pb.rebaseline_cal(self.xdata,self.ydata)
-            self.displace_result()
-    def choose_zoom(self):
-        if self.zoomy.isChecked():
-            self.zoomy_state = True
-        else:
-            self.zoomy_state = False
-        if self.zoomx.isChecked():
-            self.zoomx_state = True
-        else:
-            self.zoomx_state = False  
     def on_press(self, event):
-        self.press=True
+        #print("press")
         if event.xdata==None or event.ydata==None:
             return None
         self.xdata = event.xdata
@@ -395,11 +330,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         #print("event.inaxes", event.inaxes)
         #print("x", event.x)
         #print("y", event.y)
-    def scroll_event(self,event):
-        if self.xdata!=None and self.ydata!=None:
-            event.xdata,event.ydata = self.xdata,self.ydata
-        self.F.zoom_func(event,zoomx_state=self.zoomx_state,zoomy_state=self.zoomy_state)
-        self.displace_result()
 
     def openfile(self):
         fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", '*.txt;;*.jpk-force;;*.jpk-force-map;;*.spm')
@@ -505,11 +435,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.peakindexplus()
         elif e.key() == Qt.Key_Delete:
             self.peakdelete()
-        elif e.key()==Qt.Key_Control:
-            self.control = True
-    def keyReleaseEvent(self,e):
-        if e.key()==Qt.Key_Control:
-            self.control = False
+
     def resetslidevalue(self):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
