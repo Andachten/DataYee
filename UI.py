@@ -3,7 +3,7 @@ import copy
 
 
 import numpy as np
-from src.datapro_new import lcfunc
+from src.datapro import lcfunc
 from src.loadjpk import forcecurve, loadjpkfile
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressDialog, QGridLayout, \
@@ -11,7 +11,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox,
 from src.designer import Ui_MainWindow
 from src.parameters import Ui_Dialog
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
-from src.main_new import programbody
+from src.main import programbody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.style as mplstyle
@@ -547,6 +547,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.adhesionhist()
 
     def spinbox_changevalue(self, value):
+        if not self.pb.state:
+            return None
         sender = self.sender()
         if sender == self.lcdoubleSpinBox:
             self.lc_value = value

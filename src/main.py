@@ -6,27 +6,23 @@ import copy
 import os
 import pickle
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
-from src.datapro import cal_baseline,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,predict,peaknumjudge,slope
-from src.datapro import cal_baseline_cell,findpeakbottom_cell,noise_down,slope_cell
-from src.datapro import Lc_transformer,plotmap,plothist
-smfs_func_lst = [noise_down,cal_baseline,predict,findpeak,findbottom,wlcfit,cleanpeak,countdlc,mkbaseondlc,peaknumjudge,slope]
-cell_func_lst = [noise_down,cal_baseline_cell,findpeakbottom_cell,peaknumjudge,slope_cell]
-def process_customize(fc,functions=[0],tasktype='smfs'):
-    if tasktype == 'smfs':
-        func_lst = smfs_func_lst
-    elif tasktype == 'cell_curve':
-        func_lst = cell_func_lst
+from src.datapro import noise_down,cal_baseline_drift,cal_baseline_x,cal_baseline_y,\
+    cal_highspeed_drift,predict,findpeak,wlcfit,peakH,peakN,slope,countdlc,mkbaseondlc
+from src.datapro import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_slope
+func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
+    cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
+def process_customize(fc,functions=[0]):
     for i in functions:
         func_lst[i](fc)
 def main_smfs(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
     fc.data['tasktype']='smfs'
-    process_customize(fc, [ 1, 3, 4, 5, 6, 7, 8, 9,10])
+    process_customize(fc,[0,2,3,4,6,7,8,9,10,11,12])
     if not fc.data['peaknum_judge']:
         return None
     if fc.data['arg']['usemodel']:
-        process_customize(fc, [2])
+        process_customize(fc, [5])
     if not fc.data['mobilenet_judge']:
         return None
     fc.clean_force()
@@ -35,7 +31,7 @@ def main_cell(fc,zpo):
     if fc.data['rawdata'] == {} or fc.data['rawdata']['retract']['vDeflection'].sum()==0:
         return None
     fc.data['tasktype']='cell_curve'
-    process_customize(fc, [0,1,2,3,4],'cell_curve')
+    process_customize(fc, [0,1,2,3,4,6,9,10])
     if not fc.data['peaknum_judge']:
         return None
     fc.clean_force()
@@ -100,10 +96,21 @@ class programbody():
         else:
             self.forcecurve_index = self.forcecurve_index+n
         self.forcepeak_index = 0
-    def pk_indexchange(self,n):
+    def pk_indexchange(self,n,coor=(None,None)):
+        if not self.state:
+            return None
         peaklength = len(self.fc.data['peakindex'])
         if peaklength == 0:
             return None
+        if n==None and coor[0]!=None and coor[1]!=None:
+            datax,datay=coor
+            self.fc.recover_force(self.ljp)
+            data = self.fc.get_prodata()['retract']
+            data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
+            index = np.argmin(np.abs(data_x[np.argmin(np.abs(datax-data_x))]-data_x[self.fc.data['peakindex']]))
+            self.forcepeak_index=index
+            self.fc.clean_force()
+            return True
         if self.forcepeak_index+n >peaklength-1:
             self.forcepeak_index = peaklength-1
         elif self.forcepeak_index+n<0:
@@ -118,21 +125,38 @@ class programbody():
             if 'retract' not in self.fc.data['rawdata'].keys():
                 self.fc.recover_force(self.ljp)
             self.fc.data['arg'] = self.taskarg
-            cal_baseline(self.fc,only_x=True)
-            process_customize(self.fc,range(4,8),self.tasktype)
+            cal_baseline_x(self.fc)
+            process_customize(self.fc,range(6,13))
         self.curve_change()
+    def rebaseline_cal(self,datax1,datax2):
+        if not self.state:
+            return None
+        if datax1==datax2:
+            return None
+        self.fc.recover_force(self.ljp)
+        data = self.fc.get_prodata()['retract']
+        data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
+        if datax2>datax1:
+            datax2,datax1=datax1,datax2
+        i_start = np.where(data_x>datax2)[0]
+        i_end = np.where(data_x<datax1)[0]
+        if len(i_start)==0 or len(i_end)==0:
+            return None
+        else:
+            i_start = i_start[0]
+            i_end = i_end[-1]
+        if i_end-i_start<5:
+            return None
+        self.fc.clean_force()
     def pk_delete(self):
         if not self.state:
             return None
         if len(self.fc.data['peakindex'])>0:
             del self.fc.data['peakindex'][self.forcepeak_index]
-            del self.fc.data['bottomindex'][self.forcepeak_index]
             del self.fc.data['k'][self.forcepeak_index]
         if self.tasktype == 'smfs' and len(self.fc.data['wlcarg'])>0 :
             del self.fc.data['wlcarg'][self.forcepeak_index]
-            process_customize(self.fc,range(7,9),self.tasktype)
-            self.fc.data['arg'] = self.taskarg
-            process_customize(self.fc,[6,7],self.tasktype)
+            process_customize(self.fc,[11,12])
         self.pk_indexchange(-1)
         self.curve_change()
     def fc_delete(self):
@@ -142,25 +166,25 @@ class programbody():
         self.fc.data['artificial_judge']=False
         self.curve_change()
     def lp_change(self,dlp=0,amply=0.1):
-        if len(self.fc.data['wlcarg'])==0:
+        if not self.state or len(self.fc.data['wlcarg'])==0:
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
         self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
                                                  self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp)
-        process_customize(self.fc,range(6,9),self.tasktype)
+        process_customize(self.fc,[11,12])
         self.curve_change()
     def lc_change(self,dlc=0,amply=1):
-        if len(self.fc.data['wlcarg'])==0:
+        if not self.state or len(self.fc.data['wlcarg'])==0:
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
         self.fc.data['wlcarg'][self.forcepeak_index]=(self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][0]+amply*dlc,
                                                  self.fc.data['wlcarg'][self.forcepeak_index][1])
-        process_customize(self.fc,range(6,9),self.tasktype)
+        process_customize(self.fc,[11,12])
         self.curve_change()
     def k_change(self,k=1,amply=1):
-        if len(self.fc.data['k'])==0:
+        if not self.state or len(self.fc.data['k'])==0:
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
@@ -170,21 +194,29 @@ class programbody():
         if not self.state or len(self.fc.data['peakindex'])==0:
             None
         self.fc.recover_force(self.ljp)
-        self.fc.data['peakindex'][self.forcepeak_index]+=value
-        process_customize(self.fc,[4,5,7,8,10],self.tasktype)
+        res_index = self.fc.data['peakindex'][self.forcepeak_index]+value
+        if res_index<=0 or res_index>=max(self.fc.data['peakindex']):
+            return None
+        if self.forcepeak_index+1<len(self.fc.data['peakindex']) and res_index>self.fc.data['peakindex'][self.forcepeak_index+1]:
+            return None
+        self.fc.data['peakindex'][self.forcepeak_index]=res_index
+        if self.fc.data['tasktype']=='smfs':
+            process_customize(self.fc,[8,10,11,12])
+        elif self.fc.data['tasktype']=='cell_curve':
+            process_customize(self.fc,[9,10])
         self.fc.clean_force()
         self.curve_change()
-        #self.zpo.changedforce()
-        #self.change_dic={}
+        self.zpo.changedforce()
+        self.change_dic={}
     def reset(self):
         if not self.state:
             return None
         self.fc.recover_force(self.ljp)
         self.fc.data['arg'] = self.taskarg
         if self.tasktype == 'smfs':
-            process_customize(self.fc,list(range(2,9))+list(range(10,11)),'smfs')
+            process_customize(self.fc,[6,7,8,9,10,11,12])
         elif self.tasktype == 'cell_curve':
-            process_customize(self.fc,range(1,5),'cell_curve')
+            process_customize(self.fc,[6,9,10])
         self.fc.data['artificial_judge'] = True
         self.fc.clean_force()
         self.curve_change()
@@ -212,6 +244,8 @@ class programbody():
             self.taskarg = self.fc.data['arg']
         else:
             self.fc.data['arg'] = self.taskarg
+        if self.forcepeak_index>len(self.fc.data['peakindex'])-1:
+            self.forcepeak_index = len(self.fc.data['peakindex'])-1
         fc = copy.deepcopy(self.fc)
         F.plot(fc,self.forcepeak_index,self.ljp,self.tasktype)
     def plot_contourhist(self):
@@ -254,27 +288,59 @@ class programbody():
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; dLc={:.1f}nm; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['dlc'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
         elif len(self.fc.data['wlcarg'])>0:
             lclplabel.setText(' Lc={:.1f}nm; lp={:.2f}; k={:.1f}'.format(*self.fc.data['wlcarg'][self.forcepeak_index],self.fc.data['k'][self.forcepeak_index]))
-    def copypeak(self):
+    def copypeak_(self):
         if not self.state:
             return None
+        if len(self.fc.data['peakindex'])==0:
+            return None
+        self.fc.recover_force(self.ljp)
+        data = self.fc.get_prodata()['retract']
+        data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
+        if self.forcepeak_index==0:
+            index = np.where(data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]]-self.taskarg['xsens'])[0]
+        else:
+            index = np.where((data_x<data_x[self.fc.data['peakindex'][self.forcepeak_index]]-self.taskarg['xsens'])&(data_x>data_x[self.fc.data['peakindex'][self.forcepeak_index-1]]+self.taskarg['xsens']))[0]
+        p = findpeak_smallrange(data_y[index])
+        if len(p)==0:
+            v=index[-1]-1
+        else:
+            v=index[0]+p[-1]
         if self.forcepeak_index>=0 and self.tasktype=='smfs':
-            self.fc.data['peakindex'] = np.insert(self.fc.data['peakindex'],self.forcepeak_index,self.fc.data['peakindex'][self.forcepeak_index]-10)
-            self.fc.recover_force(self.ljp)
-            process_customize(self.fc,[4,5,7,8,10],self.tasktype)
+            self.fc.data['peakindex'].insert(self.forcepeak_index,v)
+            process_customize(self.fc,[8,10,11,12])
             self.fc.clean_force()
             self.curve_change()
             self.zpo.changedforce()
             self.change_dic={}
+        self.fc.clean_force()
+    def copypeak(self,xdata,ydata):
+        if not self.state:
+            return None
+        self.fc.recover_force(self.ljp)
+        data = self.fc.get_prodata()['retract']
+        data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
+        index = np.argmin(np.abs(data_x-xdata))
+        i = len(np.where(self.fc.data['peakindex']<index)[0])
+        if self.forcepeak_index>=0:
+            self.fc.data['peakindex'].insert(i,index)
+        if  self.fc.data['tasktype']=='smfs':
+            process_customize(self.fc,[8,10,11,12])
+        elif self.fc.data['tasktype']=='cell_curve':
+            process_customize(self.fc,[9,10])
+        self.fc.clean_force()
+        self.curve_change()
+        self.zpo.changedforce()
+        self.change_dic={}
+        self.forcepeak_index=i
+        self.fc.clean_force()
     def export_prodata(self,sel):
         if not self.state:
             return None
-        highspeed=0
-        if self.taskarg['highspeed'] and len(self.highspeedcorr)>0:
-            highspeed=self.highspeedcorr.mean()*1e12
         if self.tasktype == 'cell_curve':
-            T = self.zpo.export_celldata(self.ljp,highspeed=highspeed)
+            T = self.zpo.export_celldata(self.ljp)
         elif self.tasktype == 'smfs':
-            T = self.zpo.extrac_argdata(self.ljp,highspeed=highspeed)
+            T = self.zpo.get_arg(self.ljp,f_index=self.forcecurve_index)
+            #T = self.zpo.extrac_argdata(self.ljp)
         if not T:
             QMessageBox.information(sel,"Warning","Failed!")
     def exporttxt(self):
@@ -284,6 +350,11 @@ class programbody():
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
         elif self.tasktype == 'smfs':
             self.zpo.exporttxt(self.ljp,self.forcecurve_index)
+    def exportbatchtxt(self):
+        if not self.state:
+            return None
+        for i in range(self.forcecurve_index+1):
+            self.zpo.exporttxt(self.ljp,i,tip_correc=False)
     def export_figure(self,figure):
         if not self.state:
             return None
