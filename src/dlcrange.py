@@ -14,9 +14,9 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_dlc_range(object):
     def setupUi(self, dlc_range):
         dlc_range.setObjectName("dlc_range")
-        dlc_range.resize(395, 417)
+        dlc_range.resize(416, 436)
         self.tableWidget = QtWidgets.QTableWidget(dlc_range)
-        self.tableWidget.setGeometry(QtCore.QRect(-10, 20, 491, 501))
+        self.tableWidget.setGeometry(QtCore.QRect(0, 10, 491, 501))
         self.tableWidget.setInputMethodHints(QtCore.Qt.ImhNone)
         self.tableWidget.setRowCount(10)
         self.tableWidget.setColumnCount(3)
@@ -36,6 +36,13 @@ class Ui_dlc_range(object):
         self.tableWidget.horizontalHeader().setVisible(False)
         self.tableWidget.horizontalHeader().setHighlightSections(False)
         self.tableWidget.verticalHeader().setVisible(False)
+        self.pushButton = QtWidgets.QPushButton(dlc_range)
+        self.pushButton.setGeometry(QtCore.QRect(280, 400, 93, 28))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(14)
+        self.pushButton.setFont(font)
+        self.pushButton.setObjectName("pushButton")
 
         self.retranslateUi(dlc_range)
         QtCore.QMetaObject.connectSlotsByName(dlc_range)
@@ -58,3 +65,4 @@ class Ui_dlc_range(object):
         item = self.tableWidget.item(1, 2)
         item.setText(_translate("dlc_range", "23"))
         self.tableWidget.setSortingEnabled(__sortingEnabled)
+        self.pushButton.setText(_translate("dlc_range", "OK"))

@@ -287,6 +287,24 @@ class dlcrange_window(QDialog,Ui_dlc_range):
         super(dlcrange_window, self).__init__()
         self.setupUi(self)
         self.myWin = myWin
+        self.action_init()
+    def action_init(self):
+        self.tableWidget.itemChanged.connect(self.table_update)
+        self.pushButton.clicked.connect(self.table_update)
+    def table_update(self):
+        row_select = self.tableWidget.currentRow()
+        dic = {}
+        for r in range(1,10):
+            if None not in [self.tableWidget.item(r, 0),self.tableWidget.item(r, 1),self.tableWidget.item(r, 2)]:
+                if self.tableWidget.item(r, 1).text().isdigit() \
+                    and self.tableWidget.item(r, 2).text().isdigit() and\
+                    float(self.tableWidget.item(r, 1).text())<=float(self.tableWidget.item(r, 2).text()) \
+                    and float(self.tableWidget.item(r, 1).text())>0:
+                    dic[self.tableWidget.item(r, 0).text()] = (float(self.tableWidget.item(r, 1).text()),float(self.tableWidget.item(r, 2).text()))
+                else:
+                    QMessageBox.information(self,"Erroe","Input error!")
+                    return None
+        self.close()
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)
