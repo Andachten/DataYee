@@ -362,8 +362,6 @@ class programbody():
         fname = os.path.join(todir,'{}.png'.format(self.forcecurve_index))
         figure.savefig(fname,bbox_inches='tight',transparent=True)
     def execu_autostep(self,progress,sel):
-        if not self.ready_run:
-            return None
         self.zpo.delet_dataYee()
         self.change_dic = {}
         self.highspeedcorr = np.array([])

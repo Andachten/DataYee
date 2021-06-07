@@ -600,6 +600,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def export_figure(self):
         self.pb.export_figure(self.F.figure)
     def run(self):
+        if not self.pb.ready_run:
+            return None
         progress = QProgressDialog(self)
         self.pb.tasktype = self.tasktype
         self.pb.execu_autostep(progress, self)
