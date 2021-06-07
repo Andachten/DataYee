@@ -10,6 +10,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox,
     QButtonGroup,QDialog
 from src.designer import Ui_MainWindow
 from src.parameters import Ui_Dialog
+from src.dlcrange import Ui_dlc_range
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
@@ -256,6 +257,8 @@ class para_window(QDialog,Ui_Dialog):
         self.peakH.valueChanged.connect(self.spinbox_changevalue)
         self.highspeed.toggled.connect(self.hispeedcorrect)
         self.spinBox.valueChanged.connect(self.spinbox_changevalue)
+        self.lp_min.valueChanged.connect(self.spinbox_changevalue)
+        self.lp_max.valueChanged.connect(self.spinbox_changevalue)
         pass
     def spinbox_changevalue(self, value):
         sender = self.sender()
@@ -269,13 +272,21 @@ class para_window(QDialog,Ui_Dialog):
             self.pb.taskarg['peakH'] = value
         elif sender == self.spinBox:
             self.myWin.siglestep = value
+        elif sender == self.lp_max:
+            self.pb.taskarg['lp'][1] = value
+        elif sender == self.lp_min:
+            self.pb.taskarg['lp'][0]=value
     def hispeedcorrect(self):
         if self.highspeed.isChecked()==True:
             self.pb.taskarg['highspeed']=True
         else:
             self.pb.taskarg['highspeed']=False
 
-
+class dlcrange_window(QDialog,Ui_dlc_range):
+    def __init__(self,myWin):
+        super(dlcrange_window, self).__init__()
+        self.setupUi(self)
+        self.myWin = myWin
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)
@@ -613,7 +624,9 @@ if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
     child_window = para_window(myWin.pb,myWin)
+    child_window2 = dlcrange_window(myWin)
     myWin.actionparameters_setting.triggered.connect(child_window.show)
+    myWin.actionmark_base_on_dlc.triggered.connect(child_window2.show)
     myWin.show()
     sys.exit(app.exec_())
     plt.close()

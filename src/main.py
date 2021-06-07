@@ -55,7 +55,7 @@ class programbody():
            'sens': 10,
            'peakN': [1, 6],
            'xlim': 20,
-           'lp': (0.34, 0.38),
+           'lp': [0.34, 0.38],
            'mark': {'GB1': (13, 23), 'I27': (23, 36)},
            'fitjudge': False,
            'usemodel':True,

@@ -608,7 +608,7 @@
          </rect>
         </property>
         <property name="text">
-         <string>Strick</string>
+         <string>Strict</string>
         </property>
        </widget>
       </widget>
@@ -751,7 +751,7 @@
      <x>0</x>
      <y>0</y>
      <width>1307</width>
-     <height>37</height>
+     <height>45</height>
     </rect>
    </property>
    <property name="font">
@@ -836,15 +836,10 @@
      <addaction name="actionpeakindex_minus"/>
      <addaction name="actioncopy_peak"/>
     </widget>
-    <widget class="QMenu" name="menu_2">
-     <property name="title">
-      <string>在这里输入</string>
-     </property>
-    </widget>
     <addaction name="actionDelete"/>
     <addaction name="actionparameters_setting"/>
     <addaction name="menuAction"/>
-    <addaction name="menu_2"/>
+    <addaction name="actionmark_base_on_dlc"/>
    </widget>
    <widget class="QMenu" name="menuPlot">
     <property name="title">
@@ -855,8 +850,8 @@
       <rect>
        <x>0</x>
        <y>0</y>
-       <width>146</width>
-       <height>102</height>
+       <width>166</width>
+       <height>120</height>
       </rect>
      </property>
      <property name="font">
@@ -1020,6 +1015,7 @@
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>12</pointsize>
     </font>
    </property>
@@ -1151,6 +1147,17 @@
   <action name="actionbatch_of_txt">
    <property name="text">
     <string>batch of txt</string>
+   </property>
+  </action>
+  <action name="actionmark_base_on_dlc">
+   <property name="text">
+    <string>mark base on dlc</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
    </property>
   </action>
  </widget>
