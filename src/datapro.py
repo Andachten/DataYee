@@ -171,14 +171,16 @@ def wlcfit(fc):
             fitpoint = p_i
         if fitpoint==b_i:
             fitpoint+=20
-
-        popt, _ = curve_fit(lcfunc, data_x[b_i:fitpoint], data_y[b_i:fitpoint],
+        try:
+            popt, _ = curve_fit(lcfunc, data_x[b_i:fitpoint], data_y[b_i:fitpoint],
                                     bounds=([data_x[p_i], lp[0]], [data_x[p_i] + 50, lp[1]]))
-
-        #popt = (WRC_transformer(data_y[b_i:fitpoint],data_x[b_i:fitpoint],thr=5)[1].mean(),0.36)
-        
-        popt_pre, _ = curve_fit(lcfunc, data_x[b_i:p_i], data_y[b_i:p_i],
+        except:
+            popt = (WRC_transformer(data_y[b_i:fitpoint],data_x[b_i:fitpoint],thr=5)[1].mean(),0.36)
+        try:
+            popt_pre, _ = curve_fit(lcfunc, data_x[b_i:p_i], data_y[b_i:p_i],
                                     bounds=([data_x[p_i], 0], [data_x[p_i] + 50, 0.5]))
+        except:
+            popt_pre = (WRC_transformer(data_y[b_i:p_i],data_x[b_i:p_i],thr=5)[1].mean(),0.36)
         lc, p = popt
         fc.data['wlcarg'].append((lc, p))
         fc.data['slopepre'].append((popt_pre[0],popt_pre[1]))

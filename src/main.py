@@ -18,7 +18,10 @@ def main_smfs(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
     fc.data['tasktype']='smfs'
-    process_customize(fc,[0,2,3,4,6,7,8,9,10,11,12])
+    try:
+        process_customize(fc,[0,2,3,4,6,7,8,9,10,11,12])
+    except:
+        return None
     if not fc.data['peaknum_judge']:
         return None
     if fc.data['arg']['usemodel']:
