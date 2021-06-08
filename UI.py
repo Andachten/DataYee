@@ -30,7 +30,21 @@ mpl.rcParams['figure.subplot.right'] = 1
 mpl.rcParams['figure.subplot.top'] = 1
 mpl.rcParams['figure.subplot.bottom'] = 0.05
 color_lsts = ['#f76707']*9
-
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+ 
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+ 
+    return False
 
 # plt.ion()
 def getfitcurve(wlcarg, peakindex, data_x):
@@ -289,21 +303,26 @@ class dlcrange_window(QDialog,Ui_dlc_range):
         self.myWin = myWin
         self.action_init()
     def action_init(self):
-        self.tableWidget.itemChanged.connect(self.table_update)
         self.pushButton.clicked.connect(self.table_update)
     def table_update(self):
         row_select = self.tableWidget.currentRow()
         dic = {}
         for r in range(1,10):
             if None not in [self.tableWidget.item(r, 0),self.tableWidget.item(r, 1),self.tableWidget.item(r, 2)]:
-                if self.tableWidget.item(r, 1).text().isdigit() \
-                    and self.tableWidget.item(r, 2).text().isdigit() and\
-                    float(self.tableWidget.item(r, 1).text())<=float(self.tableWidget.item(r, 2).text()) \
-                    and float(self.tableWidget.item(r, 1).text())>0:
+                if is_number(self.tableWidget.item(r, 1).text())and\
+                    is_number(self.tableWidget.item(r, 2).text()) and\
+                    float(self.tableWidget.item(r, 1).text())<=float(self.tableWidget.item(r, 2).text()) and\
+                        float(self.tableWidget.item(r, 1).text())>0:
                     dic[self.tableWidget.item(r, 0).text()] = (float(self.tableWidget.item(r, 1).text()),float(self.tableWidget.item(r, 2).text()))
                 else:
                     QMessageBox.information(self,"Erroe","Input error!")
                     return None
+        d = np.diff(np.sort(np.array(list(dic.values())),axis=0).reshape(-1))
+        if sum(np.where(d<=0)[0])!=0:
+            QMessageBox.information(self,"Erroe","Input error!")
+            return None
+        self.myWin.pb.taskarg['mark'] = dic
+        print(self.myWin.pb.taskarg['mark'])
         self.close()
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
