@@ -11,6 +11,7 @@ from src.datapro import noise_down,cal_baseline_drift,cal_baseline_x,cal_baselin
 from src.datapro import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_slope
 func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
     cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
+    
 def process_customize(fc,functions=[0]):
     for i in functions:
         func_lst[i](fc)
@@ -259,7 +260,7 @@ class programbody():
         data_y = data['vDeflection']*1e12
         data_x = data['measuredHeight']*1e9
         img = Lc_transformer(data_x,data_y)
-        img.show()
+        return img
     def plot_contourscatter(self):
         if not self.state or self.tasktype != 'smfs':
             return None
@@ -268,19 +269,19 @@ class programbody():
         data_y = data['vDeflection']*1e12
         data_x = data['measuredHeight']*1e9
         img = Lc_transformer(data_x,data_y,'scatter')
-        img.show()
+        return img
     def adhesionmap(self):
         if not self.state:
             return None
         arr = self.zpo.get_maxforce(self.ljp)
         img = plotmap(arr)
-        img.show()
+        return img
     def adhesionhist(self):
         if not self.state:
             return None
         arr = self.zpo.get_maxforce(self.ljp)
         img = plothist(arr)
-        img.show()
+        return img
     def drawlabel(self,label,lclplabel):
         if not self.state:
             return None

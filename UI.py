@@ -7,15 +7,19 @@ from src.datapro import lcfunc
 from src.loadjpk import forcecurve, loadjpkfile
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressDialog, QGridLayout, \
-    QButtonGroup,QDialog
+    QButtonGroup,QDialog,QGraphicsScene,QGraphicsPixmapItem
+from PyQt5.QtGui import QImage,QPixmap
 from src.designer import Ui_MainWindow
 from src.parameters import Ui_Dialog
 from src.dlcrange import Ui_dlc_range
+from src.showimage import Ui_image
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.style as mplstyle
+
+from PIL import ImageQt,Image
 
 mplstyle.use('fast')
 mpl.rcParams['font.family'] = 'Arial'
@@ -324,6 +328,25 @@ class dlcrange_window(QDialog,Ui_dlc_range):
         self.myWin.pb.taskarg['mark'] = dic
         print(self.myWin.pb.taskarg['mark'])
         self.close()
+class showimage(QDialog,Ui_image):
+    def __init__(self):
+        super(showimage, self).__init__()
+        self.setupUi(self)
+    def show_img(self,img):
+        if img == None:
+            self.close()
+            return None
+        self.img = img
+        scale = img.size[0]/589
+        #img = img.resize((int(img.size[0]/scale), int(img.size[1]/scale)),Image.ANTIALIAS)
+        #img.show()
+        self.frame = QImage(np.array(img), img.size[0], img.size[1], QImage.Format_RGB888)
+        self.pix = QPixmap.fromImage(self.frame).scaledToWidth(int(img.size[0]/scale)).scaledToHeight(int(img.size[1]/scale))
+        self.item = QGraphicsPixmapItem(self.pix)
+        self.scene = QGraphicsScene()  # 创建场景
+        self.scene.addItem(self.item)
+        self.graphicsView.setScene(self.scene)
+        self.show()
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)
@@ -333,11 +356,6 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.tasktype = 'smfs'
         self.svfname = 'test.DataYee-force'
         self.pb = programbody()
-        # self.run_z = False
-        # self.state = False
-        # self.change_dict={}
-        # self.force_index = 0
-        # self.peak_index = 0
         self.F = myFigure()
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F.canvas)
@@ -348,6 +366,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.zoomy_state = True
         self.press=False
         self.control = False
+        self.img = None
+        self.showimage_win = showimage()
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
@@ -586,13 +606,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
     def plot_contourhist(self):
-        self.pb.plot_contourhist()
+        self.img = self.pb.plot_contourhist()
+        self.showimage_win.show_img(self.img)
     def plot_contourscatter(self):
-        self.pb.plot_contourscatter()
+        self.img = self.pb.plot_contourscatter()
+        self.showimage_win.show_img(self.img)
     def adhesionmap(self):
-        self.pb.adhesionmap()
+        self.img = self.pb.adhesionmap()
+        self.showimage_win.show_img(self.img)
     def adhesionhist(self):
-        self.pb.adhesionhist()
+        self.img = self.pb.adhesionhist()
+        self.showimage_win.show_img(self.img)
 
     def spinbox_changevalue(self, value):
         if not self.pb.state:
@@ -655,15 +679,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.execu_autostep(progress, self)
         if self.pb.state:
             self.displace_result()
-
+def win_connect(main_win,dialog):
+    main_win.actionparameters_setting.triggered.connect(dialog[0].show)
+    main_win.actionmark_base_on_dlc.triggered.connect(dialog[1].show)
+    
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     myWin = MyMainWindow()
-    child_window = para_window(myWin.pb,myWin)
-    child_window2 = dlcrange_window(myWin)
-    myWin.actionparameters_setting.triggered.connect(child_window.show)
-    myWin.actionmark_base_on_dlc.triggered.connect(child_window2.show)
+    child_window0 = para_window(myWin.pb,myWin)
+    child_window1 = dlcrange_window(myWin)
+    win_connect(myWin,[child_window0,child_window1])
     myWin.show()
     sys.exit(app.exec_())
     plt.close()
