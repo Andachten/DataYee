@@ -121,7 +121,6 @@ class myFigure(FigureCanvas):
 
     def setlim(self, xlim, ylim):
         if self.range_fix:
-            print('ok')
             return None
         self.ax.set_xlim(xlim)
         self.ax.set_ylim(ylim)
