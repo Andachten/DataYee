@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1307</width>
-    <height>791</height>
+    <height>811</height>
    </rect>
   </property>
   <property name="font">
@@ -245,6 +245,26 @@
           <property name="text">
            <string/>
           </property>
+         </widget>
+         <widget class="QComboBox" name="comboBox">
+          <property name="geometry">
+           <rect>
+            <x>300</x>
+            <y>70</y>
+            <width>91</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Fix lc</string>
+           </property>
+          </item>
          </widget>
         </widget>
        </item>
@@ -848,8 +868,8 @@
     <widget class="QMenu" name="menucontour_lenght">
      <property name="geometry">
       <rect>
-       <x>0</x>
-       <y>0</y>
+       <x>612</x>
+       <y>355</y>
        <width>166</width>
        <height>120</height>
       </rect>

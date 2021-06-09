@@ -432,6 +432,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.zoomy.setChecked(True)
         self.zoomx.stateChanged.connect(self.choose_zoom)
         self.zoomy.stateChanged.connect(self.choose_zoom)
+        self.comboBox.currentIndexChanged[str].connect(self.comboBoxchange)
     def onmotion_event(self,event):
         if self.press and not self.control and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
             dx = event.xdata-self.xdata
@@ -651,6 +652,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.pb.taskarg['peakN'][0] = value
         elif sender == self.spinBox_3:
             self.pb.taskarg['peakN'][1] = value
+    def comboBoxchange(self,value):
+        print(value)
 
     def rbclicked(self):
         sender = self.sender()
