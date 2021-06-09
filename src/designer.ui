@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1307</width>
-    <height>791</height>
+    <height>811</height>
    </rect>
   </property>
   <property name="font">
@@ -246,6 +246,26 @@
            <string/>
           </property>
          </widget>
+         <widget class="QComboBox" name="comboBox">
+          <property name="geometry">
+           <rect>
+            <x>300</x>
+            <y>70</y>
+            <width>91</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <item>
+           <property name="text">
+            <string>None</string>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>Fix lc</string>
+           </property>
+          </item>
+         </widget>
         </widget>
        </item>
        <item>
@@ -299,7 +319,7 @@
             <x>0</x>
             <y>80</y>
             <width>141</width>
-            <height>71</height>
+            <height>101</height>
            </rect>
           </property>
           <property name="font">
@@ -334,6 +354,24 @@
            </property>
            <property name="text">
             <string>Y</string>
+           </property>
+          </widget>
+          <widget class="QCheckBox" name="zoomfix">
+           <property name="geometry">
+            <rect>
+             <x>20</x>
+             <y>70</y>
+             <width>91</width>
+             <height>19</height>
+            </rect>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
+           </property>
+           <property name="text">
+            <string>Fix</string>
            </property>
           </widget>
          </widget>
@@ -848,8 +886,8 @@
     <widget class="QMenu" name="menucontour_lenght">
      <property name="geometry">
       <rect>
-       <x>0</x>
-       <y>0</y>
+       <x>612</x>
+       <y>355</y>
        <width>166</width>
        <height>120</height>
       </rect>
