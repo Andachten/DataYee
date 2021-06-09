@@ -81,6 +81,7 @@ class myFigure(FigureCanvas):
                         'mark': [],
                         'fitcurve': [],
                         'k':[]}
+        self.range_fix = False
         super(myFigure, self).__init__(self.canvas.figure)
     def zoom_func(self,event,base_scale = 1.1,zoomx_state=True,zoomy_state=True):
         if not zoomx_state and not zoomy_state:
@@ -119,6 +120,8 @@ class myFigure(FigureCanvas):
         self.data_x = data['measuredHeight'][:, 0] * 1e9
 
     def setlim(self, xlim, ylim):
+        if self.range_fix:
+            return None
         self.ax.set_xlim(xlim)
         self.ax.set_ylim(ylim)
 
@@ -507,7 +510,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         _ = QMessageBox.information(self, 'DataYee', 'Programm Version:0.1', QMessageBox.Ok | QMessageBox.Close,
                                     QMessageBox.Close)
 
-    def displace_result(self):
+    def displace_result(self,range_fix=False):
+        if range_fix:
+            self.F.range_fix = True
         self.gridlayout.removeWidget(self.F.canvas)
         # plt.close()
         # sip.delete(self.F)
@@ -519,6 +524,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
         self.F.canvas.draw()
         self.gridlayout.addWidget(self.F.canvas)
+        if range_fix:
+            self.F.range_fix = False
 
     def indexplus(self):
         self.pb.fc_indexchange(1)
@@ -535,23 +542,29 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def peakindexplus(self):
         self.pb.pk_indexchange(1)
         self.resetslide()
+        self.F.range_fix = True
         self.displace_result()
+        self.F.range_fix = False
     def peakvalueplus(self):
         self.pb.pv_change(self.siglestep)
+        self.F.range_fix = True
         self.displace_result()
+        self.F.range_fix = False
     def peakvalueminus(self):
         self.pb.pv_change(self.siglestep*-1)
+        self.F.range_fix = True
         self.displace_result()
+        self.F.range_fix = False
 
     def peakindexretact(self):
         self.pb.pk_indexchange(-1)
         self.resetslide()
-        self.displace_result()
+        self.displace_result(range_fix = True)
 
     def peakdelete(self):
         self.pb.pk_delete()
         self.resetslide()
-        self.displace_result()
+        self.displace_result(range_fix = True)
 
     def forcedelete(self):
         self.pb.fc_delete()
@@ -585,12 +598,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         mark = self.lineEdit.text()
         if mark!='':
             self.pb.changemark(mark)
-            self.displace_result()
+            self.displace_result(range_fix = True)
     def lcslidechange(self, value):
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         self.pb.lc_change(value, self.lc_value)
-        self.displace_result()
+        self.displace_result(range_fix = True)
 
     def lpslidechange(self, value):
         self.lc_value = self.lcdoubleSpinBox.value()
@@ -600,7 +613,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def kslidechange(self,value):
         self.k_value = self.kSpinBox.value()
         self.pb.k_change(value, self.k_value)
-        self.displace_result()
+        self.displace_result(range_fix = True)
 
     def resetslide(self):
         self.lcslide.setValue(0)
@@ -650,18 +663,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if self.xdata==None:
             return None
         self.pb.copypeak(self.xdata,self.ydata)
-        self.displace_result()
+        self.displace_result(range_fix = True)
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
         self.pb.taskarg['modelstrict'] = self.stickmodel.isChecked()
 
     def baselineplus(self):
         self.pb.baseline_change(5e-12)
-        self.displace_result()
+        self.displace_result(range_fix = True)
 
     def baselineminus(self):
         self.pb.baseline_change(-5e-12)
-        self.displace_result()
+        self.displace_result(range_fix = True)
 
     def exportexcel(self):
         self.pb.export_prodata(self)
