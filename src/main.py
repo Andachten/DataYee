@@ -53,6 +53,8 @@ class programbody():
         self.Realpeakindex = 0
         self.ready_run = False
         self.state = False
+        self.fixlc_changelp = False
+        self.corr_data = (1,1)
         self.change_dic = {}
         self.highspeedcorr = np.array([])
         self.taskarg = {'peakH': 30,
@@ -174,12 +176,18 @@ class programbody():
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
-        self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
+        if not self.fixlc_changelp:
+            self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
                                                  self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp)
+        else:
+            lp = self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp
+            self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
+                                                 self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp)
+            
         process_customize(self.fc,[11,12])
         self.curve_change()
     def lc_change(self,dlc=0,amply=1):
-        if not self.state or len(self.fc.data['wlcarg'])==0:
+        if not self.state or len(self.fc.data['wlcarg'])==0 or self.fixlc_changelp:
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]

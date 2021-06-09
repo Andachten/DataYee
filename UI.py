@@ -121,6 +121,7 @@ class myFigure(FigureCanvas):
 
     def setlim(self, xlim, ylim):
         if self.range_fix:
+            print('ok')
             return None
         self.ax.set_xlim(xlim)
         self.ax.set_ylim(ylim)
@@ -329,7 +330,6 @@ class dlcrange_window(QDialog,Ui_dlc_range):
             QMessageBox.information(self,"Erroe","Input error!")
             return None
         self.myWin.pb.taskarg['mark'] = dic
-        print(self.myWin.pb.taskarg['mark'])
         self.close()
 class showimage(QDialog,Ui_image):
     def __init__(self):
@@ -362,15 +362,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.F = myFigure()
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F.canvas)
-        self.action_init()
         self.xdata,self.xdata_r = None,None
         self.ydata,self.ydata_r = None,None
         self.zoomx_state =True
         self.zoomy_state = True
+        self.zoomfix_state = False
         self.press=False
         self.control = False
         self.img = None
         self.showimage_win = showimage()
+        self.action_init()
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
@@ -428,10 +429,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.stickmodel.setChecked(False)
         self.stickmodel.stateChanged.connect(self.statemodel)
         self.lineEdit.returnPressed.connect(self.changemark)
-        self.zoomx.setChecked(True)
-        self.zoomy.setChecked(True)
+        self.zoomx.setChecked(self.zoomx_state)
+        self.zoomy.setChecked(self.zoomy_state)
+        self.zoomfix.setChecked(self.zoomfix_state)
         self.zoomx.stateChanged.connect(self.choose_zoom)
         self.zoomy.stateChanged.connect(self.choose_zoom)
+        self.zoomfix.stateChanged.connect(self.choose_zoom)
         self.comboBox.currentIndexChanged[str].connect(self.comboBoxchange)
     def onmotion_event(self,event):
         if self.press and not self.control and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
@@ -454,12 +457,17 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.zoomx_state = True
         else:
             self.zoomx_state = False  
+        if self.zoomfix.isChecked():
+            self.zoomfix_state = True
+        else:
+            self.zoomfix_state = False 
     def on_press(self, event):
         self.press=True
         if event.xdata==None or event.ydata==None:
             return None
         self.xdata = event.xdata
         self.ydata = event.ydata
+        self.pb.coor_data = (self.xdata,self.ydata)
         self.pb.pk_indexchange(n=None,coor=(self.xdata,self.ydata))
         self.displace_result()
         #print("event.xdata", event.xdata)
@@ -514,6 +522,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def displace_result(self,range_fix=False):
         if range_fix:
             self.F.range_fix = True
+        else:
+            self.F.range_fix = False
         self.gridlayout.removeWidget(self.F.canvas)
         # plt.close()
         # sip.delete(self.F)
@@ -525,56 +535,48 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
         self.F.canvas.draw()
         self.gridlayout.addWidget(self.F.canvas)
-        if range_fix:
-            self.F.range_fix = False
 
     def indexplus(self):
         self.pb.fc_indexchange(1)
-        self.displace_result()
-        self.spinBox.setValue(self.pb.forcecurve_index)
         self.resetslide()
+        self.spinBox.setValue(self.pb.forcecurve_index)
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def indexreduct(self):
         self.pb.fc_indexchange(-1)
         self.resetslide()
         self.spinBox.setValue(self.pb.forcecurve_index)
-        self.displace_result()
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def peakindexplus(self):
         self.pb.pk_indexchange(1)
         self.resetslide()
-        self.F.range_fix = True
-        self.displace_result()
-        self.F.range_fix = False
+        self.displace_result(range_fix=self.zoomfix_state)
     def peakvalueplus(self):
         self.pb.pv_change(self.siglestep)
-        self.F.range_fix = True
-        self.displace_result()
-        self.F.range_fix = False
+        self.displace_result(range_fix=self.zoomfix_state)
     def peakvalueminus(self):
         self.pb.pv_change(self.siglestep*-1)
-        self.F.range_fix = True
-        self.displace_result()
-        self.F.range_fix = False
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def peakindexretact(self):
         self.pb.pk_indexchange(-1)
         self.resetslide()
-        self.displace_result(range_fix = True)
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def peakdelete(self):
         self.pb.pk_delete()
         self.resetslide()
-        self.displace_result(range_fix = True)
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def forcedelete(self):
         self.pb.fc_delete()
         self.resetslide()
-        self.displace_result()
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def reset_delete(self):
         self.pb.reset()
-        self.displace_result()
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def keyPressEvent(self, e):
         if e.key() == Qt.Key_Up:
@@ -599,22 +601,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         mark = self.lineEdit.text()
         if mark!='':
             self.pb.changemark(mark)
-            self.displace_result(range_fix = True)
+            self.displace_result(range_fix=self.zoomfix_state)
     def lcslidechange(self, value):
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         self.pb.lc_change(value, self.lc_value)
-        self.displace_result(range_fix = True)
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def lpslidechange(self, value):
         self.lc_value = self.lcdoubleSpinBox.value()
         self.lp_value = self.lpdoubleSpinBox.value()
         self.pb.lp_change(value, self.lp_value)
-        self.displace_result()
+        self.displace_result(range_fix=self.zoomfix_state)
     def kslidechange(self,value):
         self.k_value = self.kSpinBox.value()
         self.pb.k_change(value, self.k_value)
-        self.displace_result(range_fix = True)
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def resetslide(self):
         self.lcslide.setValue(0)
@@ -647,13 +649,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 self.pb.forcecurve_index = value
             else:
                 self.pb.forcecurve_index = len(self.pb.zpo) - 1
-            self.displace_result()
+            self.displace_result(range_fix=self.zoomfix_state)
         elif sender == self.spinBox_2:
             self.pb.taskarg['peakN'][0] = value
         elif sender == self.spinBox_3:
             self.pb.taskarg['peakN'][1] = value
     def comboBoxchange(self,value):
-        print(value)
+        if value == 'Fix lc':
+            self.pb.fixlc_changelp = True
+        else:
+            self.pb.fixlc_changelp = False
 
     def rbclicked(self):
         sender = self.sender()
@@ -666,18 +671,18 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if self.xdata==None:
             return None
         self.pb.copypeak(self.xdata,self.ydata)
-        self.displace_result(range_fix = True)
+        self.displace_result(range_fix=self.zoomfix_state)
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
         self.pb.taskarg['modelstrict'] = self.stickmodel.isChecked()
 
     def baselineplus(self):
         self.pb.baseline_change(5e-12)
-        self.displace_result(range_fix = True)
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def baselineminus(self):
         self.pb.baseline_change(-5e-12)
-        self.displace_result(range_fix = True)
+        self.displace_result(range_fix=self.zoomfix_state)
 
     def exportexcel(self):
         self.pb.export_prodata(self)

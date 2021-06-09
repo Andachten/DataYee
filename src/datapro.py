@@ -24,6 +24,14 @@ mpl.rcParams['axes.spines.top'] = False
 m = MobileNet()
 def lcfunc(x, lc, lp):
     return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
+def wlc2lc(x,f,lp):
+    #lp = lp*1e-9
+    #x = x*1e-9
+    #f=f*1e-12
+    u = f*lp/1.3806e-23/298
+    gu = (27-27/2*u+36*u**2-8*u**3+3*np.sqrt(3)/2*np.sqrt(-u**2*((4*u-3)**3-108)))**(1/3)
+    lc = x/6/u*(3+4*u+(9-3*u+4*u**2)/gu+gu)
+    return lc
 def lcfunc1d(x,lc,lp):
     return 4.114188*(1/lc + 0.5/(lc*(1 - x/lc)**3))/lp
 def rotate(data_x, data_y, index, k):

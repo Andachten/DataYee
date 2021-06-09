@@ -6,24 +6,19 @@ Created on Tue Jun  8 18:15:07 2021
 """
 import numpy as np
 from itertools import product
-from numba import njit
 T = 298
 kb = 1.38e-23
 gama = 0.577216
-@njit
 def BE(x_arr,x_beta,k_off):
     f_beta = kb*T/x_beta
     F_arr = f_beta*np.log(x_arr/f_beta/k_off)
     return F_arr
-@njit
 def Friddle(x_arr,x_beta,k_off,Feq):
     f_beta = kb*T/x_beta
     F_arr = Feq + f_beta*np.log(1+np.e**(-1*gama)*x_arr/(k_off*f_beta))
     return F_arr
-@njit
 def DHS(x_arr,x_beta,k_off,dG):
     pass
-@njit
 def r2_calculate(y_actual: np.ndarray,y_predicted: np.ndarray)->np.float64:
     sse = np.sum((y_actual - y_predicted) ** 2,axis=1)
     sst = np.sum((y_actual - np.mean(y_actual)) ** 2,axis=1)
