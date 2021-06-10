@@ -53,5 +53,5 @@ def fit(x_arr,y_arr,bounds,methods='BE',scale_factor=0.3,max_iter=5):
             bounds[np.where(bounds<0)]=1e-13
         else:
             break
-    return max_r2,best_arg
+    return {'r_2':max_r2,'arg':best_arg}
     

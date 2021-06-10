@@ -11,7 +11,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 class Ui_fitting(object):
     def setupUi(self, fitting):
         fitting.setObjectName("fitting")
-        fitting.resize(766, 472)
+        fitting.resize(898, 680)
         self.gridLayout = QtWidgets.QGridLayout(fitting)
         self.gridLayout.setObjectName("gridLayout")
         self.graphicsView = QtWidgets.QGraphicsView(fitting)
@@ -21,6 +21,7 @@ class Ui_fitting(object):
         self.tableWidget = QtWidgets.QTableWidget(fitting)
         self.tableWidget.setMinimumSize(QtCore.QSize(0, 400))
         self.tableWidget.setMaximumSize(QtCore.QSize(450, 16777215))
+        self.tableWidget.setAutoFillBackground(True)
         self.tableWidget.setRowCount(15)
         self.tableWidget.setColumnCount(5)
         self.tableWidget.setObjectName("tableWidget")
@@ -63,6 +64,7 @@ class Ui_fitting(object):
         self.horizontalLayout = QtWidgets.QHBoxLayout(self.groupBox)
         self.horizontalLayout.setObjectName("horizontalLayout")
         self.argname = QtWidgets.QLabel(self.groupBox)
+        self.argname.setMinimumSize(QtCore.QSize(50, 0))
         self.argname.setText("")
         self.argname.setObjectName("argname")
         self.horizontalLayout.addWidget(self.argname)
@@ -77,9 +79,13 @@ class Ui_fitting(object):
         self.doubleSpinBox_2.setObjectName("doubleSpinBox_2")
         self.horizontalLayout.addWidget(self.doubleSpinBox_2)
         self.unit = QtWidgets.QLabel(self.groupBox)
+        self.unit.setMinimumSize(QtCore.QSize(40, 0))
         self.unit.setText("")
         self.unit.setObjectName("unit")
         self.horizontalLayout.addWidget(self.unit)
+        self.pushButton_3 = QtWidgets.QPushButton(self.groupBox)
+        self.pushButton_3.setObjectName("pushButton_3")
+        self.horizontalLayout.addWidget(self.pushButton_3)
         self.gridLayout.addWidget(self.groupBox, 1, 1, 1, 1)
 
         self.retranslateUi(fitting)
@@ -98,4 +104,5 @@ class Ui_fitting(object):
         self.pushButton.setText(_translate("fitting", "Calculate"))
         self.pushButton_2.setText(_translate("fitting", "Save"))
         self.label.setText(_translate("fitting", "-"))
+        self.pushButton_3.setText(_translate("fitting", "next"))
 
