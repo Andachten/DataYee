@@ -88,8 +88,8 @@ def plot(x_arr,y_arr,arg,methods='BE'):
     y_ = func(x_,*arg)
     ax.plot(x_*1e12,y_*1e12)
     ax.set_title(methods)
-    ax.set_ylabels('Force(pN)')
-    ax.set_xlabels('Loading rate(pN/s)')
+    ax.set_ylabel('Force(pN)')
+    ax.set_xlabel('Loading rate(pN/s)')
     return fig
 class tableplus():
     def __init__(self,table):
@@ -111,7 +111,7 @@ class tableplus():
             lst = text.split('\n')[:-1]
             lst1 = []
             for row in lst:
-                lst1.append(row.split('\t')[:-1])
+                lst1.append(row.split('\t'))
             selected_ranges = self.table.tableWidget.selectedRanges()[0]
             for r_i,row in enumerate(range(selected_ranges.topRow(), selected_ranges.topRow()+len(lst))):
                 for c_i,col in enumerate(range(selected_ranges.leftColumn(), selected_ranges.leftColumn()+len(lst1[0]))):
@@ -125,9 +125,9 @@ class tableplus():
         try:
             text_str = ''
             selected_ranges = self.table.tableWidget.selectedRanges()[0]
-            for row in range(selected_ranges.topRow(), selected_ranges.bottomRow() + 1):
+            for row in range(selected_ranges.topRow(), selected_ranges.bottomRow()+1):
                 row_str = ""
-                for col in range(selected_ranges.leftColumn(), selected_ranges.rightColumn() + 1):
+                for col in range(selected_ranges.leftColumn(), selected_ranges.rightColumn()+1):
                     item = self.table.tableWidget.item(row, col)
                     if item == None:
                         row_str += ' ' + '\t'
@@ -171,10 +171,12 @@ class fitEnergy(QDialog,Ui_fitting,QTableView):
         self.CP = self.contextMenu.addAction('copy')
         self.JQ = self.contextMenu.addAction('cut')
         self.NT = self.contextMenu.addAction('paste')
+        self.DL = self.contextMenu.addAction('delete')
         self.tableplus = tableplus(self)
         self.CP.triggered.connect(self.tableplus.copy)
         self.JQ.triggered.connect(self.tableplus.cut)
         self.NT.triggered.connect(self.tableplus.paste)
+        self.DL.triggered.connect(self.tableplus.del_tb_text)
         
     def showMenu(self, pos):
         self.contextMenu.exec_(QCursor.pos())
