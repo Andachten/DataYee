@@ -171,7 +171,7 @@ class programbody():
         self.fc.data['artificial_judge']=False
         self.curve_change()
     def lp_change(self,dlp=0,amply=0.1):
-        if not self.state or len(self.fc.data['wlcarg'])==0:
+        if not self.state or len(self.fc.data['wlcarg'])==0 or dlp==0:
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
@@ -188,7 +188,7 @@ class programbody():
         process_customize(self.fc,[11,12])
         self.curve_change()
     def lc_change(self,dlc=0,amply=1):
-        if not self.state or len(self.fc.data['wlcarg'])==0 or self.fixlc_changelp:
+        if not self.state or len(self.fc.data['wlcarg'])==0 or self.fixlc_changelp or dlc==0:
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]
@@ -197,7 +197,7 @@ class programbody():
         process_customize(self.fc,[11,12])
         self.curve_change()
     def k_change(self,k=1,amply=1):
-        if not self.state or len(self.fc.data['k'])==0:
+        if not self.state or len(self.fc.data['k'])==0 or k==0:
             return None
         self.fc.data['arg'] = self.taskarg
         real_peakindex = np.argwhere(self.zpo[self.forcecurve_index]['peakindex']==self.fc.data['peakindex'][self.forcepeak_index])[0][0]

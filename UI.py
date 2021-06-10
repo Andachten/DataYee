@@ -620,6 +620,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def resetslide(self):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
+        self.kSlider.setValue(0)
     def plot_contourhist(self):
         self.img = self.pb.plot_contourhist()
         self.showimage_win.show_img(self.img)
