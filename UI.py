@@ -7,14 +7,11 @@ from src.datapro import lcfunc
 from src.loadjpk import forcecurve
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressDialog, QGridLayout, \
-    QButtonGroup,QDialog,QGraphicsScene,QGraphicsPixmapItem
-from PyQt5.QtGui import QImage,QPixmap
+    QButtonGroup,QDialog,QGraphicsScene,QGraphicsPixmapItem,QTableWidgetItem
+
 from src.designer import Ui_MainWindow
-from src.parameters import Ui_Dialog
-from src.dlcrange import Ui_dlc_range
-from src.showimage import Ui_image
 from src.fittingcore import fitEnergy
-from src.datapro import is_number
+from src.ui_related import dlcrange_window,showimage,para_window
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
@@ -252,90 +249,8 @@ class myFigure(FigureCanvas):
             self.setlim((self.data_x.min()-20, self.data_x.max() + 0.1*(self.data_x.max()-self.data_x.min())), (ylim_min, self.data_y.max() + 10))
         plt.draw()
         self.fc_old = copy.deepcopy(self.fc_new)
-class para_window(QDialog,Ui_Dialog):
-    def __init__(self,pb,myWin):
-        super(para_window, self).__init__()
-        self.setupUi(self)
-        self.pb=pb
-        self.myWin = myWin
-        self.action_init()
-    def action_init(self):
-        self.sens.valueChanged.connect(self.spinbox_changevalue)
-        self.xlimit.valueChanged.connect(self.spinbox_changevalue)
-        self.xsens.valueChanged.connect(self.spinbox_changevalue)
-        self.peakH.valueChanged.connect(self.spinbox_changevalue)
-        self.highspeed.toggled.connect(self.hispeedcorrect)
-        self.spinBox.valueChanged.connect(self.spinbox_changevalue)
-        self.lp_min.valueChanged.connect(self.spinbox_changevalue)
-        self.lp_max.valueChanged.connect(self.spinbox_changevalue)
-        pass
-    def spinbox_changevalue(self, value):
-        sender = self.sender()
-        if sender == self.sens:
-            self.pb.taskarg['sens'] = value
-        elif sender == self.xlimit:
-            self.pb.taskarg['xlim'] = value
-        elif sender == self.xsens:
-            self.pb.taskarg['xsens'] = value
-        elif sender == self.peakH:
-            self.pb.taskarg['peakH'] = value
-        elif sender == self.spinBox:
-            self.myWin.siglestep = value
-        elif sender == self.lp_max:
-            self.pb.taskarg['lp'][1] = value
-        elif sender == self.lp_min:
-            self.pb.taskarg['lp'][0]=value
-    def hispeedcorrect(self):
-        if self.highspeed.isChecked()==True:
-            self.pb.taskarg['highspeed']=True
-        else:
-            self.pb.taskarg['highspeed']=False
 
-class dlcrange_window(QDialog,Ui_dlc_range):
-    def __init__(self,myWin):
-        super(dlcrange_window, self).__init__()
-        self.setupUi(self)
-        self.myWin = myWin
-        self.action_init()
-    def action_init(self):
-        self.pushButton.clicked.connect(self.table_update)
-    def table_update(self):
-        dic = {}
-        for r in range(1,10):
-            if None not in [self.tableWidget.item(r, 0),self.tableWidget.item(r, 1),self.tableWidget.item(r, 2)]:
-                if is_number(self.tableWidget.item(r, 1).text())and\
-                    is_number(self.tableWidget.item(r, 2).text()) and\
-                    float(self.tableWidget.item(r, 1).text())<=float(self.tableWidget.item(r, 2).text()) and\
-                        float(self.tableWidget.item(r, 1).text())>0:
-                    dic[self.tableWidget.item(r, 0).text()] = (float(self.tableWidget.item(r, 1).text()),float(self.tableWidget.item(r, 2).text()))
-                else:
-                    QMessageBox.information(self,"Erroe","Input error!")
-                    return None
-        d = np.diff(np.sort(np.array(list(dic.values())),axis=0).reshape(-1))
-        if sum(np.where(d<=0)[0])!=0:
-            QMessageBox.information(self,"Erroe","Input error!")
-            return None
-        self.myWin.pb.taskarg['mark'] = dic
-        self.close()
-class showimage(QDialog,Ui_image):
-    def __init__(self):
-        super(showimage, self).__init__()
-        self.setupUi(self)
-    def show_img(self,img):
-        if img == None:
-            self.close()
-            return None
-        self.img = img
-        scale = img.size[0]/589
-        #img = img.resize((int(img.size[0]/scale), int(img.size[1]/scale)),Image.ANTIALIAS)
-        #img.show()
-        self.frame = QImage(np.array(img), img.size[0], img.size[1], QImage.Format_RGB888)
-        self.pix = QPixmap.fromImage(self.frame).scaledToWidth(int(img.size[0]/scale)).scaledToHeight(int(img.size[1]/scale))
-        self.item = QGraphicsPixmapItem(self.pix)
-        self.scene = QGraphicsScene()  # 创建场景
-        self.scene.addItem(self.item)
-        self.graphicsView.setScene(self.scene)
-        self.show()
+
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):

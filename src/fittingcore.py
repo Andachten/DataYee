@@ -11,9 +11,10 @@ kb = 1.38e-23
 gama = 0.577216
 import matplotlib.pyplot as plt
 from src.fittingEnergy import Ui_fitting
-from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QMenu,QApplication,QTableView,QTableWidgetItem
+from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QMenu,QTableView
 from src.datapro import is_number,fig2img
-from PyQt5.QtGui import QImage,QPixmap,QCursor,QStandardItem
+from src.ui_related import tableplus
+from PyQt5.QtGui import QImage,QPixmap,QCursor
 from PyQt5.QtCore import Qt
 def BE(x_arr,x_beta,k_off):
     f_beta = kb*T/x_beta
@@ -91,68 +92,7 @@ def plot(x_arr,y_arr,arg,methods='BE'):
     ax.set_ylabel('Force(pN)')
     ax.set_xlabel('Loading rate(pN/s)')
     return fig
-class tableplus():
-    def __init__(self,table):
-        self.table = table
-    def del_tb_text(self):
-        try:
-            selected_ranges = self.table.tableWidget.selectedRanges()[0]
-            for row in range(selected_ranges.topRow(), selected_ranges.bottomRow() + 1):
-                for col in range(selected_ranges.leftColumn(), selected_ranges.rightColumn() + 1):
-                    newItem = QTableWidgetItem()
-                    self.table.tableWidget.setItem(row, col, newItem)
-        except BaseException as e:
-            print(e)
-            return
-    
-    def paste_tb_text(self):
-        try:
-            text = QApplication.clipboard().text()
-            lst = text.split('\n')[:-1]
-            lst1 = []
-            for row in lst:
-                lst1.append(row.split('\t'))
-            selected_ranges = self.table.tableWidget.selectedRanges()[0]
-            for r_i,row in enumerate(range(selected_ranges.topRow(), selected_ranges.topRow()+len(lst))):
-                for c_i,col in enumerate(range(selected_ranges.leftColumn(), selected_ranges.leftColumn()+len(lst1[0]))):
-                    newItem = QTableWidgetItem(lst1[r_i][c_i])
-                    self.table.tableWidget.setItem(row, col, newItem)
-        except Exception as e:
-            print(e)
-            return None
-    
-    def selected_tb_text(self):
-        try:
-            text_str = ''
-            selected_ranges = self.table.tableWidget.selectedRanges()[0]
-            for row in range(selected_ranges.topRow(), selected_ranges.bottomRow()+1):
-                row_str = ""
-                for col in range(selected_ranges.leftColumn(), selected_ranges.rightColumn()+1):
-                    item = self.table.tableWidget.item(row, col)
-                    if item == None:
-                        row_str += ' ' + '\t'
-                    else:
-                        row_str += item.text() + '\t'
-                text_str += row_str + '\n'
-            clipboard = QApplication.clipboard() 
-            clipboard.setText(text_str)
-            return text_str
-        except BaseException as e:
-            print(e)
-            return None
- 
-    def copy(self):
-        text = self.selected_tb_text()
-        if text:
-            clipboard = QApplication.clipboard()
-            clipboard.setText(text)
- 
-    def cut(self):
-        self.copy()
-        self.del_tb_text()
- 
-    def paste(self):
-        self.paste_tb_text()
+
 class fitEnergy(QDialog,Ui_fitting,QTableView):
     def __init__(self):
         super(fitEnergy, self).__init__()
