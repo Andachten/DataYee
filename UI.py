@@ -4,7 +4,7 @@ import copy
 
 import numpy as np
 from src.datapro import lcfunc
-from src.loadjpk import forcecurve, loadjpkfile
+from src.loadjpk import forcecurve
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressDialog, QGridLayout, \
     QButtonGroup,QDialog,QGraphicsScene,QGraphicsPixmapItem
@@ -13,15 +13,15 @@ from src.designer import Ui_MainWindow
 from src.parameters import Ui_Dialog
 from src.dlcrange import Ui_dlc_range
 from src.showimage import Ui_image
-from src.fittingEnergy import Ui_fitting
-from src.fittingcore import fit
+from src.fittingcore import fitEnergy
+from src.datapro import is_number
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.style as mplstyle
 
-from PIL import ImageQt,Image
+#from PIL import ImageQt,Image
 
 mplstyle.use('fast')
 mpl.rcParams['font.family'] = 'Arial'
@@ -36,21 +36,7 @@ mpl.rcParams['figure.subplot.right'] = 1
 mpl.rcParams['figure.subplot.top'] = 1
 mpl.rcParams['figure.subplot.bottom'] = 0.05
 color_lsts = ['#f76707']*9
-def is_number(s):
-    try:
-        float(s)
-        return True
-    except ValueError:
-        pass
- 
-    try:
-        import unicodedata
-        unicodedata.numeric(s)
-        return True
-    except (TypeError, ValueError):
-        pass
- 
-    return False
+
 
 # plt.ion()
 def getfitcurve(wlcarg, peakindex, data_x):
@@ -350,67 +336,7 @@ class showimage(QDialog,Ui_image):
         self.scene.addItem(self.item)
         self.graphicsView.setScene(self.scene)
         self.show()
-class fitEnergy(QDialog,Ui_fitting):
-    def __init__(self):
-        super(fitEnergy, self).__init__()
-        self.setupUi(self)
-        self.arglst = ['x_beta','k_off']
-        self.argindex = 0
-        self.arg = dict(zip(self.arglst,[[0.1,0.9],[0.1,10]]))
-        self.pushButton_3.clicked.connect(self.changearg)
-        self.doubleSpinBox.valueChanged.connect(self.getarg)
-        self.doubleSpinBox_2.valueChanged.connect(self.getarg)
-        self.pushButton.clicked.connect(self.calculate)
-    def start(self,energytype):
-        self.energytype = energytype
-        self.showlabel()
-        self.setspinvalue()
-        self.show()
-    def setspinvalue(self):
-        self.doubleSpinBox.setValue(self.arg[self.arglst[self.argindex]][0])
-        self.doubleSpinBox_2.setValue(self.arg[self.arglst[self.argindex]][1])
-    def changearg(self):
-        if self.argindex<len(self.arglst)-1:
-            self.argindex = self.argindex+1
-        else:
-            self.argindex = 0
-        self.showlabel()
-        self.setspinvalue()
-    def showlabel(self):
-        arglabel = self.arglst[self.argindex]
-        self.argname.setText(arglabel)
-        if arglabel == 'x_beta':
-            self.unit.setText('nm')
-        else:
-            self.unit.setText('')
-    def getarg(self,value):
-        sender = self.sender()
-        if sender == self.doubleSpinBox:
-            self.arg[self.arglst[self.argindex]][0] = value
-        elif sender == self.doubleSpinBox_2:
-            self.arg[self.arglst[self.argindex]][1] = value
-    def calculate(self):
-        bounds = np.array(list(self.arg.values()))
-        if len(np.where(np.diff(bounds)<=0))!=0:
-            QMessageBox.information(self,"Erroe","Input error!")
-            return None
-        bounds[0] = bounds[0]*1e-9
-        x_arr = np.array([])
-        y_arr = np.array([])
-        for i in range(1,15):
-            y = self.tableWidget.item(i, 0)
-            x = self.tableWidget.item(i, 1)
-            if None not in [y,x] and is_number(x.text()) and is_number(y.text()):
-                y,x = float(y),float(x)
-                if y<=0 or x<=0:
-                    QMessageBox.information(self,"Erroe","Input error!")
-                    return None
-                x_arr = np.append(x_arr,x)
-                y_arr = np.append(y_arr,y)
-        if len(x_arr)<=3:
-            QMessageBox.information(self,"Erroe","Too little data!")
-            return None
-        arg = fit(x_arr,y_arr,bounds,method=self.energytype)
+
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)

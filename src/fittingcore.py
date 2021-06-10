@@ -9,6 +9,12 @@ from itertools import product
 T = 298
 kb = 1.38e-23
 gama = 0.577216
+import matplotlib.pyplot as plt
+from src.fittingEnergy import Ui_fitting
+from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QMenu,QApplication,QTableView
+from src.datapro import is_number,fig2img
+from PyQt5.QtGui import QImage,QPixmap,QCursor,QStandardItem
+from PyQt5.QtCore import Qt
 def BE(x_arr,x_beta,k_off):
     f_beta = kb*T/x_beta
     F_arr = f_beta*np.log(x_arr/f_beta/k_off)
@@ -32,12 +38,16 @@ def fit(x_arr,y_arr,bounds,methods='BE',scale_factor=0.3,max_iter=5):
         func = BE
     elif methods == 'Friddle':
         arg_num = 3
+        if len(bounds)==2:
+            bounds = np.vstack((bounds,np.array([[0,y_arr.min()]])))
         if len(bounds)!=arg_num:
             return False
         func = Friddle
     elif methods == 'DHS':
         return False
         func = DHS
+    else:
+        return False
     max_r2 = 0
     best_arg = np.array([])
     for i in range(max_iter):
@@ -45,13 +55,232 @@ def fit(x_arr,y_arr,bounds,methods='BE',scale_factor=0.3,max_iter=5):
         arg = [np.tile(x.reshape(-1,1),(1,len(x_arr))) for x in b]
         res = func(x_arr,*arg)
         r2 = r2_calculate(res,y_arr)
-        if max_r2 < r2.max(axis=0):
-            max_r2 = r2.max(axis=0)
+        index0_1 = np.where((r2>0)&(r2<1))[0]
+        if len(index0_1)==0:
+            break
+        max_index = index0_1[r2[index0_1].argmax(axis=0)]
+        if max_r2 < r2[max_index]:
+            max_r2 = r2[max_index]
             max_r2_index = r2.argmax(axis=0)
             best_arg = b.T[max_r2_index]
             bounds = np.tile(best_arg.reshape(-1,1),(1,2))+np.tile(np.diff(bounds)*scale_factor,(1,2))*np.array([-1,1])
             bounds[np.where(bounds<0)]=1e-13
         else:
             break
+    if len(best_arg)==0:
+        return False
     return {'r_2':max_r2,'arg':best_arg}
+def plot(x_arr,y_arr,arg,methods='BE'):
+    if methods == 'BE':
+        func = BE
+    elif methods == 'Friddle':
+        func = Friddle
+    elif methods == 'DHS':
+        return False
+        func = DHS
+    else:
+        return False
+    fig,ax = plt.subplots(dpi=100)
+    ax.set_xscale('log')
+    ax.plot(x_arr*1e12,y_arr*1e12,'ro')
     
+    x_ = np.linspace(x_arr.min(),x_arr.max())
+    y_ = func(x_,*arg)
+    ax.plot(x_*1e12,y_*1e12)
+    ax.set_title(methods)
+    ax.set_ylabels('Force(pN)')
+    ax.set_xlabels('Loading rate(pN/s)')
+    return fig
+class tableplus():
+    def __init__(self,table):
+        self.table = table
+        
+    
+    def del_tb_text(self):
+        try:
+            indexes = self.selectedIndexes()
+            for index in indexes:
+                row, column = index.row(), index.column()
+                model = self.model()
+                item = QStandardItem()
+                model.setItem(row, column, item)
+            self.setModel(model)
+        except BaseException as e:
+            print(e)
+            return
+    
+    def paste_tb_text(self):
+        try:
+            indexes = self.selectedIndexes()
+            for index in indexes:
+                index = index
+                break
+            r, c = index.row(), index.column()
+            text = QApplication.clipboard().text()
+            ls = text.split('\n')
+            ls1 = []
+            for row in ls:
+                ls1.append(row.split('\t'))
+            model = self.model()
+            rows = len(ls)
+            columns = len(ls1[0])
+            for row in range(rows):
+                for column in range(columns):
+                    item = QStandardItem()
+                    item.setText((str(ls1[row][column])))
+                    model.setItem(row + r, column + c, item)
+        except Exception as e:
+            print(e)
+            return
+    
+    def selected_tb_text(self):
+        try:
+            indexes = self.selectedIndexes()  # 获取表格对象中被选中的数据索引列表
+            indexes_dict = {}
+            for index in indexes:  # 遍历每个单元格
+                row, column = index.row(), index.column()  # 获取单元格的行号，列号
+                if row in indexes_dict.keys():
+                    indexes_dict[row].append(column)
+                else:
+                    indexes_dict[row] = [column]
+ 
+            # 将数据表数据用制表符(\t)和换行符(\n)连接，使其可以复制到excel文件中
+            text = ''
+            for row, columns in indexes_dict.items():
+                row_data = ''
+                for column in columns:
+                    data = self.model().item(row, column).text()
+                    if row_data:
+                        row_data = row_data + '\t' + data
+                    else:
+                        row_data = data
+ 
+                if text:
+                    text = text + '\n' + row_data
+                else:
+                    text = row_data
+            return text
+        except BaseException as e:
+            print(e)
+            select_range = self.table.tableWidget.selectedRanges()[0]
+            print(select_range.topRow(),select_range.bottomRow())
+            return ''
+ 
+    def copy(self):
+        text = self.selected_tb_text()  # 获取当前表格选中的数据
+        if text:
+            clipboard = QApplication.clipboard()
+            clipboard.setText(text)
+            # pyperclip.copy(text) # 复制数据到粘贴板
+ 
+    def cut(self):
+        self.copy()
+        self.del_tb_text()
+ 
+    def paste(self):
+        self.paste_tb_text()
+class fitEnergy(QDialog,Ui_fitting,QTableView):
+    def __init__(self):
+        super(fitEnergy, self).__init__()
+        self.setupUi(self)
+        self.arglst = ['x_beta','k_off']
+        self.argindex = 0
+        self.arg = dict(zip(self.arglst,[[0.1,0.9],[0.1,100]]))
+        self.pushButton_3.clicked.connect(self.changearg)
+        self.doubleSpinBox.valueChanged.connect(self.getarg)
+        self.doubleSpinBox_2.valueChanged.connect(self.getarg)
+        self.pushButton.clicked.connect(self.calculate)
+        
+        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.customContextMenuRequested.connect(self.showMenu)
+        self.contextMenu = QMenu(self)
+        self.CP = self.contextMenu.addAction('copy')
+        self.JQ = self.contextMenu.addAction('cut')
+        self.NT = self.contextMenu.addAction('paste')
+        self.CP.triggered.connect(self.copy)
+        self.JQ.triggered.connect(self.cut)
+        self.NT.triggered.connect(self.paste)
+        self.tableplus = tableplus(self)
+    def showMenu(self, pos):
+        self.contextMenu.exec_(QCursor.pos())
+    def copy(self):
+        self.tableplus.copy()
+    def cut(self):
+        self.tableplus.cut()
+    def paste(self):
+        self.tableplus.paste()
+    def start(self,energytype):
+        self.energytype = energytype
+        self.showlabel()
+        self.setspinvalue()
+        self.show()
+    def setspinvalue(self):
+        self.doubleSpinBox.setValue(self.arg[self.arglst[self.argindex]][0])
+        self.doubleSpinBox_2.setValue(self.arg[self.arglst[self.argindex]][1])
+    def changearg(self):
+        if self.argindex<len(self.arglst)-1:
+            self.argindex = self.argindex+1
+        else:
+            self.argindex = 0
+        self.showlabel()
+        self.setspinvalue()
+    def showlabel(self):
+        arglabel = self.arglst[self.argindex]
+        self.argname.setText(arglabel)
+        if arglabel == 'x_beta':
+            self.unit.setText('nm')
+        else:
+            self.unit.setText('')
+    def getarg(self,value):
+        sender = self.sender()
+        if sender == self.doubleSpinBox:
+            self.arg[self.arglst[self.argindex]][0] = value
+        elif sender == self.doubleSpinBox_2:
+            self.arg[self.arglst[self.argindex]][1] = value
+    def showimg(self):
+        img = self.img
+        if img == None:
+            self.close()
+            return None
+        self.img = img
+        scale = img.size[0]/589
+        #img = img.resize((int(img.size[0]/scale), int(img.size[1]/scale)),Image.ANTIALIAS)
+        #img.show()
+        self.frame = QImage(np.array(img), img.size[0], img.size[1], QImage.Format_RGB888)
+        self.pix = QPixmap.fromImage(self.frame).scaledToWidth(int(img.size[0]/scale)).scaledToHeight(int(img.size[1]/scale))
+        self.item = QGraphicsPixmapItem(self.pix)
+        self.scene = QGraphicsScene()  # 创建场景
+        self.scene.addItem(self.item)
+        self.graphicsView.setScene(self.scene)
+        self.show()
+    def calculate(self):
+        bounds = np.array(list(self.arg.values()))
+        if len(np.where(np.diff(bounds)<=0)[0])!=0:
+            QMessageBox.information(self,"Erroe","Input error!")
+            return None
+        bounds[0] = bounds[0]*1e-9
+        x_arr = np.array([])
+        y_arr = np.array([])
+        for i in range(1,15):
+            y = self.tableWidget.item(i, 0)
+            x = self.tableWidget.item(i, 1)
+            if None not in [y,x] and is_number(x.text()) and is_number(y.text()):
+                y,x = float(y.text()),float(x.text())
+                if y<=0 or x<=0:
+                    QMessageBox.information(self,"Erroe","Input error!")
+                    return None
+                x_arr = np.append(x_arr,x)
+                y_arr = np.append(y_arr,y)
+        x_arr,y_arr = x_arr*1e-12,y_arr*1e-12
+        if len(x_arr)<=3:
+            QMessageBox.information(self,"Erroe","Too little data!")
+            return None
+        arg = fit(x_arr,y_arr,bounds,methods=self.energytype)
+        if not arg:
+            QMessageBox.information(self,"Erroe","Fitting error!")
+            return None
+        print(arg)
+        fig = plot(x_arr, y_arr, arg['arg'],methods=self.energytype)
+        self.img = fig2img(fig)
+        plt.close()
+        self.showimg()

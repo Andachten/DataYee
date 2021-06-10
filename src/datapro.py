@@ -43,6 +43,21 @@ def fig2img(fig):
     fig.canvas.draw()
     img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
     return img
+def is_number(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        pass
+ 
+    try:
+        import unicodedata
+        unicodedata.numeric(s)
+        return True
+    except (TypeError, ValueError):
+        pass
+ 
+    return False
 def noise_down(fc):
     data_y = fc.data['rawdata']['retract']['vDeflection'] * 1e12
     r = 0.9
