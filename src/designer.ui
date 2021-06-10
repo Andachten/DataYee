@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1307</width>
-    <height>811</height>
+    <height>782</height>
    </rect>
   </property>
   <property name="font">
@@ -876,8 +876,8 @@
     </widget>
     <addaction name="actionDelete"/>
     <addaction name="actionparameters_setting"/>
-    <addaction name="menuAction"/>
     <addaction name="actionmark_base_on_dlc"/>
+    <addaction name="menuAction"/>
    </widget>
    <widget class="QMenu" name="menuPlot">
     <property name="title">
@@ -886,10 +886,10 @@
     <widget class="QMenu" name="menucontour_lenght">
      <property name="geometry">
       <rect>
-       <x>612</x>
-       <y>355</y>
-       <width>166</width>
-       <height>120</height>
+       <x>756</x>
+       <y>213</y>
+       <width>162</width>
+       <height>114</height>
       </rect>
      </property>
      <property name="font">
@@ -908,7 +908,7 @@
      <property name="font">
       <font>
        <family>Arial</family>
-       <pointsize>14</pointsize>
+       <pointsize>12</pointsize>
       </font>
      </property>
      <property name="title">
@@ -920,9 +920,29 @@
     <addaction name="menucontour_lenght"/>
     <addaction name="menuAdhesion"/>
    </widget>
+   <widget class="QMenu" name="menuPliguin">
+    <property name="title">
+     <string>Pliguin</string>
+    </property>
+    <widget class="QMenu" name="menuEnergy_landscape">
+     <property name="font">
+      <font>
+       <family>Arial</family>
+       <pointsize>12</pointsize>
+      </font>
+     </property>
+     <property name="title">
+      <string>Energy landscape</string>
+     </property>
+     <addaction name="actionBell_Evans"/>
+     <addaction name="actionFriddle"/>
+    </widget>
+    <addaction name="menuEnergy_landscape"/>
+   </widget>
    <addaction name="menu"/>
    <addaction name="menuEdit"/>
    <addaction name="menuPlot"/>
+   <addaction name="menuPliguin"/>
    <addaction name="menuAbout"/>
   </widget>
   <widget class="QToolBar" name="toolBar">
@@ -939,6 +959,12 @@
   <action name="actionSave">
    <property name="text">
     <string>Save</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -976,6 +1002,12 @@
    <property name="text">
     <string>Save as</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
   </action>
   <action name="actiontxt">
    <property name="text">
@@ -991,6 +1023,12 @@
   <action name="actionexcel">
    <property name="text">
     <string>excel</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
    </property>
   </action>
   <action name="actionCreate_methods">
@@ -1019,6 +1057,12 @@
    <property name="text">
     <string>Exit</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
   </action>
   <action name="actionhelp">
    <property name="text">
@@ -1045,6 +1089,12 @@
   <action name="actionDataYee_Force">
    <property name="text">
     <string>DataYee-Force</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
    </property>
   </action>
   <action name="actionDelete">
@@ -1096,7 +1146,7 @@
    <property name="font">
     <font>
      <family>Arial</family>
-     <pointsize>14</pointsize>
+     <pointsize>12</pointsize>
     </font>
    </property>
   </action>
@@ -1107,7 +1157,7 @@
    <property name="font">
     <font>
      <family>Arial</family>
-     <pointsize>14</pointsize>
+     <pointsize>12</pointsize>
     </font>
    </property>
   </action>
@@ -1115,10 +1165,22 @@
    <property name="text">
     <string>Map</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
   </action>
   <action name="actionHistogram">
    <property name="text">
     <string>Histogram</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
    </property>
   </action>
   <action name="actionpeakindex_plus">
@@ -1153,6 +1215,12 @@
    <property name="text">
     <string>figure</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
   </action>
   <action name="actioncopy_peak">
    <property name="text">
@@ -1186,10 +1254,38 @@
    <property name="text">
     <string>batch of txt</string>
    </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
   </action>
   <action name="actionmark_base_on_dlc">
    <property name="text">
     <string>mark base on dlc</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionBell_Evans">
+   <property name="text">
+    <string>Bell Evans</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionFriddle">
+   <property name="text">
+    <string>Friddle</string>
    </property>
    <property name="font">
     <font>
