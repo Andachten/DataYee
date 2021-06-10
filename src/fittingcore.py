@@ -135,31 +135,22 @@ class tableplus():
     
     def selected_tb_text(self):
         try:
-            indexes = self.selectedIndexes()  # 获取表格对象中被选中的数据索引列表
-            indexes_dict = {}
-            for index in indexes:  # 遍历每个单元格
-                row, column = index.row(), index.column()  # 获取单元格的行号，列号
-                if row in indexes_dict.keys():
-                    indexes_dict[row].append(column)
-                else:
-                    indexes_dict[row] = [column]
- 
-            # 将数据表数据用制表符(\t)和换行符(\n)连接，使其可以复制到excel文件中
-            text = ''
-            for row, columns in indexes_dict.items():
-                row_data = ''
-                for column in columns:
-                    data = self.model().item(row, column).text()
-                    if row_data:
-                        row_data = row_data + '\t' + data
+            text_str = ''
+            selected_ranges = self.table.tableWidget.selectedRanges()[0]
+            for row in range(selected_ranges.topRow(), selected_ranges.bottomRow() + 1):
+                row_str = ""
+                # 列（选中的列信息读取）
+                for col in range(selected_ranges.leftColumn(), selected_ranges.rightColumn() + 1):
+                    item = self.table.tableWidget.item(row, col)
+                    if item == None:
+                        row_str += ' ' + '\t'
                     else:
-                        row_data = data
- 
-                if text:
-                    text = text + '\n' + row_data
-                else:
-                    text = row_data
-            return text
+                        row_str += item.text() + '\t'  # 制表符间隔数据
+                text_str += row_str + '\n' # 换行
+            clipboard = QApplication.clipboard()  # 获取剪贴板
+            clipboard.setText(text_str)
+            print(text_str)
+            return text_str
         except BaseException as e:
             print(e)
             select_range = self.table.tableWidget.selectedRanges()[0]
@@ -167,11 +158,10 @@ class tableplus():
             return ''
  
     def copy(self):
-        text = self.selected_tb_text()  # 获取当前表格选中的数据
+        text = self.selected_tb_text()
         if text:
             clipboard = QApplication.clipboard()
             clipboard.setText(text)
-            # pyperclip.copy(text) # 复制数据到粘贴板
  
     def cut(self):
         self.copy()
