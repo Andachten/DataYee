@@ -4,14 +4,13 @@ from PyQt5.QtWidgets import QMessageBox
 import numpy as np
 import copy
 import os
-import pickle
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro import noise_down,cal_baseline_drift,cal_baseline_x,cal_baseline_y,\
     cal_highspeed_drift,predict,findpeak,wlcfit,peakH,peakN,slope,countdlc,mkbaseondlc
-from src.datapro import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_slope
+from src.datapro import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_slope,wlc2lc
 func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
     cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
-    
+
 def process_customize(fc,functions=[0]):
     for i in functions:
         func_lst[i](fc)
@@ -54,7 +53,7 @@ class programbody():
         self.ready_run = False
         self.state = False
         self.fixlc_changelp = False
-        self.corr_data = (1,1)
+        self.coor_data = (1,1)
         self.change_dic = {}
         self.highspeedcorr = np.array([])
         self.taskarg = {'peakH': 30,
@@ -180,9 +179,11 @@ class programbody():
             self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
                                                  self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp)
         else:
+            if self.coor_data[0]<0 or self.coor_data[1]<0:
+                return None
             lp = self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp
-            self.fc.data['wlcarg'][self.forcepeak_index]=(self.fc.data['wlcarg'][self.forcepeak_index][0],
-                                                 self.zpo[self.forcecurve_index]['wlcarg'][real_peakindex][1]+amply*dlp)
+            lc = wlc2lc(float(self.coor_data[0]*1e-9),float(self.coor_data[1]*1e-12),float(lp*1e-9)).real*1e9
+            self.fc.data['wlcarg'][self.forcepeak_index]=(lc,lp)
             
         process_customize(self.fc,[11,12])
         self.curve_change()
