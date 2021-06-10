@@ -11,7 +11,7 @@ kb = 1.38e-23
 gama = 0.577216
 import matplotlib.pyplot as plt
 from src.fittingEnergy import Ui_fitting
-from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QMenu,QApplication,QTableView
+from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QMenu,QApplication,QTableView,QTableWidgetItem
 from src.datapro import is_number,fig2img
 from PyQt5.QtGui import QImage,QPixmap,QCursor,QStandardItem
 from PyQt5.QtCore import Qt
@@ -94,44 +94,32 @@ def plot(x_arr,y_arr,arg,methods='BE'):
 class tableplus():
     def __init__(self,table):
         self.table = table
-        
-    
     def del_tb_text(self):
         try:
-            indexes = self.selectedIndexes()
-            for index in indexes:
-                row, column = index.row(), index.column()
-                model = self.model()
-                item = QStandardItem()
-                model.setItem(row, column, item)
-            self.setModel(model)
+            selected_ranges = self.table.tableWidget.selectedRanges()[0]
+            for row in range(selected_ranges.topRow(), selected_ranges.bottomRow() + 1):
+                for col in range(selected_ranges.leftColumn(), selected_ranges.rightColumn() + 1):
+                    newItem = QTableWidgetItem()
+                    self.table.tableWidget.setItem(row, col, newItem)
         except BaseException as e:
             print(e)
             return
     
     def paste_tb_text(self):
         try:
-            indexes = self.selectedIndexes()
-            for index in indexes:
-                index = index
-                break
-            r, c = index.row(), index.column()
             text = QApplication.clipboard().text()
-            ls = text.split('\n')
-            ls1 = []
-            for row in ls:
-                ls1.append(row.split('\t'))
-            model = self.model()
-            rows = len(ls)
-            columns = len(ls1[0])
-            for row in range(rows):
-                for column in range(columns):
-                    item = QStandardItem()
-                    item.setText((str(ls1[row][column])))
-                    model.setItem(row + r, column + c, item)
+            lst = text.split('\n')[:-1]
+            lst1 = []
+            for row in lst:
+                lst1.append(row.split('\t')[:-1])
+            selected_ranges = self.table.tableWidget.selectedRanges()[0]
+            for r_i,row in enumerate(range(selected_ranges.topRow(), selected_ranges.topRow()+len(lst))):
+                for c_i,col in enumerate(range(selected_ranges.leftColumn(), selected_ranges.leftColumn()+len(lst1[0]))):
+                    newItem = QTableWidgetItem(lst1[r_i][c_i])
+                    self.table.tableWidget.setItem(row, col, newItem)
         except Exception as e:
             print(e)
-            return
+            return None
     
     def selected_tb_text(self):
         try:
@@ -139,23 +127,19 @@ class tableplus():
             selected_ranges = self.table.tableWidget.selectedRanges()[0]
             for row in range(selected_ranges.topRow(), selected_ranges.bottomRow() + 1):
                 row_str = ""
-                # 列（选中的列信息读取）
                 for col in range(selected_ranges.leftColumn(), selected_ranges.rightColumn() + 1):
                     item = self.table.tableWidget.item(row, col)
                     if item == None:
                         row_str += ' ' + '\t'
                     else:
-                        row_str += item.text() + '\t'  # 制表符间隔数据
-                text_str += row_str + '\n' # 换行
-            clipboard = QApplication.clipboard()  # 获取剪贴板
+                        row_str += item.text() + '\t'
+                text_str += row_str + '\n'
+            clipboard = QApplication.clipboard() 
             clipboard.setText(text_str)
-            print(text_str)
             return text_str
         except BaseException as e:
             print(e)
-            select_range = self.table.tableWidget.selectedRanges()[0]
-            print(select_range.topRow(),select_range.bottomRow())
-            return ''
+            return None
  
     def copy(self):
         text = self.selected_tb_text()
@@ -187,18 +171,13 @@ class fitEnergy(QDialog,Ui_fitting,QTableView):
         self.CP = self.contextMenu.addAction('copy')
         self.JQ = self.contextMenu.addAction('cut')
         self.NT = self.contextMenu.addAction('paste')
-        self.CP.triggered.connect(self.copy)
-        self.JQ.triggered.connect(self.cut)
-        self.NT.triggered.connect(self.paste)
         self.tableplus = tableplus(self)
+        self.CP.triggered.connect(self.tableplus.copy)
+        self.JQ.triggered.connect(self.tableplus.cut)
+        self.NT.triggered.connect(self.tableplus.paste)
+        
     def showMenu(self, pos):
         self.contextMenu.exec_(QCursor.pos())
-    def copy(self):
-        self.tableplus.copy()
-    def cut(self):
-        self.tableplus.cut()
-    def paste(self):
-        self.tableplus.paste()
     def start(self,energytype):
         self.energytype = energytype
         self.showlabel()
