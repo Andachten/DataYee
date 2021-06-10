@@ -350,7 +350,7 @@ class programbody():
         if not self.state:
             return None
         if self.tasktype == 'cell_curve':
-            T = self.zpo.export_celldata(self.ljp)
+            T = self.zpo.export_celldata(self.ljp,f_index=self.forcecurve_index)
         elif self.tasktype == 'smfs':
             T = self.zpo.get_arg(self.ljp,f_index=self.forcecurve_index)
             #T = self.zpo.extrac_argdata(self.ljp)

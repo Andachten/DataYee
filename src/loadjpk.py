@@ -550,7 +550,7 @@ class zipfileopera:
         except:
             return False
         return True
-    def export_celldata(self,ljp):
+    def export_celldata(self,ljp,f_index):
         fc = forcecurve()
         dic = {'abs force':[],'force':[],'k':[],'lens':[]}
         for i,data in enumerate(self):
@@ -574,6 +574,8 @@ class zipfileopera:
             dic['force'].append(f)
             dic['k'].append(k)
             dic['lens'].append(len(fc.data['peakindex']))
+            if i==f_index:
+                break
         max_lens = max(dic['lens'])
         for i,lens in enumerate(dic['lens']):
             dic['abs force'][i] +=['']*(max_lens-lens)

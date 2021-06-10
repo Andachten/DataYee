@@ -13,6 +13,7 @@ from src.designer import Ui_MainWindow
 from src.parameters import Ui_Dialog
 from src.dlcrange import Ui_dlc_range
 from src.showimage import Ui_image
+from src.fittingEnergy import Ui_fitting
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
@@ -312,7 +313,6 @@ class dlcrange_window(QDialog,Ui_dlc_range):
     def action_init(self):
         self.pushButton.clicked.connect(self.table_update)
     def table_update(self):
-        row_select = self.tableWidget.currentRow()
         dic = {}
         for r in range(1,10):
             if None not in [self.tableWidget.item(r, 0),self.tableWidget.item(r, 1),self.tableWidget.item(r, 2)]:
@@ -349,6 +349,17 @@ class showimage(QDialog,Ui_image):
         self.scene.addItem(self.item)
         self.graphicsView.setScene(self.scene)
         self.show()
+class fitEnergy(QDialog,Ui_fitting):
+    def __init__(self,myWin):
+        super(fitEnergy, self).__init__()
+        self.setupUi(self)
+        self.myWin = myWin
+    def start(self,energytype):
+        item = self.tableWidget.item(0, 2)
+        item.setText('x_beta')
+        self.show()
+        pass
+    
 class MyMainWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super(MyMainWindow, self).__init__(parent)
@@ -370,6 +381,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.control = False
         self.img = None
         self.showimage_win = showimage()
+        self.fitEnergy = fitEnergy(self)
         self.action_init()
 
     def action_init(self):
@@ -435,6 +447,12 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.zoomy.stateChanged.connect(self.choose_zoom)
         self.zoomfix.stateChanged.connect(self.choose_zoom)
         self.comboBox.currentIndexChanged[str].connect(self.comboBoxchange)
+        self.actionBell_Evans.triggered.connect(self.enerpytypeBE)
+        self.actionFriddle.triggered.connect(self.enerpytypeF)
+    def enerpytypeBE(self):
+        self.fitEnergy.start('BE')
+    def enerpytypeF(self):
+        self.fitEnergy.start('Friddle')
     def onmotion_event(self,event):
         if self.press and not self.control and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
             dx = event.xdata-self.xdata
@@ -710,7 +728,8 @@ if __name__ == '__main__':
     myWin = MyMainWindow()
     child_window0 = para_window(myWin.pb,myWin)
     child_window1 = dlcrange_window(myWin)
-    win_connect(myWin,[child_window0,child_window1])
+    child_window2 = fitEnergy(myWin)
+    win_connect(myWin,[child_window0,child_window1,child_window2])
     myWin.show()
     sys.exit(app.exec_())
     plt.close()
