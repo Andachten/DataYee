@@ -8,9 +8,10 @@ from sklearn.neighbors import KernelDensity
 import numpy as np
 from scipy.signal import find_peaks
 from tslearn.metrics import cdist_dtw
+from tslearn.preprocessing import TimeSeriesScalerMeanVariance,TimeSeriesResampler
 from loadjpk import forcecurve,loadjpkfile,zipfileopera
 from numba import njit
-from datapro_new import *
+from datapro import *
 def WRC_transformer(f,x,thr=20):
     b,gama = 0.11e-9,41/180*np.pi
     kb = 1.38e-23
@@ -72,11 +73,13 @@ if __name__=='__main__':
         cal_baseline_x(fc)
         data = fc.get_prodata()['retract']
         data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
-        dlc,f_max = Lc_transformer(data_x,data_y)
-        res = np.append(dlc,f_max)
-        res = np.pad(res,(0,50-len(res)))
+        data_y = TimeSeriesResampler(sz=80).fit_transform(data_y).reshape(-1)
+        p,_ = find_peaks(data_y,height=20,prominence=5)
+        data_y[np.delete(np.arange(len(data_y)),p)] = 0
+        data_y/=data_y.max()
         if len(arr)==0:
-            arr = res
+            arr = np.array([data_y])
         else:
-            arr = np.vstack((arr,res))
+            arr = np.vstack((arr,np.array([data_y])))
+
         

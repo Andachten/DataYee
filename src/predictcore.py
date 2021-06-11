@@ -97,7 +97,7 @@ def feature_extract(fc):
     plt.close()
     return fig
 class VotingClassify:
-    def __init__(self,modeldir='../model/voting_clf_20210514_acc0.80_svm_lr_rf.model'):
+    def __init__(self,modeldir='./model/voting_clf_20210514_acc0.80_svm_lr_rf.model'):
         self.modeldir = modeldir
         self.loadmodel()
     def loadmodel(self):
@@ -130,7 +130,7 @@ def feature_extract(fc):
 class MobileNet:
     def __init__(self,modeldir=r'./model/2021-05-20-08-method1.0-acc82-1.7.1+cpu.model'):
         self.modeldir = modeldir
-        self.loadmodel()
+        #self.loadmodel()
         pass
     def loadmodel(self):
         self.model = torch.load(self.modeldir, map_location='cpu')
