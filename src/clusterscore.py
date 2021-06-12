@@ -11,7 +11,35 @@ from tslearn.metrics import cdist_dtw
 from tslearn.preprocessing import TimeSeriesScalerMeanVariance,TimeSeriesResampler
 from loadjpk import forcecurve,loadjpkfile,zipfileopera
 from numba import njit
-from datapro import *
+from scipy.ndimage import gaussian_filter
+from scipy.signal import savgol_filter
+def noise_down(fc):
+    data_y = fc.data['rawdata']['retract']['vDeflection'] * 1e12
+    r = 0.9
+    data_y_right = data_y[:, 0][int(r * len(data_y)):]
+    data_y_right_smth = gaussian_filter(data_y_right, 21)
+    for s in np.arange(30)[3::2]:
+        err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
+        if err < 4:
+            break
+    fc.data['filters']['win_lens'] = s
+def cal_baseline_y(fc):
+    fc.data['offset']['y'] = 0
+    data = fc.get_prodata()['retract']
+    data_y = data['vDeflection']
+    index = int(len(data_y)*0.9)
+    fc.data['offset']['y'] = data_y[index:].mean()*-1
+def cal_baseline_x(fc):
+    fc.data['offset']['x'] = 0
+    data = fc.get_prodata()['retract']
+    data_x,data_y = data['measuredHeight'],data['vDeflection']
+    for i, v in enumerate(data_y):
+        if v * data_y[i + 1] < 0:
+            fc.data['offset']['x'] = 0.5 * (data_x[i] + data_x[i + 1])
+            break
+        if i>int(0.5*len(data_x)):
+            fc.data['offset']['x'] = data_x[0]
+            break
 def WRC_transformer(f,x,thr=20):
     b,gama = 0.11e-9,41/180*np.pi
     kb = 1.38e-23
@@ -73,7 +101,7 @@ if __name__=='__main__':
         cal_baseline_x(fc)
         data = fc.get_prodata()['retract']
         data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
-        data_y = TimeSeriesResampler(sz=80).fit_transform(data_y).reshape(-1)
+        data_y = TimeSeriesResampler(sz=100).fit_transform(data_y).reshape(-1)
         p,_ = find_peaks(data_y,height=20,prominence=5)
         data_y[np.delete(np.arange(len(data_y)),p)] = 0
         data_y/=data_y.max()
