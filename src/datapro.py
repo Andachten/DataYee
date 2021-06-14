@@ -298,6 +298,12 @@ def WRC_transformer(f,x,thr=20):
     x1 = x[np.where(f<f_b)]/(1-(4*f[np.where(f<f_b)]*l/kb/T)**(-0.5))
     x2 = x[np.where(f>=f_b)]/(1-(2*f[np.where(f>=f_b)]*b/kb/T)**(-1))
     return np.hstack((f[np.where(f<f_b)],f[np.where(f>=f_b)]))*1e12,np.hstack((x1,x2))*1e9
+def WLC_transformer(f,x,thr=20):
+    x = x[np.where(f>thr)].astype(complex)*1e-9
+    f = f[np.where(f>thr)].astype(complex)*1e-12
+    p = np.array([0.36e-9],dtype=complex)
+    lc = wlc2lc(x,f,p)
+    return f,lc
 def mlti_Gaussian(x, *params):
     y = np.zeros_like(x)
     for i in range(0, len(params), 3):

@@ -6,71 +6,25 @@ Created on Tue Jun  1 09:09:11 2021
 """
 from sklearn.neighbors import KernelDensity
 import numpy as np
-from scipy.signal import find_peaks
-from tslearn.metrics import cdist_dtw
-from tslearn.preprocessing import TimeSeriesScalerMeanVariance,TimeSeriesResampler
 from loadjpk import forcecurve,loadjpkfile,zipfileopera
-from numba import njit
-from scipy.ndimage import gaussian_filter
-from scipy.signal import savgol_filter
-def noise_down(fc):
-    data_y = fc.data['rawdata']['retract']['vDeflection'] * 1e12
-    r = 0.9
-    data_y_right = data_y[:, 0][int(r * len(data_y)):]
-    data_y_right_smth = gaussian_filter(data_y_right, 21)
-    for s in np.arange(30)[3::2]:
-        err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
-        if err < 4:
-            break
-    fc.data['filters']['win_lens'] = s
-def cal_baseline_y(fc):
-    fc.data['offset']['y'] = 0
-    data = fc.get_prodata()['retract']
-    data_y = data['vDeflection']
-    index = int(len(data_y)*0.9)
-    fc.data['offset']['y'] = data_y[index:].mean()*-1
-def cal_baseline_x(fc):
-    fc.data['offset']['x'] = 0
-    data = fc.get_prodata()['retract']
-    data_x,data_y = data['measuredHeight'],data['vDeflection']
-    for i, v in enumerate(data_y):
-        if v * data_y[i + 1] < 0:
-            fc.data['offset']['x'] = 0.5 * (data_x[i] + data_x[i + 1])
-            break
-        if i>int(0.5*len(data_x)):
-            fc.data['offset']['x'] = data_x[0]
-            break
-def WRC_transformer(f,x,thr=20):
-    b,gama = 0.11e-9,41/180*np.pi
-    kb = 1.38e-23
-    T = 298
-    x = x[np.where(f>thr)]*1e-9
-    f = f[np.where(f>thr)]*1e-12
-    l=b*np.cos(gama/2)/np.abs(np.log(np.cos(gama)))
-    f_b = kb*T*l/b**2
-    x1 = x[np.where(f<f_b)]/(1-(4*f[np.where(f<f_b)]*l/kb/T)**(-0.5))
-    x2 = x[np.where(f>=f_b)]/(1-(2*f[np.where(f>=f_b)]*b/kb/T)**(-1))
-    return np.hstack((f[np.where(f<f_b)],f[np.where(f>=f_b)]))*1e12,np.hstack((x1,x2))*1e9
-def Lc_transformer(data_x,data_y,plottype='hist'):
-    f,x = WRC_transformer(data_y,data_x)
-    sort = np.argsort(x)
-    x,f = x[sort],f[sort]
+from dtaidistance import dtw
+from scr.datapro import wlc2lc,cal_baseline_x,cal_baseline_y
+from scipy.spatial.distance import pdist,squareform
+def WLC_transformer(f,x,thre=30):
+    x = x[np.where(f>thre)].astype(complex)*1e-9
+    f = f[np.where(f>thre)].astype(complex)*1e-12
+    p = np.array([0.36e-9],dtype=complex)
+    lc = wlc2lc(x,f,p)
+    return f,lc
+def Lc_transformer(data_x,data_y,length=400,step=2,thre=30):
+    f,x = WLC_transformer(data_y,data_x,thre=thre)
+    x,f = x.real*1e9,f.real*1e12
+    if len(x)<=10:
+        return np.zeros(len(np.arange(0,length,step)))
     kde = KernelDensity(kernel='gaussian', bandwidth=2).fit(x.reshape(-1,1))
-    x_ = np.arange(int(x.min()),int(x.max()))
+    x_ = np.arange(0,length,2)
     log_dens = kde.score_samples(x_.reshape(-1,1))
-    p,_ = find_peaks(np.exp(log_dens)/np.exp(log_dens).max(),height=0.15,distance=5,prominence=0.1)
-    lc = x_[p]
-    dlc = np.diff(lc,prepend=0)
-    f_max = np.array([])
-    for i,_ in enumerate(lc):
-        if i!=len(lc)-1:
-            index = np.where((lc[i]<x_)&(lc[i+1]>x_))[0]
-        else:
-            index = np.where(lc[i]<x_)[0]
-        f_max = np.append(f_max,f[index].max())
-    return dlc,f_max
-
-#@njit
+    return  np.exp(log_dens)
 def count_0(x):
     x_ = np.array([])
     for i in x:
@@ -90,24 +44,58 @@ def wlc_dist(s1,s2,dlc_thre=5,f_thre=30):
     arr_coor = np.dstack(np.where(matrix_dlc<=dlc_thre))[0]
     reduct = max(count_0(arr_coor),count_0(arr_coor[arr_coor[:,1].argsort()]))
     return 1-reduct/score
-if __name__=='__main__':
-    ljp = loadjpkfile(r'D:\jpkdata\20201201-COH-(I29)3-NGL-0_4UMS')
+
+def distance(s1,s2):
+    d = dtw.distance(s1,s2,window=int(0.25*len(s1)), penalty=0.2,use_c=True)
+    return d
+def get_distmatrix(zpo,ljp,lenght=400,step=2,thre=30,):
     fc = forcecurve()
-    arr = np.array([])
-    for i,data in enumerate(ljp):
+    lst = []
+    for i,data in enumerate(zpo):
         fc.data = data
-        noise_down(fc)
+        fc.recover_force(ljp)
         cal_baseline_y(fc)
         cal_baseline_x(fc)
         data = fc.get_prodata()['retract']
-        data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
-        data_y = TimeSeriesResampler(sz=100).fit_transform(data_y).reshape(-1)
-        p,_ = find_peaks(data_y,height=20,prominence=5)
-        data_y[np.delete(np.arange(len(data_y)),p)] = 0
-        data_y/=data_y.max()
-        if len(arr)==0:
-            arr = np.array([data_y])
-        else:
-            arr = np.vstack((arr,np.array([data_y])))
-
+        data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
+        res = Lc_transformer(data_x,data_y,lenght=lenght,step=step,thre=thre)
+        lst.append(res/res.max())
+    arr = np.array(lst)
+    dist =  pdist(arr,metric=distance)
+    matrix = squareform(dist)
+    return matrix
+def sort_similar(index,matrix):
+    arr = matrix[index,:]
+    return arr.argmin()
+    
+        
+if __name__=='__main__':
+    '''
+    from sklearn.cluster import DBSCAN
+    fc = forcecurve()
+    zpo = zipfileopera(r'D:\code\py\CreateData/0517.DataYee-force')
+    ljp = loadjpkfile(zpo.get_sourcepath())
+    lst = []
+    for i,value in enumerate(ljp):
+        fc.data = value
+        fc.recover_force(ljp)
+        cal_baseline_y(fc)
+        cal_baseline_x(fc)
+        data = fc.get_prodata()['retract']
+        data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
+        res = Lc_transformer(data_x,data_y)
+        if len(res)==0:
+            lst.append(np.zeros(200))
+            continue
+        lst.append(res/res.max())
+        if i==1000:
+            break
+        #m = np.array(ImageOps.invert(fig2img(fig).filter(ImageFilter.GaussianBlur(radius = 5)).resize((30,30)).convert('L')))
+    print('Finish stage 1')
+    X = np.array(lst)
+    db = DBSCAN(eps=0.3, min_samples=5,metric=distance).fit(np.array(lst))
+    labels = db.labels_
+    '''
+        
+        
         
