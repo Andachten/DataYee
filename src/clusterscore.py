@@ -10,6 +10,7 @@ from loadjpk import forcecurve,loadjpkfile,zipfileopera
 from dtaidistance import dtw
 from scr.datapro import wlc2lc,cal_baseline_x,cal_baseline_y
 from scipy.spatial.distance import pdist,squareform
+from sklearn.cluster import KMeans
 def WLC_transformer(f,x,thre=30):
     x = x[np.where(f>thre)].astype(complex)*1e-9
     f = f[np.where(f>thre)].astype(complex)*1e-12
@@ -67,6 +68,9 @@ def get_distmatrix(zpo,ljp,lenght=400,step=2,thre=30,):
 def sort_similar(index,matrix):
     arr = matrix[index,:]
     return arr.argmin()
+def KMsClustering(matrix,n_clusters=8):
+    km = KMeans(n_clusters=n_clusters,precompute_distance=True).fit(matrix)
+    return km.labels_
     
         
 if __name__=='__main__':
