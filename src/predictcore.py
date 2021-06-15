@@ -128,7 +128,7 @@ def feature_extract(fc):
     return fig
 
 class MobileNet:
-    def __init__(self,modeldir=r'../model/2021-05-20-08-method1.0-acc82-1.7.1+cpu.model'):
+    def __init__(self,modeldir=r'./model/2021-05-20-08-method1.0-acc82-1.7.1+cpu.model'):
         self.modeldir = modeldir
         self.loadmodel()
         pass

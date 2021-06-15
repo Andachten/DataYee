@@ -71,7 +71,7 @@ def get_lcseq(zpo,ljp,indexlst,length,step,thre):
             lst.append(res)
     #arr = np.array(lst)
     return lst
-def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,parallel=True,multip_n=4):
+def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,parallel=False,multip_n=4):
     if parallel:
         res = multi_run(zpo,ljp,length,step,thre,multip_n)
         arr = np.array([r.get() for r in res])
