@@ -4,13 +4,18 @@ Created on Tue Jun  1 09:09:11 2021
 
 @author: ZhengBin
 """
+from sklearn.cluster import KMeans
+import sys
+import os
+curPath = os.path.abspath(os.path.dirname(__file__))
+rootPath = os.path.split(curPath)[0]
+sys.path.append(rootPath)
 from sklearn.neighbors import KernelDensity
 import numpy as np
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from dtaidistance import dtw
 from src.datapro import wlc2lc,cal_baseline_x,cal_baseline_y
-from scipy.spatial.distance import pdist,squareform
-from sklearn.cluster import KMeans
+
 def WLC_transformer(f,x,thre=30):
     x = x[np.where(f>thre)].astype(complex)*1e-9
     f = f[np.where(f>thre)].astype(complex)*1e-12
@@ -49,13 +54,11 @@ def wlc_dist(s1,s2,dlc_thre=5,f_thre=30):
 def distance(s1,s2):
     d = dtw.distance(s1,s2,window=int(0.25*len(s1)), penalty=0.2,use_c=True)
     return d
-def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,):
-    import time
-    t1 = time.time()
+def get_lcseq(zpo,ljp,indexlst,length,step,thre):
     fc = forcecurve()
     lst = []
-    for i,data in enumerate(zpo):
-        fc.data = data
+    for i,index in enumerate(indexlst):
+        fc.data = zpo[index]
         fc.recover_force(ljp)
         cal_baseline_y(fc)
         cal_baseline_x(fc)
@@ -66,25 +69,44 @@ def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,):
             lst.append(res/res.max())
         else:
             lst.append(res)
-    arr = np.array(lst)
-    t2=time.time()
-    print("{}s".format(t2-t1))
+    #arr = np.array(lst)
+    return lst
+def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,parallel=True,multip_n=4):
+    if parallel:
+        res = multi_run(zpo,ljp,length,step,thre,multip_n)
+        arr = np.array([r.get() for r in res])
+    else:
+        arr = np.array(get_lcseq(zpo,ljp,range(len(zpo)),length,step,thre))
     #dist =  pdist(arr,metric=distance)
     #matrix = squareform(dist)
     matrix = dtw.distance_matrix(arr,window=50,penalty=0.2,use_c=True,parallel=True)
-    t3=time.time()
-    print("{}s".format(t3-t2))
     return matrix
 def sort_similar(index,matrix):
     arr = matrix[index,:]
     return arr.argsort()
 def KMsClustering(matrix,n_clusters=8):
-    km = KMeans(n_clusters=n_clusters,precompute_distance=True).fit(matrix)
+    km = KMeans(n_clusters=n_clusters,precompute_distances=True).fit(matrix)
     return km.labels_
+def multi_run(zpo,ljp,length,step,thre,multip_n=4):
+    from multiprocessing import Pool
+    lens = len(zpo)
+    step = int(lens / multip_n) + 1
+    lst = [range(i,i+step) for i in range(0,lens,step)]
+    pool = Pool(len(lst))
+    result = []
+    print(lst)
+    for indexlst in lst:
+        result.append(pool.apply_async(get_lcseq,(zpo,ljp,indexlst,400,2,30,)))
+    pool.close()
+    pool.join()
+    #arr = np.array([r.get() for r in result])
+    return result
     
         
 if __name__=='__main__':
-    pass
+    zpo = zipfileopera(r'E:\ZB\DataYee/test.DataYee-force')
+    ljp = loadjpkfile(zpo.get_sourcepath())
+    res = multi_run(zpo, ljp, 400, 2, 30)
         
         
         

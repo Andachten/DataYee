@@ -390,7 +390,10 @@ class programbody():
         index = list(KMsClustering(matrix,n_clusters=8))
         SplitDic = {}
         for i,class_index in enumerate(index):
-            SplitDic[class_index] = i
+            if class_index not in SplitDic.keys():
+                SplitDic[class_index] = []
+            else:
+                SplitDic[class_index].append(i)
         self.zpo.split_DataYee(SplitDic)
     def SimilaritySort(self):
         if not self.state or self.tasktype!='smfs':
