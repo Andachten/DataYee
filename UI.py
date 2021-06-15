@@ -341,6 +341,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.comboBox.currentIndexChanged[str].connect(self.comboBoxchange)
         self.actionBell_Evans.triggered.connect(self.enerpytypeBE)
         self.actionFriddle.triggered.connect(self.enerpytypeF)
+        self.actionClustering_by_KMeans.triggered.connect(self.KNcluster)
+        self.actionSort_by_similarity.triggered.connect(self.SimilaritySort)
     def enerpytypeBE(self):
         self.fitEnergy.start('BE')
     def enerpytypeF(self):
@@ -602,6 +604,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.exportbatchtxt()
     def export_figure(self):
         self.pb.export_figure(self.F.figure)
+    def SimilaritySort(self):
+        self.pb.SimilaritySort()
+    def KNcluster(self):
+        self.pb.KNcluster()
     def run(self):
         if not self.pb.ready_run:
             return None

@@ -8,6 +8,7 @@ from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from src.datapro import noise_down,cal_baseline_drift,cal_baseline_x,cal_baseline_y,\
     cal_highspeed_drift,predict,findpeak,wlcfit,peakH,peakN,slope,countdlc,mkbaseondlc
 from src.datapro import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_slope,wlc2lc
+from src.clusterscore import get_distmatrix,sort_similar,KMsClustering
 func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
     cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
 
@@ -374,6 +375,38 @@ class programbody():
         todir = os.path.dirname(self.zpo.fname)
         fname = os.path.join(todir,'{}.png'.format(self.forcecurve_index))
         figure.savefig(fname,bbox_inches='tight',transparent=True)
+    def KNcluster(self):
+        if not self.state or self.tasktype!='smfs':
+            return None
+        selfname = self.zpo.fname
+        rawname = os.path.splitext(os.path.basename(selfname))[0]
+        dirname = os.path.dirname(selfname)
+        outname = os.path.join(dirname,'{}.cluster-matrix'.format(rawname))
+        if not os.path.isfile(outname):
+            matrix = get_distmatrix(self.zpo,self.ljp,length=400,step=2,thre=30)
+            np.savetxt(outname,matrix)
+        else:
+            matrix = np.loadtxt(outname)
+        index = list(KMsClustering(matrix,n_clusters=8))
+        SplitDic = {}
+        for i,class_index in enumerate(index):
+            SplitDic[class_index] = i
+        self.zpo.split_DataYee(SplitDic)
+    def SimilaritySort(self):
+        if not self.state or self.tasktype!='smfs':
+            return None
+        selfname = self.zpo.fname
+        rawname = os.path.splitext(os.path.basename(selfname))[0]
+        dirname = os.path.dirname(selfname)
+        outname = os.path.join(dirname,'{}.cluster-matrix'.format(rawname))
+        if not os.path.isfile(outname):
+            matrix = get_distmatrix(self.zpo,self.ljp,length=400,step=2,thre=30)
+            np.savetxt(outname,matrix)
+        else:
+            matrix = np.loadtxt(outname)
+        index = list(sort_similar(self.forcecurve_index,matrix))
+        SplitDic = {0:index}
+        self.zpo.split_DataYee(SplitDic)
     def execu_autostep(self,progress,sel):
         self.zpo.delet_dataYee()
         self.change_dic = {}

@@ -399,6 +399,25 @@ class zipfileopera:
                         fc.data['datamsg'][1]) + '.pkl'
                     pkl = pickle.dumps(fc.data)
                     zips.writestr(o, pkl)
+    def split_DataYee(self,SplitDic):
+        rawname = os.path.splitext(os.path.basename(self.fname))[0]
+        dirname = os.path.join(os.path.dirname(self.fname),'clustering')
+        if not os.path.isdir(dirname):
+            os.makedirs(dirname)
+        with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
+            lst = copy.deepcopy(zips.namelist())
+        with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
+            for classindex,indexlst in SplitDic.items():
+                outputname = os.path.join(dirname, '{}-{}.{}'.format(rawname,classindex,'DataYee-force'))
+                if os.path.isfile(outputname):
+                    os.remove(outputname)
+                for index in indexlst:
+                    arcname = lst[index]
+                    with zips.open(arcname, 'r') as f:
+                        pkl = f.read()
+                    with ZipFile(outputname, 'a', zipfile.ZIP_DEFLATED) as zips1:
+                        zips1.writestr(arcname, pkl)                
+        
     def exporttxt(self,ljp,forcecurve_index,tip_correc=True):
         fc = forcecurve()
         fc.data=self[forcecurve_index]

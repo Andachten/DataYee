@@ -848,6 +848,12 @@
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuAbout">
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>About</string>
     </property>
@@ -855,6 +861,12 @@
     <addaction name="actionDataYee"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>Edit</string>
     </property>
@@ -868,26 +880,32 @@
      <property name="title">
       <string>Action</string>
      </property>
+     <addaction name="actionDelete"/>
      <addaction name="actionBaseline_plus"/>
      <addaction name="actionBaseline_minus"/>
      <addaction name="actionpeakindex_plus"/>
      <addaction name="actionpeakindex_minus"/>
      <addaction name="actioncopy_peak"/>
     </widget>
-    <addaction name="actionDelete"/>
     <addaction name="actionparameters_setting"/>
     <addaction name="actionmark_base_on_dlc"/>
     <addaction name="menuAction"/>
    </widget>
    <widget class="QMenu" name="menuPlot">
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
     <property name="title">
      <string>Plot</string>
     </property>
     <widget class="QMenu" name="menucontour_lenght">
      <property name="geometry">
       <rect>
-       <x>756</x>
-       <y>213</y>
+       <x>619</x>
+       <y>192</y>
        <width>162</width>
        <height>114</height>
       </rect>
@@ -899,7 +917,7 @@
       </font>
      </property>
      <property name="title">
-      <string>contour lenght</string>
+      <string>Contour lenght</string>
      </property>
      <addaction name="actionHistgram"/>
      <addaction name="actionScatter"/>
@@ -921,14 +939,22 @@
     <addaction name="menuAdhesion"/>
    </widget>
    <widget class="QMenu" name="menuPliguin">
+    <property name="font">
+     <font>
+      <family>Arial</family>
+      <pointsize>12</pointsize>
+     </font>
+    </property>
     <property name="title">
-     <string>Pliguin</string>
+     <string>Plugin</string>
     </property>
     <widget class="QMenu" name="menuEnergy_landscape">
      <property name="font">
       <font>
        <family>Arial</family>
        <pointsize>12</pointsize>
+       <weight>50</weight>
+       <bold>false</bold>
       </font>
      </property>
      <property name="title">
@@ -937,7 +963,15 @@
      <addaction name="actionBell_Evans"/>
      <addaction name="actionFriddle"/>
     </widget>
+    <widget class="QMenu" name="menuClustering">
+     <property name="title">
+      <string>Clustering</string>
+     </property>
+     <addaction name="actionClustering_by_KMeans"/>
+     <addaction name="actionSort_by_similarity"/>
+    </widget>
     <addaction name="menuEnergy_landscape"/>
+    <addaction name="menuClustering"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menuEdit"/>
@@ -1011,7 +1045,7 @@
   </action>
   <action name="actiontxt">
    <property name="text">
-    <string>txt</string>
+    <string>Txt</string>
    </property>
    <property name="font">
     <font>
@@ -1022,7 +1056,7 @@
   </action>
   <action name="actionexcel">
    <property name="text">
-    <string>excel</string>
+    <string>Excel</string>
    </property>
    <property name="font">
     <font>
@@ -1066,7 +1100,7 @@
   </action>
   <action name="actionhelp">
    <property name="text">
-    <string>help</string>
+    <string>Help</string>
    </property>
    <property name="font">
     <font>
@@ -1213,7 +1247,7 @@
   </action>
   <action name="actionfigure">
    <property name="text">
-    <string>figure</string>
+    <string>Figure</string>
    </property>
    <property name="font">
     <font>
@@ -1252,7 +1286,7 @@
   </action>
   <action name="actionbatch_of_txt">
    <property name="text">
-    <string>batch of txt</string>
+    <string>Batch of txt</string>
    </property>
    <property name="font">
     <font>
@@ -1286,6 +1320,28 @@
   <action name="actionFriddle">
    <property name="text">
     <string>Friddle</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionSort_by_similarity">
+   <property name="text">
+    <string>Sort by similarity</string>
+   </property>
+   <property name="font">
+    <font>
+     <family>Arial</family>
+     <pointsize>12</pointsize>
+    </font>
+   </property>
+  </action>
+  <action name="actionClustering_by_KMeans">
+   <property name="text">
+    <string>Clustering by KMeans</string>
    </property>
    <property name="font">
     <font>

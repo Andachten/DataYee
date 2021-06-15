@@ -6,9 +6,9 @@ Created on Tue Jun  1 09:09:11 2021
 """
 from sklearn.neighbors import KernelDensity
 import numpy as np
-from loadjpk import forcecurve,loadjpkfile,zipfileopera
+from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
 from dtaidistance import dtw
-from scr.datapro import wlc2lc,cal_baseline_x,cal_baseline_y
+from src.datapro import wlc2lc,cal_baseline_x,cal_baseline_y
 from scipy.spatial.distance import pdist,squareform
 from sklearn.cluster import KMeans
 def WLC_transformer(f,x,thre=30):
@@ -49,7 +49,9 @@ def wlc_dist(s1,s2,dlc_thre=5,f_thre=30):
 def distance(s1,s2):
     d = dtw.distance(s1,s2,window=int(0.25*len(s1)), penalty=0.2,use_c=True)
     return d
-def get_distmatrix(zpo,ljp,lenght=400,step=2,thre=30,):
+def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,):
+    import time
+    t1 = time.time()
     fc = forcecurve()
     lst = []
     for i,data in enumerate(zpo):
@@ -59,47 +61,30 @@ def get_distmatrix(zpo,ljp,lenght=400,step=2,thre=30,):
         cal_baseline_x(fc)
         data = fc.get_prodata()['retract']
         data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
-        res = Lc_transformer(data_x,data_y,lenght=lenght,step=step,thre=thre)
-        lst.append(res/res.max())
+        res = Lc_transformer(data_x,data_y,length=length,step=step,thre=thre)
+        if res.max()>0:
+            lst.append(res/res.max())
+        else:
+            lst.append(res)
     arr = np.array(lst)
-    dist =  pdist(arr,metric=distance)
-    matrix = squareform(dist)
+    t2=time.time()
+    print("{}s".format(t2-t1))
+    #dist =  pdist(arr,metric=distance)
+    #matrix = squareform(dist)
+    matrix = dtw.distance_matrix(arr,window=50,penalty=0.2,use_c=True,parallel=True)
+    t3=time.time()
+    print("{}s".format(t3-t2))
     return matrix
 def sort_similar(index,matrix):
     arr = matrix[index,:]
-    return arr.argmin()
+    return arr.argsort()
 def KMsClustering(matrix,n_clusters=8):
     km = KMeans(n_clusters=n_clusters,precompute_distance=True).fit(matrix)
     return km.labels_
     
         
 if __name__=='__main__':
-    '''
-    from sklearn.cluster import DBSCAN
-    fc = forcecurve()
-    zpo = zipfileopera(r'D:\code\py\CreateData/0517.DataYee-force')
-    ljp = loadjpkfile(zpo.get_sourcepath())
-    lst = []
-    for i,value in enumerate(ljp):
-        fc.data = value
-        fc.recover_force(ljp)
-        cal_baseline_y(fc)
-        cal_baseline_x(fc)
-        data = fc.get_prodata()['retract']
-        data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
-        res = Lc_transformer(data_x,data_y)
-        if len(res)==0:
-            lst.append(np.zeros(200))
-            continue
-        lst.append(res/res.max())
-        if i==1000:
-            break
-        #m = np.array(ImageOps.invert(fig2img(fig).filter(ImageFilter.GaussianBlur(radius = 5)).resize((30,30)).convert('L')))
-    print('Finish stage 1')
-    X = np.array(lst)
-    db = DBSCAN(eps=0.3, min_samples=5,metric=distance).fit(np.array(lst))
-    labels = db.labels_
-    '''
+    pass
         
         
         
