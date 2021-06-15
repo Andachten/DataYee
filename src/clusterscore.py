@@ -117,7 +117,6 @@ if __name__=='__main__':
     res = multi_run(zpo, ljp, 400, 2, 30)
     arr = np.vstack([r.get() for r in res])
     t2 = time.time()
-    print(t2-t1)
         
         
         
