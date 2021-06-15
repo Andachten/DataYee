@@ -56,21 +56,22 @@ def distance(s1,s2):
     return d
 def get_lcseq(zpo,ljp,indexlst,length,step,thre):
     fc = forcecurve()
-    lst = []
+    arr = np.array([])
     for i,index in enumerate(indexlst):
         fc.data = zpo[index]
         fc.recover_force(ljp)
-        cal_baseline_y(fc)
-        cal_baseline_x(fc)
         data = fc.get_prodata()['retract']
         data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
         res = Lc_transformer(data_x,data_y,length=length,step=step,thre=thre)
         if res.max()>0:
-            lst.append(res/res.max())
+            res = res/res.max()
+        if len(arr)!=0:
+            arr = np.vstack((arr,res))
         else:
-            lst.append(res)
+            arr = res
+        
     #arr = np.array(lst)
-    return lst
+    return arr
 def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,parallel=True,multip_n=4):
     if parallel:
         res = multi_run(zpo,ljp,length,step,thre,multip_n)
@@ -91,7 +92,12 @@ def multi_run(zpo,ljp,length,step,thre,multip_n=4):
     from multiprocessing import Pool
     lens = len(zpo)
     step = int(lens / multip_n) + 1
-    lst = [range(i,i+step) for i in range(0,lens,step)]
+    lst = []
+    for i in range(0,lens-1,step):
+        if i+step<len(zpo):
+            lst.append(range(i,i+step))
+        else:
+            lst.append(range(i,i+step-1))
     pool = Pool(len(lst))
     result = []
     print(lst)
@@ -104,9 +110,14 @@ def multi_run(zpo,ljp,length,step,thre,multip_n=4):
     
         
 if __name__=='__main__':
-    zpo = zipfileopera(r'E:\ZB\DataYee/test.DataYee-force')
+    zpo = zipfileopera(r'D:\code\py\DataYee/test.DataYee-force')
     ljp = loadjpkfile(zpo.get_sourcepath())
+    import time
+    t1=time.time()
     res = multi_run(zpo, ljp, 400, 2, 30)
+    arr = np.vstack([r.get() for r in res])
+    t2 = time.time()
+    print(t2-t1)
         
         
         
