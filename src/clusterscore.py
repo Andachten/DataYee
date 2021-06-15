@@ -112,11 +112,8 @@ def multi_run(zpo,ljp,length,step,thre,multip_n=4):
 if __name__=='__main__':
     zpo = zipfileopera(r'D:\code\py\DataYee/test.DataYee-force')
     ljp = loadjpkfile(zpo.get_sourcepath())
-    import time
-    t1=time.time()
     res = multi_run(zpo, ljp, 400, 2, 30)
     arr = np.vstack([r.get() for r in res])
-    t2 = time.time()
         
         
         
