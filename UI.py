@@ -17,7 +17,7 @@ from src.main import programbody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.style as mplstyle
-
+from src.multiProcess import multi_run
 #from PIL import ImageQt,Image
 
 mplstyle.use('fast')
@@ -253,7 +253,7 @@ class myFigure(FigureCanvas):
 
 
 class MyMainWindow(QMainWindow, Ui_MainWindow):
-    def __init__(self, parent=None):
+    def __init__(self, m_run,parent=None):
         super(MyMainWindow, self).__init__(parent)
         self.setupUi(self)
         self.filedir = ''
@@ -275,6 +275,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.showimage_win = showimage()
         self.fitEnergy = fitEnergy()
         self.action_init()
+        self.m_run = m_run
 
     def action_init(self):
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
@@ -605,9 +606,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def export_figure(self):
         self.pb.export_figure(self.F.figure)
     def SimilaritySort(self):
-        self.pb.SimilaritySort()
+        self.pb.SimilaritySort(m_run)
     def KNcluster(self):
-        self.pb.KNcluster()
+        self.pb.KNcluster(m_run)
     def run(self):
         if not self.pb.ready_run:
             return None
@@ -623,7 +624,8 @@ def win_connect(main_win,dialog):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
-    myWin = MyMainWindow()
+    m_run = multi_run('None')
+    myWin = MyMainWindow(m_run)
     child_window0 = para_window(myWin.pb,myWin)
     child_window1 = dlcrange_window(myWin)
     win_connect(myWin,[child_window0,child_window1])

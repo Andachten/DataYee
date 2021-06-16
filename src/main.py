@@ -375,7 +375,7 @@ class programbody():
         todir = os.path.dirname(self.zpo.fname)
         fname = os.path.join(todir,'{}.png'.format(self.forcecurve_index))
         figure.savefig(fname,bbox_inches='tight',transparent=True)
-    def KNcluster(self):
+    def KNcluster(self,m_run):
         if not self.state or self.tasktype!='smfs':
             return None
         selfname = self.zpo.fname
@@ -383,7 +383,7 @@ class programbody():
         dirname = os.path.dirname(selfname)
         outname = os.path.join(dirname,'{}.cluster-matrix'.format(rawname))
         if not os.path.isfile(outname):
-            matrix = get_distmatrix(self.zpo,self.ljp,length=400,step=2,thre=30)
+            matrix = get_distmatrix(self.zpo,self.ljp,m_run,length=400,step=2,thre=30)
             np.savetxt(outname,matrix)
         else:
             matrix = np.loadtxt(outname)
@@ -395,7 +395,7 @@ class programbody():
             else:
                 SplitDic[class_index].append(i)
         self.zpo.split_DataYee(SplitDic)
-    def SimilaritySort(self):
+    def SimilaritySort(self,m_run):
         if not self.state or self.tasktype!='smfs':
             return None
         selfname = self.zpo.fname
@@ -403,7 +403,7 @@ class programbody():
         dirname = os.path.dirname(selfname)
         outname = os.path.join(dirname,'{}.cluster-matrix'.format(rawname))
         if not os.path.isfile(outname):
-            matrix = get_distmatrix(self.zpo,self.ljp,length=400,step=2,thre=30)
+            matrix = get_distmatrix(self.zpo,self.ljp,m_run,length=400,step=2,thre=30)
             np.savetxt(outname,matrix)
         else:
             matrix = np.loadtxt(outname)

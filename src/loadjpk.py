@@ -40,7 +40,8 @@ class forcecurve:
                      'dlc': [],
                      'k': [],
                      'mark': [],
-                     'arg':{}}
+                     'arg':{},
+                     'xy-position':[0,0]}
 
     def get_prodata(self, smooth=True, tip_correc=True, s=None):
         data = copy.deepcopy(self.data['rawdata'])
@@ -210,6 +211,8 @@ class loadjpkfile(forcecurve):
         except:
             return None
         jpk = jpks.get_single_pixel(index)
+        position = jpks.flat_indices[index].parameters['force-scan-series']['header']['position']
+        self.data['xy-position'][0],self.data['xy-position'][1] = float(position['x']),float(position['y'])
         try:
             springConstant = float(
                 jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling'][
@@ -245,9 +248,11 @@ class loadjpkfile(forcecurve):
         for filename in self.filelst:
             if filename.endswith('.jpk-force-map'):
                 jpks = JPKMap(filename)
-                for i in range(len(jpks.flat_indices)):
+                for i,j in jpks.flat_indices.items():
 
                     jpk = jpks.get_single_pixel(i)
+                    position = j.parameters['force-scan-series']['header']['position']
+                    dic['xy-position'][0],self.data['xy-position'][1] = float(position['x']),float(position['y'])
                     try:
                         springConstant = float(
                             jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling'][

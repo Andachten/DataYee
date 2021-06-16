@@ -72,14 +72,22 @@ def get_lcseq(zpo,ljp,indexlst,length,step,thre):
         
     #arr = np.array(lst)
     return arr
-def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,parallel=False,multip_n=4):
-    if parallel:
-        res = multi_run(zpo,ljp,length,step,thre,multip_n)
-        arr = np.array([r.get() for r in res])
-    else:
+def get_distmatrix(zpo,ljp,m_run,length=400,step=2,thre=30,parallel=True,multip_n=4):
+    if not parallel:
         arr = np.array(get_lcseq(zpo,ljp,range(len(zpo)),length,step,thre))
-    #dist =  pdist(arr,metric=distance)
-    #matrix = squareform(dist)
+    else:
+        print('multiprocessing')
+        lens = len(zpo)
+        step = int(lens / multip_n) + 1
+        arg_lst = []
+        m_run.createPool(multip_n)
+        for i in range(0,lens,step):
+            if i+step<len(zpo):
+                arg_lst.append((zpo,ljp,range(i,i+step),length,step,thre))
+            else:
+                arg_lst.append((zpo,ljp,range(i,i+step-1),length,step,thre))
+        m_run.inputTask(get_lcseq,arg_lst)
+        arr = np.vstack(m_run.results)
     matrix = dtw.distance_matrix(arr,window=50,penalty=0.2,use_c=True,parallel=True)
     return matrix
 def sort_similar(index,matrix):
@@ -93,7 +101,7 @@ def multi_run(zpo,ljp,length,step,thre,multip_n=4):
     lens = len(zpo)
     step = int(lens / multip_n) + 1
     lst = []
-    for i in range(0,lens-1,step):
+    for i in range(0,lens,step):
         if i+step<len(zpo):
             lst.append(range(i,i+step))
         else:
