@@ -72,7 +72,7 @@ def get_lcseq(zpo,ljp,indexlst,length,step,thre):
         
     #arr = np.array(lst)
     return arr
-def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,parallel=True,multip_n=4):
+def get_distmatrix(zpo,ljp,length=400,step=2,thre=30,parallel=False,multip_n=4):
     if parallel:
         res = multi_run(zpo,ljp,length,step,thre,multip_n)
         arr = np.array([r.get() for r in res])
@@ -112,8 +112,13 @@ def multi_run(zpo,ljp,length,step,thre,multip_n=4):
 if __name__=='__main__':
     zpo = zipfileopera(r'D:\code\py\DataYee/test.DataYee-force')
     ljp = loadjpkfile(zpo.get_sourcepath())
+    import time
+    t1=time.time()
     res = multi_run(zpo, ljp, 400, 2, 30)
     arr = np.vstack([r.get() for r in res])
+    #res = get_distmatrix(zpo,ljp)
+    t2=time.time()
+    print(t2-t1)
         
         
         

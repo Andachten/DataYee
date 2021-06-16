@@ -22,13 +22,14 @@ mpl.rcParams['font.size'] = 8
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
 m = MobileNet()
+from numba import jit
 def lcfunc(x, lc, lp):
     return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
-
-def wlc2lc(x,F,lp):
+@jit(nopython=True)
+def wlc2lc(x,f,lp):
     kb = 1.3806e-23
     T = 298
-    lc = (4*F*lp*x+3*kb*T*x)/(6*F*lp)-(-16*F**2*lp**2*x**2+12*F*kb*lp*T*x**2-36*kb**2*T**2*x**2)/(12*2**(2/3)*F*lp*(-16*F**3*lp**3*x**3+72*F**2*kb*lp**2*T*x**3-27*F*kb**2*lp*T**2*x**3+54*kb**3*T**3*x**3+3*(3)**0.5*(-64*F**5*kb*lp**5*T*x**6+144*F**4*kb**2*lp**4*T**2*x**6-108*F**3*kb**3*lp**3*T**3*x**6+135*F**2*kb**4*lp**2*T**4*x**6)**0.5)**(1/3))+(-16*F**3*lp**3*x**3+72*F**2*kb*lp**2*T*x**3-27*F*kb**2*lp*T**2*x**3+54*kb**3*T**3*x**3+3*(3)**0.5*(-64*F**5*kb*lp**5*T*x**6+144*F**4*kb**2*lp**4*T**2*x**6-108*F**3*kb**3*lp**3*T**3*x**6+135*F**2*kb**4*lp**2*T**4*x**6)**0.5)**(1/3)/(6*2**(1/3)*F*lp)
+    lc = (4*f*lp*x+3*kb*T*x)/(6*f*lp)-(-16*f**2*lp**2*x**2+12*f*kb*lp*T*x**2-36*kb**2*T**2*x**2)/(12*2**(2/3)*f*lp*(-16*f**3*lp**3*x**3+72*f**2*kb*lp**2*T*x**3-27*f*kb**2*lp*T**2*x**3+54*kb**3*T**3*x**3+3*(3)**0.5*(-64*f**5*kb*lp**5*T*x**6+144*f**4*kb**2*lp**4*T**2*x**6-108*f**3*kb**3*lp**3*T**3*x**6+135*f**2*kb**4*lp**2*T**4*x**6)**0.5)**(1/3))+(-16*f**3*lp**3*x**3+72*f**2*kb*lp**2*T*x**3-27*f*kb**2*lp*T**2*x**3+54*kb**3*T**3*x**3+3*(3)**0.5*(-64*f**5*kb*lp**5*T*x**6+144*f**4*kb**2*lp**4*T**2*x**6-108*f**3*kb**3*lp**3*T**3*x**6+135*f**2*kb**4*lp**2*T**4*x**6)**0.5)**(1/3)/(6*2**(1/3)*f*lp)
     return lc
 def lcfunc1d(x,lc,lp):
     return 4.114188*(1/lc + 0.5/(lc*(1 - x/lc)**3))/lp
