@@ -66,7 +66,10 @@ def get_lcseq(zpo,ljp,indexlst,length,step,thre):
         if res.max()>0:
             res = res/res.max()
         if len(arr)!=0:
-            arr = np.vstack((arr,res))
+            try:
+                arr = np.vstack((arr,res))
+            except Exception as err:
+                print(i,err)
         else:
             arr = res
         
