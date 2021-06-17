@@ -66,7 +66,10 @@ def get_lcseq(zpo,ljp,indexlst,length,step,thre):
         if res.max()>0:
             res = res/res.max()
         if len(arr)!=0:
-            arr = np.vstack((arr,res))
+            try:
+                arr = np.vstack((arr,res))
+            except Exception as err:
+                print(i,err)
         else:
             arr = res
         
@@ -88,7 +91,7 @@ def get_distmatrix(zpo,ljp,m_run,length=400,step=2,thre=30,parallel=True,multip_
                 arg_lst.append((zpo,ljp,range(i,i+step-1),length,step,thre))
         m_run.inputTask(get_lcseq,arg_lst)
         arr = np.vstack(m_run.results)
-    matrix = dtw.distance_matrix(arr,window=50,penalty=0.2,use_c=True,parallel=True)
+    matrix = dtw.distance_matrix(arr,window=25,penalty=0.2,use_c=True,parallel=True)
     return matrix
 def sort_similar(index,matrix):
     arr = matrix[index,:]
@@ -118,6 +121,8 @@ def multi_run(zpo,ljp,length,step,thre,multip_n=4):
     
         
 if __name__=='__main__':
+    pass
+'''
     zpo = zipfileopera(r'D:\code\py\DataYee/test.DataYee-force')
     ljp = loadjpkfile(zpo.get_sourcepath())
     import time
@@ -126,7 +131,7 @@ if __name__=='__main__':
     arr = np.vstack([r.get() for r in res])
     #res = get_distmatrix(zpo,ljp)
     t2=time.time()
-    print(t2-t1)
+    print(t2-t1)'''
         
         
         
