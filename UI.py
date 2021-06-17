@@ -65,7 +65,8 @@ class myFigure(FigureCanvas):
                         'bottom': [],
                         'mark': [],
                         'fitcurve': [],
-                        'k':[]}
+                        'k':[],
+                        'selrange':[]}
         self.range_fix = False
         super(myFigure, self).__init__(self.canvas.figure)
     def zoom_func(self,event,base_scale = 1.1,zoomx_state=True,zoomy_state=True):
@@ -89,6 +90,24 @@ class myFigure(FigureCanvas):
         if zoomy_state:
             self.ax.set_ylim([ydata - cur_yrange*scale_factor,
                      ydata + cur_yrange*scale_factor])
+    def plot_selrange(self,datax1,datax2):
+        if datax1 ==None or datax2 == None:
+            for line in self.content['selrange']:
+                try:
+                    line[0].remove()
+                except:
+                    continue
+            return None
+        if datax1>datax2:
+            datax1,datax2=datax2,datax1
+        for line in self.content['selrange']:
+            try:
+                line[0].remove()
+            except:
+                continue
+        cur_ylim = self.ax.get_ylim()
+        self.content['selrange'].append(self.ax.plot([datax1,datax1],cur_ylim,c='#9fa8da',lw=1))
+        self.content['selrange'].append(self.ax.plot([datax2,datax2],cur_ylim,c='#9fa8da',lw=1))
     def motion(self,dx,dy):
         cur_xlim = self.ax.get_xlim()
         cur_ylim = self.ax.get_ylim()
@@ -350,17 +369,25 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def enerpytypeF(self):
         self.fitEnergy.start('Friddle')
     def onmotion_event(self,event):
-        if self.press and not self.control and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
-            dx = event.xdata-self.xdata
-            dy = event.ydata-self.ydata
-            self.F.motion(dx, dy)
-            self.displace_result()
+        if self.press and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
+            if not self.control:
+                dx = event.xdata-self.xdata
+                dy = event.ydata-self.ydata
+                self.F.motion(dx, dy)
+                self.displace_result()
+            else:
+                self.F.plot_selrange(self.xdata, event.xdata)
+                self.displace_result()
+            
     def on_release(self,event):
         self.press=False
         self.xdata_r,self.ydata_r = event.xdata,event.ydata
-        if self.control and None not in[self.xdata_r,self.xdata]:
-            self.pb.rebaseline_cal(self.xdata,event.xdata,allowRotate = self.allowrotate)
-            self.displace_result(range_fix=True)
+        if None not in[self.xdata_r,self.xdata]:
+            if self.control:
+                self.pb.rebaseline_cal(self.xdata,event.xdata,allowRotate = self.allowrotate)
+                self.F.plot_selrange(None, None)
+                self.displace_result(range_fix=True)
+                
     def choose_zoom(self):
         if self.zoomy.isChecked():
             self.zoomy_state = True

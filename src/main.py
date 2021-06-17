@@ -141,12 +141,11 @@ class programbody():
             return None
         self.fc.recover_force(self.ljp)
         data = self.fc.get_prodata()['retract']
-        data_x = data['measuredHeight']*1e9
+        data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
         if datax2>datax1:
             datax2,datax1=datax1,datax2
         i_start = np.where(data_x>datax2)[0]
         i_end = np.where(data_x<datax1)[0]
-        
         if len(i_start)==0 or len(i_end)==0:
             return None
         else:
