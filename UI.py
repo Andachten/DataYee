@@ -91,6 +91,8 @@ class myFigure(FigureCanvas):
             self.ax.set_ylim([ydata - cur_yrange*scale_factor,
                      ydata + cur_yrange*scale_factor])
     def plot_selrange(self,datax1,datax2):
+        if self.fc_new.data['datamsg'][0]=='':
+            return None
         if datax1 ==None or datax2 == None:
             for line in self.content['selrange']:
                 try:
