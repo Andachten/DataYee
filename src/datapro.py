@@ -22,10 +22,8 @@ mpl.rcParams['font.size'] = 8
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
 m = MobileNet()
-from numba import jit
 def lcfunc(x, lc, lp):
     return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
-@jit(nopython=True)
 def wlc2lc(x,f,lp):
     kb = 1.3806e-23
     T = 298
