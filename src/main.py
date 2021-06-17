@@ -141,11 +141,12 @@ class programbody():
             return None
         self.fc.recover_force(self.ljp)
         data = self.fc.get_prodata()['retract']
-        data_x,data_y = data['measuredHeight']*1e9,data['vDeflection']*1e12
+        data_x = data['measuredHeight']*1e9
         if datax2>datax1:
             datax2,datax1=datax1,datax2
         i_start = np.where(data_x>datax2)[0]
         i_end = np.where(data_x<datax1)[0]
+        
         if len(i_start)==0 or len(i_end)==0:
             return None
         else:
@@ -153,6 +154,11 @@ class programbody():
             i_end = i_end[-1]
         if i_end-i_start<5:
             return None
+        data_y = self.fc.data['rawdata']['retract']['vDeflection']
+        self.fc.data['offset']['y'] = data_y[i_start:i_end].mean()
+        if self.fc.data['tasktype']=='smfs':
+            cal_baseline_x(self.fc)
+        self.curve_change()
         self.fc.clean_force()
     def pk_delete(self):
         if not self.state:

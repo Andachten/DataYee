@@ -358,8 +358,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.press=False
         self.xdata_r,self.ydata_r = event.xdata,event.ydata
         if self.control and None not in[self.xdata_r,self.xdata]:
-            self.pb.rebaseline_cal(self.xdata,self.ydata)
-            self.displace_result()
+            self.pb.rebaseline_cal(self.xdata,event.xdata)
+            self.displace_result(range_fix=True)
     def choose_zoom(self):
         if self.zoomy.isChecked():
             self.zoomy_state = True

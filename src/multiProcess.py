@@ -19,6 +19,16 @@ class multi_run():
         self.pool.close()
         self.pool.join()
         self.results =  [i.get() for i in res]
-
+def splitRange(lens,n):
+    if lens==1:
+        return [range(0,1)]
+    step = int(lens / n) + 1
+    lst = []
+    for i in range(0,lens,step):
+        if i+step<lens:
+            lst.append(range(i,i+step))
+        else:
+            lst.append(range(i,i+step-1))
+    return lst
 if __name__=='__main__':
     pass
