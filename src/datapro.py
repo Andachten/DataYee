@@ -354,6 +354,7 @@ def plotmap(arr):
     lens = int(np.sqrt(len(arr)))
     arr = arr[:lens**2]
     d = arr.reshape((lens,lens))
+    d[1::2]=d[1::2][:,::-1]
     fig,ax = plt.subplots(figsize=(8,6),dpi=300)
     plt.axis('off')
     cmap = plt.get_cmap('YlOrBr_r')
