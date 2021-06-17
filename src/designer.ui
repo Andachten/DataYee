@@ -789,7 +789,7 @@
      <x>0</x>
      <y>0</y>
      <width>1307</width>
-     <height>45</height>
+     <height>37</height>
     </rect>
    </property>
    <property name="font">
@@ -904,10 +904,10 @@
     <widget class="QMenu" name="menucontour_lenght">
      <property name="geometry">
       <rect>
-       <x>619</x>
-       <y>192</y>
-       <width>162</width>
-       <height>114</height>
+       <x>789</x>
+       <y>471</y>
+       <width>140</width>
+       <height>94</height>
       </rect>
      </property>
      <property name="font">
@@ -1219,7 +1219,7 @@
   </action>
   <action name="actionpeakindex_plus">
    <property name="text">
-    <string>peakindex_plus</string>
+    <string>Peakindex_plus</string>
    </property>
    <property name="font">
     <font>
@@ -1233,7 +1233,7 @@
   </action>
   <action name="actionpeakindex_minus">
    <property name="text">
-    <string>peakindex_minus</string>
+    <string>Peakindex_minus</string>
    </property>
    <property name="font">
     <font>
@@ -1258,7 +1258,7 @@
   </action>
   <action name="actioncopy_peak">
    <property name="text">
-    <string>copy peak</string>
+    <string>Copy peak</string>
    </property>
    <property name="font">
     <font>
@@ -1272,7 +1272,7 @@
   </action>
   <action name="actionparameters_setting">
    <property name="text">
-    <string>parameters setting</string>
+    <string>Parameters setting</string>
    </property>
    <property name="font">
     <font>
@@ -1297,7 +1297,7 @@
   </action>
   <action name="actionmark_base_on_dlc">
    <property name="text">
-    <string>mark base on dlc</string>
+    <string>Mark base on dlc</string>
    </property>
    <property name="font">
     <font>

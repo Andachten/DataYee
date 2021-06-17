@@ -19,7 +19,12 @@ from nanoscope.constants import FORCE, METRIC, VOLTS, PLT_kwargs'''
 
 def rotate(data_x, data_y, index, k):
     theta = np.arctan(k) * -1
-    return (data_x - data_x[index]) * np.sin(theta) + (data_y - data_y[index]) * np.cos(theta) + data_y[index]
+    if type(index) == int:
+        return (data_x - data_x[index]) * np.sin(theta) + (data_y - data_y[index]) * np.cos(theta) + data_y[index]
+    elif type(index) == tuple:
+        return (data_x - index[0]) * np.sin(theta) + (data_y - index[1]) * np.cos(theta) + index[1]
+    
+    
 
 
 class forcecurve:
@@ -63,12 +68,13 @@ class forcecurve:
                     'springConstant']
             if 'k' in self.data['offset'].keys():
                 if 'rotate_index' in self.data['offset'].keys():
-                    rotate_index = self.fc.data['offset']['rotate_index']
+                    rotate_index = self.data['offset']['rotate_index']
                 else:
                     rotate_index = -1
+                rotate_x,rotate_y = data['retract']['measuredHeight'][rotate_index],data['retract']['vDeflection'][rotate_index]
                 data[k]['vDeflection'] = rotate(data[k]['measuredHeight'].reshape(-1),
                                                 data[k]['vDeflection'].reshape(-1),
-                                                rotate_index,
+                                                (rotate_x,rotate_y),
                                                 self.data['offset']['k']).reshape(-1, 1)
         return data
 

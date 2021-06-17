@@ -134,7 +134,7 @@ class programbody():
             cal_baseline_x(self.fc)
             process_customize(self.fc,range(6,13))
         self.curve_change()
-    def rebaseline_cal(self,datax1,datax2):
+    def rebaseline_cal(self,datax1,datax2,allowRotate=False):
         if not self.state:
             return None
         if datax1==datax2:
@@ -158,6 +158,13 @@ class programbody():
         self.fc.data['offset']['y'] = data_y[i_start:i_end].mean()
         if self.fc.data['tasktype']=='smfs':
             cal_baseline_x(self.fc)
+        if allowRotate:
+            self.fc.data['offset']['k'] = 0
+            data = self.fc.get_prodata()['retract']
+            data_x,data_y = data['measuredHeight'],data['vDeflection']
+            k = get_slope(data_x[i_start:i_end].reshape(-1),data_y[i_start:i_end].reshape(-1),0)
+            self.fc.data['offset']['rotate_index'] = i_start
+            self.fc.data['offset']['k']=k
         self.curve_change()
         self.fc.clean_force()
     def pk_delete(self):

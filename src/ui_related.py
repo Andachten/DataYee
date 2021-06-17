@@ -79,6 +79,7 @@ class para_window(QDialog,Ui_Dialog):
         self.setupUi(self)
         self.pb=pb
         self.myWin = myWin
+        self.myWin.allowrotate = False
         self.action_init()
     def action_init(self):
         self.sens.valueChanged.connect(self.spinbox_changevalue)
@@ -89,6 +90,8 @@ class para_window(QDialog,Ui_Dialog):
         self.spinBox.valueChanged.connect(self.spinbox_changevalue)
         self.lp_min.valueChanged.connect(self.spinbox_changevalue)
         self.lp_max.valueChanged.connect(self.spinbox_changevalue)
+        self.rotatestate.setChecked(False)
+        self.rotatestate.stateChanged.connect(self.cbchange)
         pass
     def spinbox_changevalue(self, value):
         sender = self.sender()
@@ -111,7 +114,10 @@ class para_window(QDialog,Ui_Dialog):
             self.pb.taskarg['highspeed']=True
         else:
             self.pb.taskarg['highspeed']=False
-
+    def cbchange(self):
+        sender = self.sender()
+        if sender == self.rotatestate:
+            self.myWin.allowrotate = not self.myWin.allowrotate
 class dlcrange_window(QDialog,Ui_dlc_range):
     def __init__(self,myWin):
         super(dlcrange_window, self).__init__()

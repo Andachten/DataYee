@@ -186,7 +186,7 @@ def wlcfit(fc):
                 b_i-=3
         if data_y[p_i]>150:
             dy = data_y[p_i]-data_y[b_i]
-            fitpoint = np.where(data_y[b_i:]>data_y[b_i]+0.5*dy)[0][0]+b_i
+            fitpoint = np.where(data_y[b_i:]>data_y[b_i]+0.6*dy)[0][0]+b_i
         else:
             fitpoint = p_i
         if fitpoint==b_i:

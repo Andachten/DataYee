@@ -272,6 +272,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.press=False
         self.control = False
         self.img = None
+        self.allowrotate = False
         self.showimage_win = showimage()
         self.fitEnergy = fitEnergy()
         self.action_init()
@@ -358,7 +359,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.press=False
         self.xdata_r,self.ydata_r = event.xdata,event.ydata
         if self.control and None not in[self.xdata_r,self.xdata]:
-            self.pb.rebaseline_cal(self.xdata,event.xdata)
+            self.pb.rebaseline_cal(self.xdata,event.xdata,allowRotate = self.allowrotate)
             self.displace_result(range_fix=True)
     def choose_zoom(self):
         if self.zoomy.isChecked():
