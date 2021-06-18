@@ -106,7 +106,7 @@ class VotingClassify:
     def predict_batchs(self,data_array):
         return self.model.predict(data_array)
 b, a = signal.butter(8, 0.08, 'lowpass')
-def feature_extract(fc):
+def feature_extract(fc,get_data=False):
     #methods=1.0
     data = fc.get_prodata(tip_correc=False)['retract']
     data_y = data['vDeflection']*1e12
@@ -117,6 +117,8 @@ def feature_extract(fc):
     d = signal.filtfilt(b, a, d)
     d = d/np.abs(d).max()
     d[np.where(d>-0.11)] = 0
+    if get_data:
+        return d,data_y
     fig,ax = plt.subplots(figsize=(2.24, 2.24))
     plt.axis('off')
     plt.subplots_adjust(top=1, bottom=0.1, right=1, left=0.1)
