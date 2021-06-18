@@ -17,7 +17,7 @@ import pickle
 from scipy import signal
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
-
+from scipy.signal import find_peaks
 '''
 def loaddata(train,value,imgsize=8):
     img_lst = []
@@ -75,7 +75,7 @@ class kmeans:
         self.trainset,self.traintarget = loaddata(self.train,self.value)[1:3]
     def predict(self,x):
         return np.array([self.classfy(i,self.trainset, self.traintarget) for i in x])
-'''
+
 b, a = signal.butter(8, 0.08, 'lowpass')
 def feature_extract(fc):
     data = fc.get_prodata(tip_correc=False)['retract']
@@ -96,6 +96,7 @@ def feature_extract(fc):
     ax.plot(d , '#c92a2a', linewidth=1)
     plt.close()
     return fig
+'''
 class VotingClassify:
     def __init__(self,modeldir='./model/voting_clf_20210514_acc0.80_svm_lr_rf.model'):
         self.modeldir = modeldir
@@ -106,7 +107,7 @@ class VotingClassify:
     def predict_batchs(self,data_array):
         return self.model.predict(data_array)
 b, a = signal.butter(8, 0.08, 'lowpass')
-def feature_extract(fc,get_data=False):
+def feature_extract(fc,get_data=False,data_len = 250):
     #methods=1.0
     data = fc.get_prodata(tip_correc=False)['retract']
     data_y = data['vDeflection']*1e12
@@ -118,7 +119,17 @@ def feature_extract(fc,get_data=False):
     d = d/np.abs(d).max()
     d[np.where(d>-0.11)] = 0
     if get_data:
-        return d,data_y
+        d = np.abs(d)
+        pk = find_peaks(d)[0]
+        new_d = np.zeros(len(d))
+        new_d[pk] = d[pk]
+        d = new_d
+        data_y = data_y.reshape(-1)
+        zoom_d = (np.where(d>0)[0]/len(d)*data_len).astype(np.int16)
+        zoom_datay = (np.where(data_y>0)[0]/len(data_y)*data_len).astype(np.int16)
+        new_d,new_datay = np.zeros(data_len),np.zeros(data_len)
+        new_d[zoom_d],new_datay[zoom_datay] = d[np.where(d>0)[0]],data_y[np.where(data_y>0)[0]]
+        return new_d.reshape(-1),new_datay.reshape(-1)
     fig,ax = plt.subplots(figsize=(2.24, 2.24))
     plt.axis('off')
     plt.subplots_adjust(top=1, bottom=0.1, right=1, left=0.1)
