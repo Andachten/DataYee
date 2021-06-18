@@ -13,6 +13,7 @@ import torchvision.transforms as transforms
 #from sklearn.linear_model import LogisticRegression
 #import toolz
 #import dask
+import torch.nn as nn
 import pickle
 from scipy import signal
 from scipy.ndimage import gaussian_filter
@@ -178,7 +179,17 @@ class MobileNet:
         _, predicted = torch.max(pb, 1)
         classIndex_ = predicted[0]
         return classIndex_.item()
-    
+class ResidualBlock(nn.Module):
+    def __init__(self,channels):
+        super(ResidualBlock,self).__init__()
+        self.channels = channels
+        self.conv1 = nn.Conv1d(channels,channels,kernel_size=3,padding=1)
+        self.conv2 = nn.Conv1d(channels,channels,kernel_size=3,padding=1)
+        self.relu = nn.ReLU(inplace=True)
+    def forward(self,x):
+        y = self.relu(self.conv1(x))
+        y = self.conv2(y)
+        return self.relu(x+y)
 '''
 if __name__=='__main__':
     train = r'D:\code\py\SMFS\20210503-train-data\train'
