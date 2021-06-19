@@ -182,7 +182,7 @@ class MobileNet:
         return classIndex_.item()
 class myNet():
     def __init__(self,datatype='img'):
-        resnetdir = './model/2021-06-19-12-method3.0-acc80-lr0.004-batch30-1.7.1+cpu.model'
+        resnetdir = './model/2021-06-19-12-method3.0-acc80-lr0.004-batch30-1.7.1+cpu.pt'
         mobilenetdir = './model/2021-05-20-08-method1.0-acc82-1.7.1+cpu.model'
         self.datatype = datatype
         if self.datatype=='img':
@@ -191,7 +191,12 @@ class myNet():
             self.modeldir = resnetdir
         self.loadmodel()
     def loadmodel(self):
-        self.model = torch.load(self.modeldir, map_location='cpu')
+        if self.datatype=='series':
+            self.model = Net()
+            pt = torch.load(self.modeldir, map_location='cpu')
+            self.model.load_state_dict(pt)
+        elif self.datatype=='img':
+            self.model = torch.load(self.modeldir, map_location='cpu')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.model.to(self.device)
         self.model.eval()
