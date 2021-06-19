@@ -181,19 +181,28 @@ class MobileNet:
         classIndex_ = predicted[0]
         return classIndex_.item()
 class myNet():
-    def __init__(self,modeldir=r'./model/2021-06-18-23-method3.0-acc77-1.7.1+cpu.model'):
+    def __init__(self,datatype='img',modeldir=r'./model/2021-06-18-23-method3.0-acc77-1.7.1+cpu.model'):
         self.modeldir = modeldir
+        self.datatype = datatype
         self.loadmodel()
     def loadmodel(self):
         self.model = torch.load(self.modeldir, map_location='cpu')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.model.to(self.device)
         self.model.eval()
+        if self.datatype == 'img':
+            self.transform = transforms.Compose([transforms.Resize(224), transforms.ToTensor(), ])
     def predict(self,data):
+        if self.datatype == 'img':
+            print('ok')
+            img = self.transform(data)
+            img = img.unsqueeze(0)
+            img = img.to(self.device)
+            data = img
         with torch.no_grad():
-            outputs = model(data)
+            outputs = self.model(data)
             _, preds = torch.max(outputs, 1)
-        return preds
+        return preds.detach().numpy()
 
 class NetM3(nn.Module):
     #lens=250
@@ -306,17 +315,17 @@ if __name__=='__main__':
     from torch.optim import lr_scheduler
     import copy
     import time
-    datapath = r'E:\ZB\SMFS/seqdataset.pkl'
+    datapath = r'D:\code\py\CreateData/seqdataset.pkl'
     train_data = DataSet(datapath,'train')
-    traindataloader = DataLoader(train_data,batch_size=100,shuffle=True)
+    traindataloader = DataLoader(train_data,batch_size=30,shuffle=True)
     val_data = DataSet(datapath,'val')
-    valdataloader = DataLoader(val_data,batch_size=100,shuffle=True)
+    valdataloader = DataLoader(val_data,batch_size=30,shuffle=True)
     model = Net()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
+    optimizer = optim.SGD(model.parameters(), lr=0.004, momentum=0.9)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.8)
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
     num_epochs = 80
