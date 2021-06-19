@@ -194,17 +194,7 @@ class myNet():
             outputs = model(data)
             _, preds = torch.max(outputs, 1)
         return preds
-class ResidualBlock(nn.Module):
-    def __init__(self,channels):
-        super(ResidualBlock,self).__init__()
-        self.channels = channels
-        self.conv1 = nn.Conv1d(channels,channels,kernel_size=3,padding=1)
-        self.conv2 = nn.Conv1d(channels,channels,kernel_size=3,padding=1)
-        self.relu = nn.ReLU(inplace=True)
-    def forward(self,x):
-        y = self.relu(self.conv1(x))
-        y = self.conv2(y)
-        return self.relu(x+y)
+
 class NetM3(nn.Module):
     #lens=250
     def __init__(self,n_output=6):
@@ -232,10 +222,8 @@ class NetM3(nn.Module):
         self.rblock3 = ResidualBlock(8)
         self.L = nn.Linear(200,self.n_output)
         self.r = nn.ReLU(True)
-        self.s = nn.Sigmoid()
         self.dropout = nn.Dropout(0.5)
         self.bn1d = nn.BatchNorm1d(40)
-        
     def forward(self,x):
         x = self.c1(x)
         x = self.rblock1(x)
@@ -246,6 +234,19 @@ class NetM3(nn.Module):
         x = self.bn1d(x)
         x = self.L(x)
         return x
+class ResidualBlock(nn.Module):
+    def __init__(self,channels):
+        super(ResidualBlock,self).__init__()
+        self.channels = channels
+        self.conv1 = nn.Conv1d(channels,channels,kernel_size=3,padding=1)
+        self.conv2 = nn.Conv1d(channels,channels,kernel_size=3,padding=1)
+        self.relu = nn.ReLU(inplace=True)
+        #self.bn1 = nn.BatchNorm1d(channels)
+        #self.dropout = nn.Dropout(0.3)
+    def forward(self,x):
+        y = self.relu(self.conv1(x))
+        y = self.conv2(y)
+        return self.relu(x+y)
 class Net(nn.Module):
     def __init__(self,n_output=6):
         super(Net, self).__init__()
@@ -272,15 +273,16 @@ class Net(nn.Module):
         self.rblock3 = ResidualBlock(8)
         self.L = nn.Linear(200,self.n_output)
         self.r = nn.ReLU(True)
-        self.s = nn.Sigmoid()
-        self.dropout = nn.Dropout(0.5)
+        self.leakr = nn.LeakyReLU(0.2, inplace=True)
+        self.dropout = nn.Dropout(0.3)
         
     def forward(self,x):
         x = self.c1(x)
         x = self.rblock1(x)
+        x = self.rblock1(x)
         x = self.c2(x)
         x = self.rblock2(x)
-        #x = self.s(x)
+        x = self.rblock2(x)
         x = x.view(x.size(0),-1)
         x = self.L(x)
         return x
@@ -304,10 +306,11 @@ if __name__=='__main__':
     from torch.optim import lr_scheduler
     import copy
     import time
-    train_data = DataSet(r'D:\code\py\CreateData/seqdataset.pkl','train')
-    traindataloader = DataLoader(train_data,batch_size=60,shuffle=True)
-    val_data = DataSet(r'D:\code\py\CreateData/seqdataset.pkl','val')
-    valdataloader = DataLoader(val_data,batch_size=60,shuffle=True)
+    datapath = r'E:\ZB\SMFS/seqdataset.pkl'
+    train_data = DataSet(datapath,'train')
+    traindataloader = DataLoader(train_data,batch_size=100,shuffle=True)
+    val_data = DataSet(datapath,'val')
+    valdataloader = DataLoader(val_data,batch_size=100,shuffle=True)
     model = Net()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
