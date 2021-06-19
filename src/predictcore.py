@@ -308,15 +308,15 @@ if __name__=='__main__':
     import time
     datapath = r'E:\ZB\SMFS/seqdataset.pkl'
     train_data = DataSet(datapath,'train')
-    traindataloader = DataLoader(train_data,batch_size=100,shuffle=True)
+    traindataloader = DataLoader(train_data,batch_size=30,shuffle=True)
     val_data = DataSet(datapath,'val')
-    valdataloader = DataLoader(val_data,batch_size=100,shuffle=True)
+    valdataloader = DataLoader(val_data,batch_size=60,shuffle=True)
     model = Net()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
     optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
-    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.8)
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
     num_epochs = 80
