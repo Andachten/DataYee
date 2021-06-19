@@ -19,6 +19,7 @@ from scipy import signal
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 from scipy.signal import find_peaks
+from torch.utils.data import Dataset, DataLoader
 '''
 def loaddata(train,value,imgsize=8):
     img_lst = []
@@ -179,6 +180,20 @@ class MobileNet:
         _, predicted = torch.max(pb, 1)
         classIndex_ = predicted[0]
         return classIndex_.item()
+class myNet():
+    def __init__(self,modeldir=r'./model/2021-06-18-23-method3.0-acc77-1.7.1+cpu.model'):
+        self.modeldir = modeldir
+        self.loadmodel()
+    def loadmodel(self):
+        self.model = torch.load(self.modeldir, map_location='cpu')
+        self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+        self.model = self.model.to(self.device)
+        self.model.eval()
+    def predict(self,data):
+        with torch.no_grad():
+            outputs = model(data)
+            _, preds = torch.max(outputs, 1)
+        return preds
 class ResidualBlock(nn.Module):
     def __init__(self,channels):
         super(ResidualBlock,self).__init__()
@@ -190,8 +205,187 @@ class ResidualBlock(nn.Module):
         y = self.relu(self.conv1(x))
         y = self.conv2(y)
         return self.relu(x+y)
-'''
+class NetM3(nn.Module):
+    #lens=250
+    def __init__(self,n_output=6):
+        super(Net, self).__init__()
+        self.n_output = n_output
+        self.c1 = nn.Sequential(
+            nn.Conv1d(in_channels=2,out_channels=16,kernel_size=3,padding=1),
+            nn.ReLU(True),
+            nn.Conv1d(in_channels=16,out_channels=32,kernel_size=3,padding=1),
+            nn.MaxPool1d(kernel_size=5),
+            )
+        self.rblock1 = ResidualBlock(32)
+        self.c2 = nn.Sequential(
+            nn.Conv1d(in_channels=32,out_channels=16,kernel_size=3,padding=1),
+            nn.ReLU(True),
+            nn.Conv1d(in_channels=16,out_channels=8,kernel_size=3,padding=1),
+            nn.MaxPool1d(kernel_size=2),
+            )
+        self.rblock2 = ResidualBlock(8)
+        self.c3 = nn.Sequential(
+            nn.Conv1d(in_channels=16,out_channels=8,kernel_size=3,padding=1),
+            nn.ReLU(True),
+            nn.MaxPool1d(kernel_size=5),
+            )
+        self.rblock3 = ResidualBlock(8)
+        self.L = nn.Linear(200,self.n_output)
+        self.r = nn.ReLU(True)
+        self.s = nn.Sigmoid()
+        self.dropout = nn.Dropout(0.5)
+        self.bn1d = nn.BatchNorm1d(40)
+        
+    def forward(self,x):
+        x = self.c1(x)
+        x = self.rblock1(x)
+        x = self.c2(x)
+        x = self.rblock2(x)
+        #x = self.s(x)
+        x = x.view(x.size(0),-1)
+        x = self.bn1d(x)
+        x = self.L(x)
+        return x
+class Net(nn.Module):
+    def __init__(self,n_output=6):
+        super(Net, self).__init__()
+        self.n_output = n_output
+        self.c1 = nn.Sequential(
+            nn.Conv1d(in_channels=2,out_channels=16,kernel_size=3,padding=1),
+            nn.ReLU(True),
+            nn.Conv1d(in_channels=16,out_channels=32,kernel_size=3,padding=1),
+            nn.MaxPool1d(kernel_size=5),
+            )
+        self.rblock1 = ResidualBlock(32)
+        self.c2 = nn.Sequential(
+            nn.Conv1d(in_channels=32,out_channels=16,kernel_size=3,padding=1),
+            nn.ReLU(True),
+            nn.Conv1d(in_channels=16,out_channels=8,kernel_size=3,padding=1),
+            nn.MaxPool1d(kernel_size=2),
+            )
+        self.rblock2 = ResidualBlock(8)
+        self.c3 = nn.Sequential(
+            nn.Conv1d(in_channels=16,out_channels=8,kernel_size=3,padding=1),
+            nn.ReLU(True),
+            nn.MaxPool1d(kernel_size=5),
+            )
+        self.rblock3 = ResidualBlock(8)
+        self.L = nn.Linear(200,self.n_output)
+        self.r = nn.ReLU(True)
+        self.s = nn.Sigmoid()
+        self.dropout = nn.Dropout(0.5)
+        
+    def forward(self,x):
+        x = self.c1(x)
+        x = self.rblock1(x)
+        x = self.c2(x)
+        x = self.rblock2(x)
+        #x = self.s(x)
+        x = x.view(x.size(0),-1)
+        x = self.L(x)
+        return x
+        
+class DataSet(Dataset):
+    import pickle
+    def __init__(self,path,task='train'):
+        with open(path,'rb') as f:
+            self.dic = pickle.load(f)
+        self.data = self.dic[task]
+        self.seq = torch.tensor(np.vstack([i for i in self.data.values()]).astype(np.float32))
+        self.classes = torch.tensor(np.hstack([[k]*len(v) for k,v in self.data.items()]).astype(np.int64))
+    def __len__(self):
+        return len(self.seq)
+    def __getitem__(self,index):
+        data = self.seq[index]
+        cla = self.classes[index]
+        return data,cla
 if __name__=='__main__':
+    import torch.optim as optim
+    from torch.optim import lr_scheduler
+    import copy
+    import time
+    train_data = DataSet(r'D:\code\py\CreateData/seqdataset.pkl','train')
+    traindataloader = DataLoader(train_data,batch_size=60,shuffle=True)
+    val_data = DataSet(r'D:\code\py\CreateData/seqdataset.pkl','val')
+    valdataloader = DataLoader(val_data,batch_size=60,shuffle=True)
+    model = Net()
+    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    model = model.to(device)
+    criterion = nn.CrossEntropyLoss()
+    optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
+    scheduler = lr_scheduler.StepLR(optimizer, step_size=10, gamma=0.8)
+    best_model_wts = copy.deepcopy(model.state_dict())
+    best_acc = 0.0
+    num_epochs = 80
+    since = time.time()
+    val_lens = len(val_data)
+    train_lens = len(train_data)
+    for epoch in range(num_epochs):
+        print('Epoch {}/{}'.format(epoch, num_epochs - 1))
+        now = int(time.time())
+        timeArray = time.localtime(now)
+        otherStyleTime = time.strftime("%Y-%m-%d %H:%M:%S", timeArray)
+        print(otherStyleTime)
+        print('-' * 10)
+        for phase in ['train', 'val']:
+            if phase == 'train':
+                model.train()  # Set model to training mode
+                dloader = traindataloader
+            else:
+                model.eval()   # Set model to evaluate mode
+                dloader = valdataloader
+            running_loss = 0.0
+            running_corrects = 0
+            for inputs, labels in dloader:
+                inputs = inputs.to(device)
+                labels = labels.to(device)
+                optimizer.zero_grad()
+                with torch.set_grad_enabled(phase == 'train'):
+                    outputs = model(inputs)
+                    _, preds = torch.max(outputs, 1)
+                    loss = criterion(outputs, labels)
+                    # backward + optimize only if in training phase
+                    if phase == 'train':
+                        loss.backward()
+                        optimizer.step()
+                running_loss += loss.item() * inputs.size(0)
+                running_corrects += torch.sum(preds == labels.data)
+            if phase == 'train':
+                scheduler.step()
+            if phase == 'train':
+                epoch_loss = running_loss / train_lens
+                epoch_acc = running_corrects.double() / train_lens
+            else:
+                print(phase)
+                print(running_corrects)
+                epoch_loss = running_loss / val_lens
+                epoch_acc = running_corrects.double() / val_lens
+            print('{} Loss: {:.4f} Acc: {:.4f}'.format(
+                phase, epoch_loss, epoch_acc))
+            if phase == 'val' and epoch_acc > best_acc:
+                best_acc = epoch_acc
+                best_model_wts = copy.deepcopy(model.state_dict())
+                torch.save(best_model_wts, '.\parameter.pkl')
+        print()
+    time_elapsed = time.time() - since
+    print('Training complete in {:.0f}m {:.0f}s'.format(
+        time_elapsed // 60, time_elapsed % 60))
+    print('Best val Acc: {:4f}'.format(best_acc))
+
+    # load best model weights
+    model.load_state_dict(best_model_wts)
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    '''
     train = r'D:\code\py\SMFS\20210503-train-data\train'
     value = r'D:\code\py\SMFS\20210503-train-data\val'
     img_lst,data_array,target_array,val_img_lst,val_data_array,val_target_array = loaddata(train,value)
