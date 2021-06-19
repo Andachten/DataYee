@@ -11,7 +11,7 @@ from scipy.optimize import curve_fit
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 from PIL import Image
-from src.predictcore import feature_extract,MobileNet
+from src.predictcore import feature_extract,MobileNet,myNet,Net
 import matplotlib as mpl
 from sklearn.neighbors import KernelDensity
 mpl.rcParams['font.family'] = 'Arial'
@@ -21,7 +21,8 @@ mpl.rcParams['axes.linewidth'] = 0.5
 mpl.rcParams['font.size'] = 8
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
-m = MobileNet()
+#m = MobileNet()
+my = myNet('img')
 def lcfunc(x, lc, lp):
     return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
 def wlc2lc(x,f,lp):
@@ -112,10 +113,19 @@ def cal_highspeed_drift(fc):
         return None
     fc.data['offset']['highspeed'] = 0.5*corr
     pass
-def predict(fc):
-    fig = feature_extract(fc)
-    img = fig2img(fig)
-    score = m.predict(img)
+def predict(fc,usemodel='img'):
+    global my
+    if my.datatype!=usemodel:
+        print(my.datatype,usemodel)
+        my = myNet(usemodel)
+    if usemodel == 'img':
+        fig = feature_extract(fc)
+        img = fig2img(fig)
+        data = img
+    elif usemodel == 'series':
+        data = np.vstack(feature_extract(fc,get_data=True))
+        data = data.reshape((1,*data.shape)).astype(np.float32)
+    score = my.predict(data)
     if fc.data['arg']['modelstrict']:
         v = 1
     else:

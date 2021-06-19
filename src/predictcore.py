@@ -181,9 +181,14 @@ class MobileNet:
         classIndex_ = predicted[0]
         return classIndex_.item()
 class myNet():
-    def __init__(self,datatype='img',modeldir=r'./model/2021-06-18-23-method3.0-acc77-1.7.1+cpu.model'):
-        self.modeldir = modeldir
+    def __init__(self,datatype='img'):
+        resnetdir = './model/2021-06-19-12-method3.0-acc80-lr0.004-batch30-1.7.1+cpu.model'
+        mobilenetdir = './model/2021-05-20-08-method1.0-acc82-1.7.1+cpu.model'
         self.datatype = datatype
+        if self.datatype=='img':
+            self.modeldir = mobilenetdir
+        elif self.datatype=='series':
+            self.modeldir = resnetdir
         self.loadmodel()
     def loadmodel(self):
         self.model = torch.load(self.modeldir, map_location='cpu')
@@ -194,15 +199,16 @@ class myNet():
             self.transform = transforms.Compose([transforms.Resize(224), transforms.ToTensor(), ])
     def predict(self,data):
         if self.datatype == 'img':
-            print('ok')
             img = self.transform(data)
             img = img.unsqueeze(0)
             img = img.to(self.device)
             data = img
+        elif self.datatype == 'series':
+            data = torch.tensor(data)
         with torch.no_grad():
             outputs = self.model(data)
             _, preds = torch.max(outputs, 1)
-        return preds.detach().numpy()
+        return preds.detach().numpy()[0]
 
 class NetM3(nn.Module):
     #lens=250
