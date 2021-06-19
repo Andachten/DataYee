@@ -181,19 +181,34 @@ class MobileNet:
         classIndex_ = predicted[0]
         return classIndex_.item()
 class myNet():
-    def __init__(self,modeldir=r'./model/2021-06-18-23-method3.0-acc77-1.7.1+cpu.model'):
-        self.modeldir = modeldir
+    def __init__(self,datatype='img'):
+        resnetdir = './model/2021-06-19-12-method3.0-acc80-lr0.004-batch30-1.7.1+cpu.model'
+        mobilenetdir = './model/2021-05-20-08-method1.0-acc82-1.7.1+cpu.model'
+        self.datatype = datatype
+        if self.datatype=='img':
+            self.modeldir = mobilenetdir
+        elif self.datatype=='series':
+            self.modeldir = resnetdir
         self.loadmodel()
     def loadmodel(self):
         self.model = torch.load(self.modeldir, map_location='cpu')
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         self.model = self.model.to(self.device)
         self.model.eval()
+        if self.datatype == 'img':
+            self.transform = transforms.Compose([transforms.Resize(224), transforms.ToTensor(), ])
     def predict(self,data):
+        if self.datatype == 'img':
+            img = self.transform(data)
+            img = img.unsqueeze(0)
+            img = img.to(self.device)
+            data = img
+        elif self.datatype == 'series':
+            data = torch.tensor(data)
         with torch.no_grad():
-            outputs = model(data)
+            outputs = self.model(data)
             _, preds = torch.max(outputs, 1)
-        return preds
+        return preds.detach().numpy()[0]
 
 class NetM3(nn.Module):
     #lens=250
@@ -306,16 +321,16 @@ if __name__=='__main__':
     from torch.optim import lr_scheduler
     import copy
     import time
-    datapath = r'E:\ZB\SMFS/seqdataset.pkl'
+    datapath = r'D:\code\py\CreateData/seqdataset.pkl'
     train_data = DataSet(datapath,'train')
     traindataloader = DataLoader(train_data,batch_size=30,shuffle=True)
     val_data = DataSet(datapath,'val')
-    valdataloader = DataLoader(val_data,batch_size=60,shuffle=True)
+    valdataloader = DataLoader(val_data,batch_size=30,shuffle=True)
     model = Net()
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     model = model.to(device)
     criterion = nn.CrossEntropyLoss()
-    optimizer = optim.SGD(model.parameters(), lr=0.005, momentum=0.9)
+    optimizer = optim.SGD(model.parameters(), lr=0.004, momentum=0.9)
     scheduler = lr_scheduler.StepLR(optimizer, step_size=20, gamma=0.8)
     best_model_wts = copy.deepcopy(model.state_dict())
     best_acc = 0.0
