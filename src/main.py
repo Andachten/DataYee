@@ -67,7 +67,8 @@ class programbody():
            'usemodel':True,
            'xsens':2,
            'highspeed':False,
-           'modelstrict':False}
+           'modelstrict':False,
+           'fastmode':'img'}
     def creattask(self,path,tasktype='smfs'):
         self.tasktype = tasktype
         self.fc = forcecurve()

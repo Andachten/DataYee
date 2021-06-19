@@ -88,7 +88,7 @@ def get_distmatrix(zpo,ljp,m_run,length=400,step=2,thre=30,parallel=True,multip_
             if i+step<len(zpo):
                 arg_lst.append((zpo,ljp,range(i,i+step),length,step,thre))
             else:
-                arg_lst.append((zpo,ljp,range(i,i+step-1),length,step,thre))
+                arg_lst.append((zpo,ljp,range(i,len(zpo)),length,step,thre))
         m_run.inputTask(get_lcseq,arg_lst)
         arr = np.vstack(m_run.results)
     matrix = dtw.distance_matrix(arr,window=25,penalty=0.2,use_c=True,parallel=True)

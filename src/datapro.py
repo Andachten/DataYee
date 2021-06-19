@@ -113,7 +113,8 @@ def cal_highspeed_drift(fc):
         return None
     fc.data['offset']['highspeed'] = 0.5*corr
     pass
-def predict(fc,usemodel='img'):
+def predict(fc):
+    usemodel = fc.data['arg']['fastmode']
     global my
     if my.datatype!=usemodel:
         print(my.datatype,usemodel)

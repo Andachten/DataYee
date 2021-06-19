@@ -613,8 +613,8 @@
         <rect>
          <x>10</x>
          <y>10</y>
-         <width>151</width>
-         <height>61</height>
+         <width>201</width>
+         <height>81</height>
         </rect>
        </property>
        <property name="title">
@@ -640,13 +640,26 @@
         <property name="geometry">
          <rect>
           <x>10</x>
-          <y>30</y>
+          <y>50</y>
           <width>151</width>
           <height>31</height>
          </rect>
         </property>
         <property name="text">
          <string>Strict</string>
+        </property>
+       </widget>
+       <widget class="QCheckBox" name="fastmode">
+        <property name="geometry">
+         <rect>
+          <x>10</x>
+          <y>30</y>
+          <width>141</width>
+          <height>21</height>
+         </rect>
+        </property>
+        <property name="text">
+         <string>Fast Mode</string>
         </property>
        </widget>
       </widget>

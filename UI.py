@@ -353,6 +353,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.usemodel_cb.stateChanged.connect(self.statemodel)
         self.stickmodel.setChecked(False)
         self.stickmodel.stateChanged.connect(self.statemodel)
+        self.fastmode.setChecked(False)
+        self.fastmode.stateChanged.connect(self.statemodel)
         self.lineEdit.returnPressed.connect(self.changemark)
         self.zoomx.setChecked(self.zoomx_state)
         self.zoomy.setChecked(self.zoomy_state)
@@ -617,6 +619,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
     def statemodel(self):
         self.pb.taskarg['usemodel'] = self.usemodel_cb.isChecked()
         self.pb.taskarg['modelstrict'] = self.stickmodel.isChecked()
+        if self.fastmode.isChecked():
+            self.pb.taskarg['fastmode'] = 'series'
+        else:
+            self.pb.taskarg['fastmode'] = 'img'
 
     def baselineplus(self):
         self.pb.baseline_change(5e-12)
