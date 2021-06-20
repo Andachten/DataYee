@@ -117,7 +117,6 @@ def predict(fc):
     usemodel = fc.data['arg']['fastmode']
     global my
     if my.datatype!=usemodel:
-        print(my.datatype,usemodel)
         my = myNet(usemodel)
     if usemodel == 'img':
         fig = feature_extract(fc)

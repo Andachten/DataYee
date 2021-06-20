@@ -1,6 +1,5 @@
 import sys
 import copy
-#from src.predictcore import ResidualBlock,Net
 import numpy as np
 from src.datapro import lcfunc
 from src.loadjpk import forcecurve
