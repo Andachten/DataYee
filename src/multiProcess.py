@@ -5,6 +5,9 @@ Spyder Editor
 This is a temporary script file.
 """
 from multiprocessing import Pool
+import threading, queue
+from src.loadjpk import  forcecurve
+import time
 class multi_run():
     def __init__(self,name):
         super().__init__()
@@ -30,5 +33,28 @@ def splitRange(lens,n):
         else:
             lst.append(range(i,i+step-1))
     return lst
+def get_fc(q,ljp,index):
+    q.put((index,ljp[index]))
+def get_batchfc(q,ljp,index_range):
+    if index_range=='all':
+        index_range = range(len(ljp))
+    for i in index_range:
+        while q.full():
+            time.sleep(0.01)
+        print('this')
+        t = threading.Thread(target=get_fc,args=(q,ljp,i))
+        t.start()
+class get_fcdata():
+    def __init__(self,ljp):
+        self.ljp = ljp
+        self.fc = forcecurve
+        self._stop_event = threading.Event()
+    def create_quene(self,max_size=10):
+        self.q = queue.PriorityQueue(maxsize=max_size)
+    def put_data(self):
+        self.t = threading.Thread(target=get_batchfc,args=(self.q,self.ljp,'all',))
+        self.t.start()
+    def get_data(self):
+        return self.q.get(timeout=5)
 if __name__=='__main__':
     pass

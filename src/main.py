@@ -11,7 +11,7 @@ from src.datapro import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_
 from src.clusterscore import get_distmatrix,sort_similar,KMsClustering
 func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
     cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
-
+from src.multiProcess import get_fcdata
 def process_customize(fc,functions=[0]):
     for i in functions:
         func_lst[i](fc)
@@ -434,7 +434,10 @@ class programbody():
         progress.setMinimumDuration(5)
         progress.setWindowModality(Qt.WindowModal)
         progress.setRange(0,num)
-        for i,data in enumerate(self.ljp):
+        b_fc = get_fcdata(self.ljp)
+        b_fc.create_quene()
+        b_fc.put_data()
+        for i in range(len(self.ljp)):
             progress.setValue(i)
             if progress.wasCanceled():
                 QMessageBox.warning(sel,"Warning!","Failed!")
@@ -442,7 +445,7 @@ class programbody():
                 self.change={}
                 self.ready_run = True
                 break
-            self.fc.data = data
+            self.fc.data = b_fc.get_data()[1]
             self.fc.data['arg'] = self.taskarg
             main(self.fc,self.zpo,self.tasktype)
             if self.taskarg['highspeed'] and self.fc.data['offset']['highspeed']>0:
