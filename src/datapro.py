@@ -14,6 +14,7 @@ from PIL import Image
 from src.predictcore import feature_extract,MobileNet,myNet,Net
 import matplotlib as mpl
 from sklearn.neighbors import KernelDensity
+from src.tool import timer
 mpl.rcParams['font.family'] = 'Arial'
 mpl.rcParams['axes.labelsize'] = 8
 mpl.rcParams['axes.labelweight'] = 'normal'
@@ -134,6 +135,7 @@ def predict(fc):
         fc.data['mobilenet_judge']=True
     else:
         fc.data['mobilenet_judge']=False
+
 def findpeak(fc):
     fc.data['peakindex'] = np.array([])
     fc.data['bottomindex'] = np.array([])

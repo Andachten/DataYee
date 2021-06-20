@@ -7,7 +7,7 @@ This is a temporary script file.
 from multiprocessing import Pool
 import threading, queue
 from src.loadjpk import  forcecurve
-import time
+
 class multi_run():
     def __init__(self,name):
         super().__init__()
@@ -34,21 +34,22 @@ def splitRange(lens,n):
             lst.append(range(i,i+step-1))
     return lst
 def get_fc(q,ljp,index):
-    q.put((index,ljp[index]))
+    data = (index,ljp[index])
+    q.put(data,timeout=100)
 def get_batchfc(q,ljp,index_range):
     if index_range=='all':
         index_range = range(len(ljp))
-    for i in index_range:
-        while q.full():
-            time.sleep(0.01)
-        print('this')
-        t = threading.Thread(target=get_fc,args=(q,ljp,i))
+    q_index = queue.PriorityQueue(maxsize=0)
+    [q_index.put(i) for i in index_range]
+    while not q_index.empty():
+        t = threading.Thread(target=get_fc,args=(q,ljp,q_index.get()))
         t.start()
+        t.join()
+        
 class get_fcdata():
     def __init__(self,ljp):
         self.ljp = ljp
         self.fc = forcecurve
-        self._stop_event = threading.Event()
     def create_quene(self,max_size=10):
         self.q = queue.PriorityQueue(maxsize=max_size)
     def put_data(self):

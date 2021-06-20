@@ -11,17 +11,18 @@ from src.datapro import Lc_transformer,plotmap,plothist,findpeak_smallrange,get_
 from src.clusterscore import get_distmatrix,sort_similar,KMsClustering
 func_lst = [noise_down,cal_baseline_drift,cal_baseline_y,cal_baseline_x,\
     cal_highspeed_drift,predict,findpeak,peakH,wlcfit,peakN,slope,countdlc,mkbaseondlc]
-from src.multiProcess import get_fcdata
 def process_customize(fc,functions=[0]):
     for i in functions:
         func_lst[i](fc)
+
 def main_smfs(fc,zpo):
     if fc.data['rawdata'] == {}:
         return None
     fc.data['tasktype']='smfs'
     try:
         process_customize(fc,[0,2,3,4,6,7,8,9,10,11,12])
-    except:
+    except Exception as err:
+        print(err)
         return None
     if not fc.data['peaknum_judge']:
         return None
@@ -434,9 +435,9 @@ class programbody():
         progress.setMinimumDuration(5)
         progress.setWindowModality(Qt.WindowModal)
         progress.setRange(0,num)
-        b_fc = get_fcdata(self.ljp)
-        b_fc.create_quene()
-        b_fc.put_data()
+        #b_fc = get_fcdata(self.ljp)
+        #b_fc.create_quene()
+        #b_fc.put_data()
         for i in range(len(self.ljp)):
             progress.setValue(i)
             if progress.wasCanceled():
@@ -445,7 +446,9 @@ class programbody():
                 self.change={}
                 self.ready_run = True
                 break
-            self.fc.data = b_fc.get_data()[1]
+            #data = b_fc.get_data()
+            #self.fc.data = data[1]
+            self.fc.data = self.ljp[i]
             self.fc.data['arg'] = self.taskarg
             main(self.fc,self.zpo,self.tasktype)
             if self.taskarg['highspeed'] and self.fc.data['offset']['highspeed']>0:
