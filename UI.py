@@ -578,9 +578,13 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.showimage_win.show_img(self.img)
 
     def spinbox_changevalue(self, value):
+        sender = self.sender()
+        if sender == self.spinBox_2:
+            self.pb.taskarg['peakN'][0] = value
+        elif sender == self.spinBox_3:
+            self.pb.taskarg['peakN'][1] = value
         if not self.pb.state:
             return None
-        sender = self.sender()
         if sender == self.lcdoubleSpinBox:
             self.lc_value = value
         elif sender == self.lpdoubleSpinBox:
@@ -593,10 +597,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             else:
                 self.pb.forcecurve_index = len(self.pb.zpo) - 1
             self.displace_result(range_fix=self.zoomfix_state)
-        elif sender == self.spinBox_2:
-            self.pb.taskarg['peakN'][0] = value
-        elif sender == self.spinBox_3:
-            self.pb.taskarg['peakN'][1] = value
+        
     def comboBoxchange(self,value):
         if value == 'Fix lc':
             self.pb.fixlc_changelp = True
