@@ -20,7 +20,9 @@ def main_smfs(fc,zpo):
         return None
     fc.data['tasktype']='smfs'
     try:
-        process_customize(fc,[0,2,3,4,6,7,8,9,10,11,12])
+        #0:noise_down,2:cal_baseline_y,3:cal_baseline_x,4:cal_highspeed_drift
+        #6:findpeak,7:peakH,9:peakN
+        process_customize(fc,[0,2,3,4,6,7,9])
     except Exception as err:
         print(err)
         return None
@@ -29,6 +31,12 @@ def main_smfs(fc,zpo):
     if fc.data['arg']['usemodel']:
         process_customize(fc, [5])
     if not fc.data['mobilenet_judge']:
+        return None
+    try:
+        #8:wlc,10:slope,11:countdlc,12:mkbaseondlc
+        process_customize(fc,[8,10,11,12])
+    except Exception as err:
+        print(err)
         return None
     fc.clean_force()
     zpo.changingforce(fc)
