@@ -163,8 +163,8 @@ class programbody():
             i_end = i_end[-1]
         if i_end-i_start<5:
             return None
-        data_y = self.fc.data['rawdata']['retract']['vDeflection']
-        self.fc.data['offset']['y'] = data_y[i_start:i_end].mean()
+        #data_y = self.fc.data['rawdata']['retract']['vDeflection']
+        self.fc.data['offset']['y'] -= data_y[i_start:i_end].mean()*1e-12
         if self.fc.data['tasktype']=='smfs':
             cal_baseline_x(self.fc)
         if allowRotate:
@@ -174,6 +174,8 @@ class programbody():
             k = get_slope(data_x[i_start:i_end].reshape(-1),data_y[i_start:i_end].reshape(-1),0)
             self.fc.data['offset']['rotate_index'] = i_start
             self.fc.data['offset']['k']=k
+            data_y = data['vDeflection']
+            self.fc.data['offset']['y'] -= data_y[i_start:i_end].mean()
         self.curve_change()
         self.fc.clean_force()
     def pk_delete(self):
@@ -357,7 +359,7 @@ class programbody():
         data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
         index = np.argmin(np.abs(data_x-xdata))
         i = len(np.where(self.fc.data['peakindex']<index)[0])
-        print(self.fc.data['peakindex'])
+        print()
         if self.forcepeak_index>=0:
             self.fc.data['peakindex'].insert(i,index)
         if len(self.fc.data['peakindex'])==0:
