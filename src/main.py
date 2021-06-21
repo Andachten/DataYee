@@ -357,8 +357,12 @@ class programbody():
         data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
         index = np.argmin(np.abs(data_x-xdata))
         i = len(np.where(self.fc.data['peakindex']<index)[0])
+        print(self.fc.data['peakindex'])
         if self.forcepeak_index>=0:
             self.fc.data['peakindex'].insert(i,index)
+        if len(self.fc.data['peakindex'])==0:
+            self.fc.data['peakindex'].append(i)
+            self.forcepeak_index = 0
         if  self.fc.data['tasktype']=='smfs':
             process_customize(self.fc,[8,10,11,12])
         elif self.fc.data['tasktype']=='cell_curve':

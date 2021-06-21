@@ -262,7 +262,7 @@ class myFigure(FigureCanvas):
                 self.plotmark()
             if self.fc_new.data['k'] != self.fc_old.data['k']:
                 self.plotk()
-        if tasktype == 'cell_curve':
+        if tasktype == 'cell_curve' and not self.range_fix:
             set_range = 0.1
             ylim_min = self.data_y[int(set_range*len(self.data_y)):].min()-20
             self.setlim((self.data_x.min()-20, self.data_x.max() + 0.1*(self.data_x.max()-self.data_x.min())), (ylim_min, self.data_y.max() + 10))
@@ -376,10 +376,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
                 dx = event.xdata-self.xdata
                 dy = event.ydata-self.ydata
                 self.F.motion(dx, dy)
-                self.displace_result()
+                self.displace_result(range_fix=True)
             else:
                 self.F.plot_selrange(self.xdata, event.xdata)
-                self.displace_result()
+                self.displace_result(range_fix=True)
             
     def on_release(self,event):
         self.press=False
@@ -411,7 +411,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.ydata = event.ydata
         self.pb.coor_data = (self.xdata,self.ydata)
         self.pb.pk_indexchange(n=None,coor=(self.xdata,self.ydata))
-        self.displace_result()
+        self.displace_result(range_fix=True)
         #print("event.xdata", event.xdata)
         #print("event.ydata", event.ydata)
         #print("event.inaxes", event.inaxes)
@@ -421,7 +421,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         if self.xdata!=None and self.ydata!=None:
             event.xdata,event.ydata = self.xdata,self.ydata
         self.F.zoom_func(event,zoomx_state=self.zoomx_state,zoomy_state=self.zoomy_state)
-        self.displace_result()
+        self.displace_result(range_fix=True)
 
     def openfile(self):
         fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", '*.txt;;*.jpk-force;;*.jpk-force-map;;*.spm')
