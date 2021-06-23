@@ -948,8 +948,15 @@
      <addaction name="actionMap"/>
      <addaction name="actionHistogram"/>
     </widget>
+    <widget class="QMenu" name="menuStatistics">
+     <property name="title">
+      <string>Statistics</string>
+     </property>
+     <addaction name="actionHistogram_scatter"/>
+    </widget>
     <addaction name="menucontour_lenght"/>
     <addaction name="menuAdhesion"/>
+    <addaction name="menuStatistics"/>
    </widget>
    <widget class="QMenu" name="menuPliguin">
     <property name="font">
@@ -1361,6 +1368,11 @@
      <family>Arial</family>
      <pointsize>12</pointsize>
     </font>
+   </property>
+  </action>
+  <action name="actionHistogram_scatter">
+   <property name="text">
+    <string>Histogram_scatter</string>
    </property>
   </action>
  </widget>
