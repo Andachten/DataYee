@@ -240,7 +240,7 @@ def slope(fc):
         for i,arg in enumerate(fc.data['slopepre']):
             k = lcfunc1d(data_x[fc.data['peakindex'][i]],*arg)
             fc.data['k'] = np.append(fc.data['k'],k)
-        del fc.data['slopepre']
+        #del fc.data['slopepre']
     elif fc.data['tasktype']=='cell_curve':
         n = int(0.05*len(data_x))
         for i,p_i in enumerate(fc.data['peakindex']):
