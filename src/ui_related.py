@@ -172,8 +172,10 @@ class scatterFigure(FigureCanvas):
         #self.figure = mpl.figure.Figure()
         self.canvas = FigureCanvas(mpl.figure.Figure(dpi=100))
         #self.figure = self.canvas.figure
-        self.ax = self.canvas.figure.add_subplot()
-        plt.subplots_adjust(left=0, bottom=0, right=1, top=0.5,hspace=0.1,wspace=0.1)
+        self.ax = self.canvas.figure.add_subplot(4,1,(2,4))
+        self.ax0 = self.canvas.figure.add_subplot(4,1,(1,1))
+        
+        plt.subplots_adjust(left=0.3, bottom=0.2, right=0.9, top=0.9,hspace=0,wspace=0)
         #self.figure.patch.set_facecolor('None')
         #self.figure.patch.set_alpha(0)
         self.index = 0
@@ -186,6 +188,7 @@ class scatterFigure(FigureCanvas):
                         'selrange':[]}
         self.range_fix = False
         self.s = []
+        self.h = []
         super(scatterFigure, self).__init__(self.canvas.figure)
     def plotscatter(self,arr_dic,index):
         for s in self.s:
@@ -203,6 +206,13 @@ class scatterFigure(FigureCanvas):
             arr_x = np.hstack(x)
             arr_y = np.hstack(y)
             self.s.append(self.ax.scatter(arr_x,arr_y,c='r'))
+    def plothisto(self,arr_dic):
+        for h in self.h:
+            h.remove()
+        x = [v[0] for i,v in arr_dic.items()]
+        if 0 not in [len(x)]:
+            arr_x = np.hstack(x)
+            self.s.append(self.ax0.hist(arr_x,bins=10)[-1])
     def clean(self):
         for l in self.ax.lines:
             l.remove()
@@ -236,11 +246,11 @@ class statistics_win(QDialog,Ui_hist_scatter):
         fc.recover_force(ljp)
         data = fc.get_prodata()['retract']
         data_y = data['vDeflection'].reshape(-1)*1e12
-        force_arr = data_y[fc.data['peakindex']]
-        lc_arr = np.array([])
-        for lc,lp in fc.data['wlcarg']:
-            lc_arr = np.append(lc_arr,lc)
-        self.arr_dic[self.force_index] = (lc_arr,force_arr)
+        force_arr = data_y[fc.data['peakindex'][:-1]]
+        print(force_arr)
+        dlc_arr = fc.data['dlc']
+        print(dlc_arr)
+        self.arr_dic[self.force_index] = (dlc_arr,force_arr)
         fc.clean_force()
         self.fname = 'test.scatterplot'
     def plot(self):
@@ -248,12 +258,14 @@ class statistics_win(QDialog,Ui_hist_scatter):
             return None
         self.get_data()
         self.F.plotscatter(self.arr_dic,self.force_index)
+        self.F.plothisto(self.arr_dic)
         self.displace()
     def delete(self):
         self.force_index = self.myWin.pb.forcecurve_index
         if self.force_index in self.arr_dic.keys():
             del self.arr_dic[self.force_index]
         self.F.plotscatter(self.arr_dic,self.force_index)
+        self.F.plothisto(self.arr_dic)
         self.displace()
     def save(self):
         import os
@@ -287,5 +299,6 @@ class statistics_win(QDialog,Ui_hist_scatter):
                 data = pickle.load(f)
                 self.arr_dic = data['arr_dic']
             self.F.plotscatter(self.arr_dic,self.force_index)
+            self.F.plothisto(self.arr_dic)
             self.displace()
         pass
