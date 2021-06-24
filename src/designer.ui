@@ -802,7 +802,7 @@
      <x>0</x>
      <y>0</y>
      <width>1307</width>
-     <height>37</height>
+     <height>45</height>
     </rect>
    </property>
    <property name="font">
@@ -919,8 +919,8 @@
       <rect>
        <x>789</x>
        <y>471</y>
-       <width>140</width>
-       <height>94</height>
+       <width>162</width>
+       <height>114</height>
       </rect>
      </property>
      <property name="font">

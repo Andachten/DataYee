@@ -316,7 +316,6 @@ class zipfileopera:
             with zips.open(filename) as f:
                 data = pickle.load(f)
         return data
-
     def get_sourcepath(self):
         with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
             # zips.extract(zips.namelist()[0])

@@ -438,6 +438,8 @@ class programbody():
         index = list(sort_similar(self.forcecurve_index,matrix))
         SplitDic = {0:index}
         self.zpo.split_DataYee(SplitDic)
+    def hist_scatterplot(self,fig,ax_s):
+        pass
     def execu_autostep(self,progress,sel):
         self.zpo.delet_dataYee()
         self.change_dic = {}
