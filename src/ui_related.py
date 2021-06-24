@@ -5,12 +5,16 @@ Created on Thu Jun 10 21:40:37 2021
 @author: ZhengBin
 """
 from PyQt5.QtGui import QImage,QPixmap
-from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QApplication,QTableWidgetItem
+from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QApplication,QTableWidgetItem,QGridLayout,QFileDialog
 from src.parameters import Ui_Dialog
 from src.dlcrange import Ui_dlc_range
 from src.showimage import Ui_image
 from src.datapro import is_number
+from src.scatter_histogramm import Ui_hist_scatter 
 import numpy as np
+from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
+import matplotlib as mpl
+import matplotlib.pyplot as plt
 class tableplus():
     def __init__(self,table):
         self.table = table
@@ -163,3 +167,125 @@ class showimage(QDialog,Ui_image):
         self.scene.addItem(self.item)
         self.graphicsView.setScene(self.scene)
         self.show()
+class scatterFigure(FigureCanvas):
+    def __init__(self):
+        #self.figure = mpl.figure.Figure()
+        self.canvas = FigureCanvas(mpl.figure.Figure(dpi=100))
+        #self.figure = self.canvas.figure
+        self.ax = self.canvas.figure.add_subplot()
+        plt.subplots_adjust(left=0, bottom=0, right=1, top=0.5,hspace=0.1,wspace=0.1)
+        #self.figure.patch.set_facecolor('None')
+        #self.figure.patch.set_alpha(0)
+        self.index = 0
+        self.content = {'curve': [],
+                        'peak': [],
+                        'bottom': [],
+                        'mark': [],
+                        'fitcurve': [],
+                        'k':[],
+                        'selrange':[]}
+        self.range_fix = False
+        self.s = []
+        super(scatterFigure, self).__init__(self.canvas.figure)
+    def plotscatter(self,arr_dic,index):
+        for s in self.s:
+            s.remove()
+        self.s = []
+        x = [v[0] for i,v in arr_dic.items() if i!=index]
+        y = [v[1] for i,v in arr_dic.items() if i!=index]
+        if 0 not in [len(x),len(y)]:
+            arr_x = np.hstack(x)
+            arr_y = np.hstack(y)
+            self.s.append(self.ax.scatter(arr_x,arr_y,c='k'))
+        x = [v[0] for i,v in arr_dic.items() if i==index]
+        y = [v[1] for i,v in arr_dic.items() if i==index]
+        if 0 not in [len(x),len(y)]:
+            arr_x = np.hstack(x)
+            arr_y = np.hstack(y)
+            self.s.append(self.ax.scatter(arr_x,arr_y,c='r'))
+    def clean(self):
+        for l in self.ax.lines:
+            l.remove()
+class statistics_win(QDialog,Ui_hist_scatter):
+    def __init__(self,myWin):
+        super(statistics_win, self).__init__()
+        self.myWin = myWin
+        self.setupUi(self)
+        self.F = scatterFigure()
+        self.horizontalLayout_2.addWidget(self.F.canvas)
+        self.force_index = 0
+        self.arr_dic = {}
+        self.displace()
+        self.action_init()
+    def action_init(self):
+        self.pushButton.clicked.connect(self.delete)
+        self.pushButton_4.clicked.connect(self.plot)
+        self.pushButton_5.clicked.connect(self.save)
+        self.pushButton_6.clicked.connect(self.openfile)
+    def displace(self):
+        self.F.clean()
+        self.horizontalLayout_2.removeWidget(self.F.canvas)
+        self.F.canvas.draw()
+        self.horizontalLayout_2.addWidget(self.F.canvas)
+    def get_data(self):
+        if not self.myWin.pb.state and self.myWin.pb.tasktype!='smfs':
+            return None
+        fc = self.myWin.pb.fc
+        ljp = self.myWin.pb.ljp
+        self.force_index = self.myWin.pb.forcecurve_index
+        fc.recover_force(ljp)
+        data = fc.get_prodata()['retract']
+        data_y = data['vDeflection'].reshape(-1)*1e12
+        force_arr = data_y[fc.data['peakindex']]
+        lc_arr = np.array([])
+        for lc,lp in fc.data['wlcarg']:
+            lc_arr = np.append(lc_arr,lc)
+        self.arr_dic[self.force_index] = (lc_arr,force_arr)
+        fc.clean_force()
+        self.fname = 'test.scatterplot'
+    def plot(self):
+        if not self.myWin.pb.state or self.myWin.pb.tasktype!='smfs':
+            return None
+        self.get_data()
+        self.F.plotscatter(self.arr_dic,self.force_index)
+        self.displace()
+    def delete(self):
+        self.force_index = self.myWin.pb.forcecurve_index
+        if self.force_index in self.arr_dic.keys():
+            del self.arr_dic[self.force_index]
+        self.F.plotscatter(self.arr_dic,self.force_index)
+        self.displace()
+    def save(self):
+        import os
+        import pickle
+        if not self.myWin.pb.state or self.myWin.pb.tasktype!='smfs':
+            return None
+        fname = self.myWin.pb.zpo.fname
+        todir = os.path.dirname(fname)
+        basename = os.path.basename(fname)
+        rawname = os.path.splitext(basename)[0]
+        fname = os.path.join(todir,"{}.{}".format(rawname,'scatterplot'))
+        with open(fname,'wb') as f:
+            data = dict(arr_dic=self.arr_dic)
+            pickle.dump(data,f)
+    def openfile(self):
+        import os
+        import pickle
+        if not self.myWin.pb.state or self.myWin.pb.tasktype!='smfs':
+            return None
+        fname = self.myWin.pb.zpo.fname
+        todir = os.path.dirname(fname)
+        basename = os.path.basename(fname)
+        rawname = os.path.splitext(basename)[0]
+        fname = os.path.join(todir,"{}.{}".format(rawname,'scatterplot'))
+        if os.path.isfile(fname):
+            pass
+        else:
+            fname, _ = QFileDialog.getOpenFileName(self, "Open Scatter Plot", '*.scatterplot')
+        if os.path.isfile(fname):
+            with open(fname,'rb') as f:
+                data = pickle.load(f)
+                self.arr_dic = data['arr_dic']
+            self.F.plotscatter(self.arr_dic,self.force_index)
+            self.displace()
+        pass

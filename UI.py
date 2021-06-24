@@ -1,5 +1,6 @@
 import sys
 import copy
+import os
 import numpy as np
 from src.datapro import lcfunc
 from src.loadjpk import forcecurve
@@ -9,13 +10,14 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox,
 
 from src.designer import Ui_MainWindow
 from src.fittingcore import fitEnergy
-from src.ui_related import dlcrange_window,showimage,para_window
+from src.ui_related import dlcrange_window,showimage,para_window,statistics_win
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
 import matplotlib as mpl
 import matplotlib.style as mplstyle
 from src.multiProcess import multi_run
+#mpl.use('agg')
 #from PIL import ImageQt,Image
 
 mplstyle.use('fast')
@@ -366,6 +368,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actionFriddle.triggered.connect(self.enerpytypeF)
         self.actionClustering_by_KMeans.triggered.connect(self.KNcluster)
         self.actionSort_by_similarity.triggered.connect(self.SimilaritySort)
+        self.actionExit.triggered.connect(self.close)
     def enerpytypeBE(self):
         self.fitEnergy.start('BE')
     def enerpytypeF(self):
@@ -466,6 +469,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.F.range_fix = True
         else:
             self.F.range_fix = False
+        
         self.gridlayout.removeWidget(self.F.canvas)
         # plt.close()
         # sip.delete(self.F)
@@ -477,6 +481,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         # self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
         self.F.canvas.draw()
         self.gridlayout.addWidget(self.F.canvas)
+        
 
     def indexplus(self):
         self.pb.fc_indexchange(1)
@@ -655,6 +660,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 def win_connect(main_win,dialog):
     main_win.actionparameters_setting.triggered.connect(dialog[0].show)
     main_win.actionmark_base_on_dlc.triggered.connect(dialog[1].show)
+    main_win.actionHistogram_scatter.triggered.connect(dialog[2].show)
     
 
 if __name__ == '__main__':
@@ -663,8 +669,10 @@ if __name__ == '__main__':
     myWin = MyMainWindow(m_run)
     child_window0 = para_window(myWin.pb,myWin)
     child_window1 = dlcrange_window(myWin)
-    win_connect(myWin,[child_window0,child_window1])
+    child_window2 = statistics_win(myWin)
+    win_connect(myWin,[child_window0,child_window1,child_window2])
     myWin.show()
     sys.exit(app.exec_())
     plt.close()
+    
     
