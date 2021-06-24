@@ -10,6 +10,7 @@ from src.parameters import Ui_Dialog
 from src.dlcrange import Ui_dlc_range
 from src.showimage import Ui_image
 from src.datapro import is_number
+from src.scatter_histogramm import Ui_hist_scatter
 import numpy as np
 class tableplus():
     def __init__(self,table):
@@ -163,3 +164,11 @@ class showimage(QDialog,Ui_image):
         self.scene.addItem(self.item)
         self.graphicsView.setScene(self.scene)
         self.show()
+class statistics_hist_scatter(QDialog,Ui_hist_scatter):
+    def __init__(self,myWin):
+        super(statistics_hist_scatter, self).__init__()
+        self.setupUi(self)
+        self.myWin = myWin
+        self.action_init()
+    def action_init(self):
+        pass
