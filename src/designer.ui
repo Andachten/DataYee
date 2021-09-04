@@ -992,6 +992,7 @@
     </widget>
     <addaction name="menuEnergy_landscape"/>
     <addaction name="menuClustering"/>
+    <addaction name="actionScript"/>
    </widget>
    <addaction name="menu"/>
    <addaction name="menuEdit"/>
@@ -1373,6 +1374,16 @@
   <action name="actionHistogram_scatter">
    <property name="text">
     <string>Histogram_scatter</string>
+   </property>
+  </action>
+  <action name="actionScript">
+   <property name="text">
+    <string>Script</string>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>12</pointsize>
+    </font>
    </property>
   </action>
  </widget>

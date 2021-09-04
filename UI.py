@@ -10,7 +10,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox,
 
 from src.designer import Ui_MainWindow
 from src.fittingcore import fitEnergy
-from src.ui_related import dlcrange_window,showimage,para_window,statistics_win
+from src.ui_related import dlcrange_window,showimage,para_window,statistics_win,script_win
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 from src.main import programbody
 import matplotlib.pyplot as plt
@@ -661,6 +661,7 @@ def win_connect(main_win,dialog):
     main_win.actionparameters_setting.triggered.connect(dialog[0].show)
     main_win.actionmark_base_on_dlc.triggered.connect(dialog[1].show)
     main_win.actionHistogram_scatter.triggered.connect(dialog[2].show)
+    main_win.actionScript.triggered.connect(dialog[3].show)
     
 
 if __name__ == '__main__':
@@ -670,7 +671,8 @@ if __name__ == '__main__':
     child_window0 = para_window(myWin.pb,myWin)
     child_window1 = dlcrange_window(myWin)
     child_window2 = statistics_win(myWin)
-    win_connect(myWin,[child_window0,child_window1,child_window2])
+    child_window3 = script_win(myWin)
+    win_connect(myWin,[child_window0,child_window1,child_window2,child_window3])
     myWin.show()
     sys.exit(app.exec_())
     plt.close()

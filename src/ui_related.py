@@ -5,12 +5,13 @@ Created on Thu Jun 10 21:40:37 2021
 @author: ZhengBin
 """
 from PyQt5.QtGui import QImage,QPixmap
-from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QApplication,QTableWidgetItem,QGridLayout,QFileDialog
+from PyQt5.QtWidgets import QDialog,QMessageBox,QGraphicsScene,QGraphicsPixmapItem,QApplication,QTableWidgetItem,QGridLayout,QFileDialog,QAbstractItemView
 from src.parameters import Ui_Dialog
 from src.dlcrange import Ui_dlc_range
 from src.showimage import Ui_image
 from src.datapro import is_number
 from src.scatter_histogramm import Ui_hist_scatter 
+from src.script import Ui_Script
 import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib as mpl
@@ -302,3 +303,93 @@ class statistics_win(QDialog,Ui_hist_scatter):
             self.F.plothisto(self.arr_dic)
             self.displace()
         pass
+class script_win(QDialog,Ui_Script):
+    def __init__(self,myWin):
+        super(script_win, self).__init__()
+        self.setupUi(self)
+        self.myWin = myWin
+        self.get_script()
+        self.renew_list2()
+        self.listWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.listWidget_2.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self.add_lst = []
+        self.action_init()
+    def action_init(self):
+        self.pushButton.clicked.connect(self.add)
+        self.pushButton_2.clicked.connect(self.delete)
+        self.pushButton_3.clicked.connect(self.get_selectitem)
+        self.pushButton_4.clicked.connect(self.quickstart)
+        self.pushButton_5.clicked.connect(self.up)
+        self.pushButton_6.clicked.connect(self.down)
+        self.pushButton_7.clicked.connect(self.renew)
+    def start(self,item):
+        pass
+    def delete(self):
+        self.get_selectitem()
+        for i in self.select_dic['add']:
+            self.listWidget.removeItemWidget(self.listWidget.takeItem(self.listWidget.row(i)))
+    def add(self):
+        self.get_selectitem()
+        for i in self.select_dic['script']:
+            self.add_lst.append(i.text())
+        self.renew_list1()
+    def up(self):
+        self.move(-1)
+    def down(self):
+        self.move(+1)
+    def move(self,n):
+        self.get_selectitem()
+        for i,v in enumerate(self.select_dic['add']):
+            index = self.listWidget.row(v)
+            try:
+                self.add_lst[index],self.add_lst[index+n] = self.add_lst[index+n],self.add_lst[index]
+            except:
+                pass
+            break
+        self.renew_list1()
+    def get_selectitem(self):
+        self.select_dic = {}
+        dic = {'add':self.listWidget,'script':self.listWidget_2}
+        for i in ['add','script']:
+            self.select_dic[i]=[]
+            items = dic[i].selectedItems()
+            for item in items:
+                self.select_dic[i].append(item)
+    def renew(self):
+        self.listWidget_2.clear()
+        self.get_script()
+        self.renew_list2()
+    def renew_list1(self):
+        self.listWidget.clear()
+        for i in self.add_lst:
+            self.listWidget.addItem(i)
+    def renew_list2(self):
+        for fname in self.f_lst:
+            self.listWidget_2.addItem(fname)
+        pass
+    def get_script(self):
+        import os
+        self.f_lst = []
+        for a,b,c in os.walk(r'./script'):
+            for fname in c:
+                if fname.endswith('.py'):
+                    self.f_lst.append(fname)
+    def quickstart(self):
+        import os
+        zpo,ljp,fc = self.myWin.pb.zpo,self.myWin.pb.ljp,self.myWin.pb.fc
+        index_lst = range(len(zpo))
+        for i,v in enumerate(self.add_lst):
+            print(v)
+            name = os.path.splitext(v)[0]
+            print(name)
+            exec("from script.{} import {}".format(name,name))
+            exec("{}_{} = {}(zpo,ljp,fc)".format(name,i,name))
+        for index in index_lst:
+            for i,v in enumerate(self.add_lst):
+                name = os.path.splitext(v)[0]
+                exec("{}_{}.run({})".format(name,i,index))
+        for i,v in enumerate(self.add_lst):
+            name = os.path.splitext(v)[0]
+            exec("{}_{}.end()".format(name,i))
+        print('finish')
+        
