@@ -15,3 +15,4 @@ src/MINIST/MNIST/processed/test.pt
 src/MINIST/MNIST/raw/train-labels-idx1-ubyte
 maxforce.txt
 *.cluster-matrix
+txt_out/0.txt

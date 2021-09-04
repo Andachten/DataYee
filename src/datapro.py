@@ -65,7 +65,7 @@ def noise_down(fc):
     r = 0.9
     data_y_right = data_y[:, 0][int(r * len(data_y)):]
     data_y_right_smth = gaussian_filter(data_y_right, 21)
-    for s in np.arange(30)[3::2]:
+    for s in np.arange(17)[3::2]:
         err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
         if err < 4:
             break

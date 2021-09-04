@@ -344,6 +344,8 @@ if __name__=='__main__':
     since = time.time()
     val_lens = len(val_data)
     train_lens = len(train_data)
+    loss_lst,acc_lst,step_lst = [],[],[]
+    step=0
     for epoch in range(num_epochs):
         print('Epoch {}/{}'.format(epoch, num_epochs - 1))
         now = int(time.time())
@@ -374,6 +376,10 @@ if __name__=='__main__':
                         optimizer.step()
                 running_loss += loss.item() * inputs.size(0)
                 running_corrects += torch.sum(preds == labels.data)
+                step+=1
+                step_lst.append(step)
+                loss_lst.append(loss.item())
+                acc_lst.append(torch.sum(preds == labels.data)/len(preds))
             if phase == 'train':
                 scheduler.step()
             if phase == 'train':
@@ -398,7 +404,6 @@ if __name__=='__main__':
 
     # load best model weights
     model.load_state_dict(best_model_wts)
-    
     
     
     
