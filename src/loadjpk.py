@@ -13,9 +13,10 @@ from jpkfile import JPKFile, JPKMap
 import zipfile
 from zipfile import ZipFile
 from scipy.signal import savgol_filter
-'''from nanoscope import files
-from nanoscope.constants import FORCE, METRIC, VOLTS, PLT_kwargs'''
-
+'''
+from nanoscope import files
+from nanoscope.constants import FORCE, METRIC, VOLTS, PLT_kwargs
+'''
 
 def rotate(data_x, data_y, index, k):
     theta = np.arctan(k) * -1
@@ -100,9 +101,129 @@ class forcecurve:
     def recover_force(self, ljf):
         ljf.file_type_deter(*self.data['datamsg'])
         self.data['rawdata'] = ljf.data['rawdata']
-
-
-class loadjpkfile(forcecurve):
+class loadjpkfile():
+    def __init__(self,filedir):
+        self.filedir = filedir
+        self.filelst = []
+        self.datalst = []
+        self.get_filelst()
+        self.get_datalst()
+        self.start_num = -1
+        self.current_readfile = 'none'
+        fc = forcecurve()
+        self.data = fc.data
+        self.data['path'] = self.filedir
+        self.buffer = {'txt':'none','jpkmap':'none','jpkforce':'nono','datay':'none'}
+    def __len__(self):
+        return len(self.datalst)
+    def __iter__(self):
+        return self
+    def __next__(self):
+        self.start_num += 1
+        if self.start_num < len(self):
+            pass
+        else:
+            self.start_num = -1
+            raise StopIteration
+        self.data['datamsg'] = self.datalst[self.start_num]
+        self.file_type_deter(*self.datalst[self.startnum])
+        return copy.deepcopy(self.data)
+    def __getitem__(self, index):
+        self.file_type_deter(*self.datalst[index])
+        self.data['datamsg'] = self.datalst[index]
+        return copy.deepcopy(self.data)
+    def get_datalst(self):
+        for fname in self.filelst:
+            if sum([True for i in ['.txt', '.jpk-force', '.datay'] if fname.endswith(i)]):
+                self.datalst.append((fname, 0))
+            elif sum([True for i in ['.jpk-force-map'] if fname.endswith(i)]):
+                properties = ZipFile(fname).open('header.properties')
+                while True:
+                    line = properties.readline()
+                    if b'force-scan-map.indexes.max' in line:
+                        maxindex = int(line.rstrip().split(b'=')[-1])
+                        for i in range(maxindex):
+                            self.datalst.append((fname, i))
+                        break
+    def get_filelst(self, Travel=True):
+        if os.path.isfile(self.filedir):
+            self.filelst.append(self.filedir)
+        elif os.path.isdir(self.filedir):
+            for a, b, c in os.walk(self.filedir, topdown=True, onerror=None, followlinks=False):
+                for filename in c:
+                    if sum([True for i in ['.txt', '.jpk-force', '.jpk-force-map', '.datay'] if
+                            os.path.join(a, filename).endswith(i)]):
+                        self.filelst.append(os.path.join(a, filename))
+                if not Travel:
+                    break
+    def file_type_deter(self, filename, index):
+        self.change_buffer(filename)
+        if filename.endswith('.txt'):
+            self.extract_txt_data(filename, index)
+        elif filename.endswith('.jpk-force'):
+            self.extract_force_data(filename, index)
+        elif filename.endswith('.jpk-force-map'):
+            self.extract_map_data(filename, index)
+        elif filename.endswith('.datay'):
+            self.extract_datay_data(filename, index)
+    def change_buffer(self,filename):
+        if self.current_readfile != filename:
+            self.current_readfile = filename
+            suffix = os.path.splitext(filename)[-1]
+            if suffix =='.txt':
+                self.buffer['txt'] = np.loadtxt(filename, comments='#')
+            elif suffix =='.jpk-force':
+                self.buffer['jpkforce'] = JPKFile(filename)
+            elif suffix == '.jpk-force-map':
+                self.buffer['jpkmap'] = JPKMap(filename)
+            elif suffix == '.datay':
+                with open(filename,'rb') as f:
+                    self.buffer['datay'] = pickle.load(f)
+                
+    def extract_txt_data(self, filename, index):
+        data = self.buffer['txt']
+        with open(filename, 'r') as f:
+            text = f.readlines()
+            for line in text:
+                if '# springConstant' in line:
+                    springConstant = float(line.split()[-1])
+                    break
+        self.data['springConstant'] = springConstant
+        self.data['rawdata']['extend'] = np.array([[tuple(i)] for i in data[:np.argmin(data[:, 0])]],
+                                                  dtype=[('measuredHeight', '<f8'), ('vDeflection', '<f8')])
+        self.data['rawdata']['retract'] = np.array([[tuple(i)] for i in data[np.argmin(data[:, 0]):]],
+                                                   dtype=[('measuredHeight', '<f8'), ('vDeflection', '<f8')])
+    def extract_force_data(self, filename, index):
+        jpk = self.buffer['jpkforce']
+        try:
+            springConstant = float(
+                jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling'][
+                    'multiplier'])
+        except:
+            return None
+        self.data['springConstant'] = springConstant
+        for i, segment in jpk.segments.items():
+            self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight', 'vDeflection'])[0]
+    def extract_map_data(self, filename, index):
+        jpks = self.buffer['jpkmap']
+        jpk = jpks.get_single_pixel(index)
+        position = jpks.flat_indices[index].parameters['force-scan-series']['header']['position']
+        self.data['xy-position'][0],self.data['xy-position'][1] = float(position['x']),float(position['y'])
+        try:
+            springConstant = float(
+                jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling'][
+                    'multiplier'])
+        except:
+            springConstant = float(
+                jpk.shared_parameters['lcd-info']['1']['conversion-set']['conversion']['force']['scaling'][
+                    'multiplier'])
+        self.data['springConstant'] = springConstant
+        for i, segment in jpk.segments.items():
+            self.data['rawdata'][segment.get_info('type')] = segment.get_array(['measuredHeight', 'vDeflection'])[0]
+    def extract_datay_data(self, filename, index):
+        self.data['springConstant'] = self.buffer['datay']['springConstant']
+        self.data['rawdata'] = self.buffer['datay']['rawdata']
+class loadjpkfile_(forcecurve):
     def __init__(self, filedir):
         super().__init__()
         self.filedir = filedir
@@ -152,11 +273,13 @@ class loadjpkfile(forcecurve):
                         for i in range(maxindex):
                             self.datalst.append((fname, i))
                         break
-            '''elif sum([True for i in ['.spm'] if fname.endswith(i)]):
+            '''
+            elif sum([True for i in ['.spm'] if fname.endswith(i)]):
                 with files.ForceVolumeFile(fname) as f:
                     fv_pixels = f.force_curves_channel.number_of_force_curves
                     for i in range(fv_pixels):
-                        self.datalst.append((fname, i))'''
+                        self.datalst.append((fname, i))
+            '''
 
     def get_filenamelst(self, Travel=True):
         if os.path.isfile(self.filedir):
@@ -179,7 +302,8 @@ class loadjpkfile(forcecurve):
             self.extract_map_data(filename, index)
         elif filename.endswith('.datay'):
             self.extract_datay_data(filename, index)
-        '''elif filename.endswith('.spm'):
+        '''
+        elif filename.endswith('.spm'):
             self.extract_spm_data(filename, index)'''
 
     def extract_txt_data(self, filename, index):
@@ -303,33 +427,56 @@ class zipfileopera:
     def __init__(self, fname='test.DataYee-force'):
         self.fname = fname
         self.startnum = -1
+        self.version = 'version2'
+        self.data = {self.version:'','data.pkl':{}}
+        self.readfile()
         self.change = {}
 
     def __len__(self):
+        '''
         with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
             lens = len(zips.namelist())
-        return lens
+        '''
+        return len(self.data['data.pkl'])
 
     def __getitem__(self, index):
+        index = list(self.data['data.pkl'].keys())[index]
+        '''
         with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
             filename = zips.namelist()[index]
             with zips.open(filename) as f:
                 data = pickle.load(f)
-        return data
+                '''
+        return self.data['data.pkl'][index]
+    def readfile(self):
+        if os.path.isfile(self.fname):
+            with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
+                if self.version in zips.namelist():
+                    for fname in zips.namelist():
+                        with zips.open(fname) as f:
+                            self.data[fname] = pickle.load(f)
+                else:
+                    for fname in zips.namelist():
+                        if os.path.splitext(fname)[-1] == '.pkl':
+                            with zips.open(fname) as f:
+                                fcdata = pickle.load(f)
+                                self.data['data.pkl'][fcdata['datamsg']] = fcdata
+    def savefile(self):
+        with ZipFile(self.fname, 'w', zipfile.ZIP_DEFLATED) as zips:
+            for k,v in self.data.items():
+                zips.writestr(k, pickle.dumps(v))
     def get_sourcepath(self):
-        with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
-            # zips.extract(zips.namelist()[0])
-            with zips.open(zips.namelist()[0]) as f:
-                data = pickle.load(f)
-        return data['path']
+        
+        return list(self.data['data.pkl'].values())[0]['path']
 
     def addforce(self, fc):
         fc.clean_force()
+        self.data['data.pkl'][fc.data['datamsg']] = fc.data
+        '''
         o = os.path.splitext(os.path.basename(fc.data['datamsg'][0]))[0] + '-s-' + str(fc.data['datamsg'][1]) + '.pkl'
         pkl = pickle.dumps(fc.data)
         with ZipFile(self.fname, 'a', zipfile.ZIP_DEFLATED) as zips:
             zips.writestr(o, pkl)
-
     def saveforce(self):
         with ZipFile(self.fname, 'a', zipfile.ZIP_DEFLATED) as zips:
             for i, fcs in self.change.items():
@@ -338,15 +485,21 @@ class zipfileopera:
                 pkl = pickle.dumps(fcs.data)
                 zips.writestr(o, pkl)
         self.change = {}
-
+'''
     def changingforce(self, fc):
-        bup = copy.deepcopy(fc)
-        #        bup.clean_force()
-        self.change[fc.data['datamsg']] = bup
+        fc.clean_force()
+        self.change[fc.data['datamsg']] = copy.deepcopy(fc.data)
 
     def changedforce(self, svfname='',saveas=False):
         if len(self.change) == 0 and not saveas:
             return None
+        if saveas:
+            self.fname = svfname
+        for k,v in self.change.items():
+            self.data['data.pkl'][k] = v
+        self.change = {}
+        self.savefile()
+        '''
         with ZipFile(self.fname, 'r', zipfile.ZIP_DEFLATED) as zips:
             lst = copy.deepcopy(zips.namelist())
         pkl_dic = {}
@@ -366,7 +519,8 @@ class zipfileopera:
         with ZipFile(self.fname, 'w', zipfile.ZIP_DEFLATED) as zips:
             for i in range(len(pkl_index)):
                 zips.writestr(pkl_index[i], pickle.dumps(pkl_dic[pkl_index[i]]))
-        self.change = {}
+        '''
+        
 
     def delet_dataYee(self):
         if os.path.isfile(self.fname):

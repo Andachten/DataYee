@@ -24,6 +24,7 @@ mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
 #m = MobileNet()
 my = myNet('img')
+plt.ioff()
 def lcfunc(x, lc, lp):
     return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
 def wlc2lc(x,f,lp):

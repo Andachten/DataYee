@@ -275,7 +275,7 @@ class programbody():
         if not self.state:
             return None
         if self.forcecurve_index in self.change_dic.keys():
-            self.fc.data = copy.deepcopy(self.zpo.change[self.change_dic[self.forcecurve_index]].data)
+            self.fc.data = copy.deepcopy(self.zpo.change[self.change_dic[self.forcecurve_index]])
         else:
             self.fc.data = self.zpo[self.forcecurve_index]
         if 'arg' in self.fc.data.keys():
@@ -472,12 +472,12 @@ class programbody():
         else:
             if self.taskarg['highspeed'] and len(self.highspeedcorr)!=0:
                 for k,v in self.zpo.change.items():
-                    self.zpo.change[k].data['offset']['highspeed']=self.highspeedcorr.mean()
+                    self.zpo.change[k]['offset']['highspeed']=self.highspeedcorr.mean()
             if len(self.zpo.change)==0:
                 self.state = False
             else:
                 self.state = True
-            self.zpo.saveforce()
+            self.zpo.changedforce()
             progress.setValue(num)
             QMessageBox.information(sel,"Notic","Success")
             self.ready_run = False
