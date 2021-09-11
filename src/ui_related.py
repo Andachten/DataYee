@@ -326,8 +326,11 @@ class script_win(QDialog,Ui_Script):
         pass
     def delete(self):
         self.get_selectitem()
+        print(self.select_dic['add'])
+        print(self.add_lst)
         for i in self.select_dic['add']:
             self.listWidget.removeItemWidget(self.listWidget.takeItem(self.listWidget.row(i)))
+            self.add_lst.remove(i.text())
     def add(self):
         self.get_selectitem()
         for i in self.select_dic['script']:

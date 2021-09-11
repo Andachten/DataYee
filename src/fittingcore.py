@@ -186,12 +186,14 @@ class fitEnergy(QDialog,Ui_fitting,QTableView):
         if len(x_arr)<=3:
             QMessageBox.information(self,"Erroe","Too little data!")
             return None
+        print(x_arr,x_arr,bounds)
         arg = fit(x_arr,y_arr,bounds,methods=self.energytype)
         if not arg:
             QMessageBox.information(self,"Erroe","Fitting error!")
             return None
         print(arg)
         fig = plot(x_arr, y_arr, arg['arg'],methods=self.energytype)
+        fig.savefig('test.png',bbox_inches='tight',transparent=True)
         self.img = fig2img(fig)
         plt.close()
         self.showimg()
