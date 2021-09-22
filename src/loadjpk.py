@@ -489,10 +489,12 @@ class zipfileopera:
     def changingforce(self, fc):
         fc.clean_force()
         self.change[fc.data['datamsg']] = copy.deepcopy(fc.data)
-
+    def clean_force(self):
+        self.data['data.pkl'] = {}
     def changedforce(self, svfname='',saveas=False):
         if len(self.change) == 0 and not saveas:
             return None
+        os.remove(self.fname)
         if saveas:
             self.fname = svfname
         for k,v in self.change.items():
@@ -674,10 +676,6 @@ class zipfileopera:
             data_frame.to_excel(writer,sheet_name=mark)
         writer.close()
         return True
-            
-            
-            
-                
             
     def extrac_argdata(self, ljp, filters=True, filter_lst=['peaknum_judge', 'mobilenet_judge', 'artificial_judge']):
         wk_i = xlwt.Workbook(encoding='utf-8')
