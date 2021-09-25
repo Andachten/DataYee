@@ -100,6 +100,7 @@ class forcecurve:
 
     def recover_force(self, ljf):
         ljf.file_type_deter(*self.data['datamsg'])
+        print(self.data['datamsg'])
         self.data['rawdata'] = ljf.data['rawdata']
 class loadjpkfile():
     def __init__(self,filedir):

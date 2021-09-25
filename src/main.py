@@ -101,6 +101,7 @@ class programbody():
         if not self.state:
             return None
         self.change_dic[self.forcecurve_index]=self.fc.data['datamsg']
+        self.fc.clean_force()
         self.zpo.changingforce(self.fc)
     def fc_indexchange(self,n=0):
         if not self.state:
