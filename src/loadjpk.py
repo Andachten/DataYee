@@ -494,8 +494,8 @@ class zipfileopera:
     def changedforce(self, svfname='',saveas=False):
         if len(self.change) == 0 and not saveas:
             return None
-        os.remove(self.fname)
         if saveas:
+            os.remove(self.fname)
             self.fname = svfname
         for k,v in self.change.items():
             self.data['data.pkl'][k] = v
