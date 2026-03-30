@@ -10,7 +10,7 @@ from dataclasses import dataclass
 from typing import Optional
 
 CURRENT_VERSION = "0.1.0"
-REPO_OWNER = "DataYee"
+REPO_OWNER = "Andachten"
 REPO_NAME = "DataYee"
 
 
