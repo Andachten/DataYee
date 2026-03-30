@@ -66,6 +66,28 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.fitEnergy = fitEnergy()
         self.action_init()
         self.m_run = m_run if m_run is not None else None
+        self.setAcceptDrops(True)
+
+    def dragEnterEvent(self, event: Any) -> None:
+        if event.mimeData().hasUrls():
+            event.acceptProposedAction()
+        else:
+            super().dragEnterEvent(event)
+
+    def dropEvent(self, event: Any) -> None:
+        if event.mimeData().hasUrls():
+            for url in event.mimeData().urls():
+                file_path = url.toLocalFile()
+                if file_path.endswith('.DataYee-force') or file_path.endswith('.jpk-force') or file_path.endswith('.txt'):
+                    self.fname = file_path
+                    self.settings.setValue('lastDirectory', file_path.rsplit('/', 1)[0].rsplit('\\', 1)[0])
+                    self.pb.creattask(file_path)
+                    self.F.clean_overlay()
+                    self.displace_result()
+                    break
+            event.acceptProposedAction()
+        else:
+            super().dropEvent(event)
 
     def action_init(self) -> None:
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
