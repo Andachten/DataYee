@@ -1,0 +1,68 @@
+[project]
+name = "datayee"
+version = "0.1.0"
+description = "Single-Molecule Force Spectroscopy (SMFS) Data Analysis Tool"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [
+    { name = "ZhengBin" }
+]
+keywords = ["AFM", "force-spectroscopy", "single-molecule", "biophysics"]
+
+dependencies = [
+    "numpy>=1.26.0",
+    "pandas>=2.2.0",
+    "scipy>=1.12.0",
+    "matplotlib>=3.8.0",
+    "scikit-learn>=1.5.0",
+    "PyQt5>=5.15.0",
+    "openpyxl>=3.1.0",
+    "xlwt>=1.3.0",
+    "dtaidistance>=2.3.2",
+    "tslearn>=0.7.0",
+    "jpkfile>=1.6.1",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0.0",
+    "pytest-cov>=4.1.0",
+    "pytest-qt>=4.4.0",
+    "ruff>=0.3.0",
+    "mypy>=1.8.0",
+]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # Pyflakes
+    "I",   # isort
+    "N",   # pep8-naming
+    "UP",  # pyupgrade
+]
+ignore = [
+    "E501",  # line too long (handled by formatter)
+]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_ignores = true
+disallow_untyped_defs = true
