@@ -1,18 +1,66 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
 
-*.xml
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Data files (keep in testdata for testing)
 *.DataYee-force
-*.patch
-*.pyc
+*.jpk-force
 *.xlsx
-*.png
 *.xls
-*.iml
-*.gz
-src/MINIST/MNIST/raw/t10k-images-idx3-ubyte
-src/MINIST/MNIST/raw/t10k-labels-idx1-ubyte
-src/MINIST/MNIST/raw/train-images-idx3-ubyte
-src/MINIST/MNIST/processed/test.pt
-src/MINIST/MNIST/raw/train-labels-idx1-ubyte
-maxforce.txt
-*.cluster-matrix
-txt_out/0.txt
+
+# Logs
+*.log
+txt_out/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Model files (deprecated ML module)
+*.model
+*.pt
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Temporary files
+*.tmp
+nul
