@@ -78,140 +78,147 @@ class TableHelper:
         self.paste_tb_text()
 
 
-class ParaWindow(QDialog):
+class ParaWindow:
     """Parameter settings dialog window."""
 
     def __init__(self, pb: 'programbody', myWin: 'QMainWindow') -> None:
-        super().__init__()
         from src.parameters import Ui_Dialog
-        self.setupUi(self)
-        self.pb = pb
-        self.myWin = myWin
-        self.myWin.allowrotate = False
-        self.action_init()
+        self._dialog = QDialog()
+        self._ui = Ui_Dialog()
+        self._ui.setupUi(self._dialog)
+        self._dialog.pb = pb
+        self._dialog.myWin = myWin
+        self._dialog.myWin.allowrotate = False
+        self._dialog.sens = self._ui.sens
+        self._dialog.xlimit = self._ui.xlimit
+        self._dialog.xsens = self._ui.xsens
+        self._dialog.peakH = self._ui.peakH
+        self._dialog.highspeed = self._ui.highspeed
+        self._dialog.spinBox = self._ui.spinBox
+        self._dialog.lp_min = self._ui.lp_min
+        self._dialog.lp_max = self._ui.lp_max
+        self._dialog.rotatestate = self._ui.rotatestate
+        self._dialog.delay = self._ui.delay
+        self._setup_actions()
 
-    def setupUi(self, Dialog: QDialog) -> None:
-        from src.parameters import Ui_Dialog
-        super().setupUi(Dialog)
-        Ui_Dialog.setupUi(self, Dialog)
+    def _setup_actions(self) -> None:
+        self._dialog.sens.valueChanged.connect(self._spinbox_changevalue)
+        self._dialog.xlimit.valueChanged.connect(self._spinbox_changevalue)
+        self._dialog.xsens.valueChanged.connect(self._spinbox_changevalue)
+        self._dialog.peakH.valueChanged.connect(self._spinbox_changevalue)
+        self._dialog.highspeed.toggled.connect(self._hispeedcorrect)
+        self._dialog.spinBox.valueChanged.connect(self._spinbox_changevalue)
+        self._dialog.lp_min.valueChanged.connect(self._spinbox_changevalue)
+        self._dialog.lp_max.valueChanged.connect(self._spinbox_changevalue)
+        self._dialog.rotatestate.setChecked(False)
+        self._dialog.rotatestate.stateChanged.connect(self._cbchange)
+        self._dialog.delay.stateChanged.connect(self._cbchange)
 
-    def action_init(self) -> None:
-        self.sens.valueChanged.connect(self.spinbox_changevalue)
-        self.xlimit.valueChanged.connect(self.spinbox_changevalue)
-        self.xsens.valueChanged.connect(self.spinbox_changevalue)
-        self.peakH.valueChanged.connect(self.spinbox_changevalue)
-        self.highspeed.toggled.connect(self.hispeedcorrect)
-        self.spinBox.valueChanged.connect(self.spinbox_changevalue)
-        self.lp_min.valueChanged.connect(self.spinbox_changevalue)
-        self.lp_max.valueChanged.connect(self.spinbox_changevalue)
-        self.rotatestate.setChecked(False)
-        self.rotatestate.stateChanged.connect(self.cbchange)
-        self.delay.stateChanged.connect(self.cbchange)
-
-    def spinbox_changevalue(self, value: float) -> None:
+    def _spinbox_changevalue(self, value: float) -> None:
         sender = self.sender()
-        if sender == self.sens:
-            self.pb.taskarg['sens'] = value
-        elif sender == self.xlimit:
-            self.pb.taskarg['xlim'] = value
-        elif sender == self.xsens:
-            self.pb.taskarg['xsens'] = value
-        elif sender == self.peakH:
-            self.pb.taskarg['peakH'] = value
-        elif sender == self.spinBox:
-            self.myWin.siglestep = value
-        elif sender == self.lp_max:
-            self.pb.taskarg['lp'][1] = value
-        elif sender == self.lp_min:
-            self.pb.taskarg['lp'][0] = value
+        if sender == self._dialog.sens:
+            self._dialog.pb.taskarg['sens'] = value
+        elif sender == self._dialog.xlimit:
+            self._dialog.pb.taskarg['xlim'] = value
+        elif sender == self._dialog.xsens:
+            self._dialog.pb.taskarg['xsens'] = value
+        elif sender == self._dialog.peakH:
+            self._dialog.pb.taskarg['peakH'] = value
+        elif sender == self._dialog.spinBox:
+            self._dialog.myWin.siglestep = value
+        elif sender == self._dialog.lp_max:
+            self._dialog.pb.taskarg['lp'][1] = value
+        elif sender == self._dialog.lp_min:
+            self._dialog.pb.taskarg['lp'][0] = value
 
-    def hispeedcorrect(self) -> None:
-        if self.highspeed.isChecked():
-            self.pb.taskarg['highspeed'] = True
+    def _hispeedcorrect(self) -> None:
+        if self._dialog.highspeed.isChecked():
+            self._dialog.pb.taskarg['highspeed'] = True
         else:
-            self.pb.taskarg['highspeed'] = False
+            self._dialog.pb.taskarg['highspeed'] = False
 
-    def cbchange(self) -> None:
+    def _cbchange(self) -> None:
         sender = self.sender()
-        if sender == self.rotatestate:
-            self.myWin.allowrotate = not self.myWin.allowrotate
-        elif sender == self.delay:
-            self.myWin.F.overlaymode = not self.myWin.F.overlaymode
+        if sender == self._dialog.rotatestate:
+            self._dialog.myWin.allowrotate = not self._dialog.myWin.allowrotate
+        elif sender == self._dialog.delay:
+            self._dialog.myWin.F.overlaymode = not self._dialog.myWin.F.overlaymode
+
+    def show(self) -> None:
+        self._dialog.show()
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._dialog, name)
 
 
-class DLCRangeWindow(QDialog):
+class DLCRangeWindow:
     """DLC range settings dialog window."""
 
     def __init__(self, myWin: 'QMainWindow') -> None:
-        super().__init__()
         from src.dlcrange import Ui_dlc_range
-        self.setupUi(self)
-        self.myWin = myWin
-        self.action_init()
+        self._dialog = QDialog()
+        self._ui = Ui_dlc_range()
+        self._ui.setupUi(self._dialog)
+        self._dialog.myWin = myWin
+        self._dialog.tableWidget = self._ui.tableWidget
+        self._dialog.pushButton = self._ui.pushButton
+        self._dialog.pushButton.clicked.connect(self._table_update)
 
-    def setupUi(self, Dialog: QDialog) -> None:
-        from src.dlcrange import Ui_dlc_range
-        super().setupUi(Dialog)
-        Ui_dlc_range.setupUi(self, Dialog)
-
-    def action_init(self) -> None:
-        self.pushButton.clicked.connect(self.table_update)
-
-    def table_update(self) -> None:
+    def _table_update(self) -> None:
         from src.datapro import is_number
         dic: Dict[str, tuple] = {}
         for r in range(1, 10):
-            if (self.tableWidget.item(r, 0) is not None and
-                self.tableWidget.item(r, 1) is not None and
-                self.tableWidget.item(r, 2) is not None):
-                if (is_number(self.tableWidget.item(r, 1).text()) and
-                    is_number(self.tableWidget.item(r, 2).text()) and
-                    float(self.tableWidget.item(r, 1).text()) <= float(self.tableWidget.item(r, 2).text()) and
-                    float(self.tableWidget.item(r, 1).text()) > 0):
-                    dic[self.tableWidget.item(r, 0).text()] = (
-                        float(self.tableWidget.item(r, 1).text()),
-                        float(self.tableWidget.item(r, 2).text())
+            if (self._dialog.tableWidget.item(r, 0) is not None and
+                self._dialog.tableWidget.item(r, 1) is not None and
+                self._dialog.tableWidget.item(r, 2) is not None):
+                if (is_number(self._dialog.tableWidget.item(r, 1).text()) and
+                    is_number(self._dialog.tableWidget.item(r, 2).text()) and
+                    float(self._dialog.tableWidget.item(r, 1).text()) <= float(self._dialog.tableWidget.item(r, 2).text()) and
+                    float(self._dialog.tableWidget.item(r, 1).text()) > 0):
+                    dic[self._dialog.tableWidget.item(r, 0).text()] = (
+                        float(self._dialog.tableWidget.item(r, 1).text()),
+                        float(self._dialog.tableWidget.item(r, 2).text())
                     )
                 else:
-                    QMessageBox.information(self, "Error", "Input error!")
+                    QMessageBox.information(self._dialog, "Error", "Input error!")
                     return None
         d = np.diff(np.sort(np.array(list(dic.values())), axis=0).reshape(-1))
         if sum(np.where(d <= 0)[0]) != 0:
-            QMessageBox.information(self, "Error", "Input error!")
+            QMessageBox.information(self._dialog, "Error", "Input error!")
             return None
-        self.myWin.pb.taskarg['mark'] = dic
-        self.close()
+        self._dialog.myWin.pb.taskarg['mark'] = dic
+        self._dialog.close()
+
+    def show(self) -> None:
+        self._dialog.show()
 
 
-class ShowImageWindow(QDialog):
+class ShowImageWindow:
     """Image display dialog window."""
 
     def __init__(self) -> None:
-        super().__init__()
         from src.showimage import Ui_image
-        self.setupUi(self)
-
-    def setupUi(self, Dialog: QDialog) -> None:
-        from src.showimage import Ui_image
-        super().setupUi(Dialog)
-        Ui_image.setupUi(self, Dialog)
+        self._dialog = QDialog()
+        self._ui = Ui_image()
+        self._ui.setupUi(self._dialog)
+        self._dialog.graphicsView = self._ui.graphicsView
 
     def show_img(self, img: Any) -> None:
         if img is None:
-            self.close()
+            self._dialog.close()
             return None
-        self.img = img
+        self._img = img
         scale = img.size[0] / 589
-        self.frame = QImage(np.array(img), img.size[0], img.size[1], QImage.Format_RGB888)
-        self.pix = QPixmap.fromImage(self.frame).scaledToWidth(int(img.size[0] / scale)).scaledToHeight(int(img.size[1] / scale))
-        self.item = QGraphicsPixmapItem(self.pix)
-        self.scene = QGraphicsScene()
-        self.scene.addItem(self.item)
-        self.graphicsView.setScene(self.scene)
-        self.show()
+        self._frame = QImage(np.array(img), img.size[0], img.size[1], QImage.Format_RGB888)
+        self._pix = QPixmap.fromImage(self._frame).scaledToWidth(int(img.size[0] / scale)).scaledToHeight(int(img.size[1] / scale))
+        self._item = QGraphicsPixmapItem(self._pix)
+        self._scene = QGraphicsScene()
+        self._scene.addItem(self._item)
+        self._dialog.graphicsView.setScene(self._scene)
+        self._dialog.show()
 
 
-class ScatterFigure(FigureCanvas):
+class ScatterFigure:
     """Scatter plot figure canvas for statistics window."""
 
     def __init__(self) -> None:
@@ -227,11 +234,10 @@ class ScatterFigure(FigureCanvas):
         self.range_fix = False
         self.s: list = []
         self.h: list = []
-        super().__init__(self.canvas.figure)
 
     def plotscatter(self, arr_dic: Dict[int, tuple], index: int) -> None:
-        for s in self.s:
-            s.remove()
+        for sc in self.s:
+            sc.remove()
         self.s = []
         x = [v[0] for i, v in arr_dic.items() if i != index]
         y = [v[1] for i, v in arr_dic.items() if i != index]
@@ -259,44 +265,39 @@ class ScatterFigure(FigureCanvas):
             l.remove()
 
 
-class StatisticsWindow(QDialog):
+class StatisticsWindow:
     """Statistics dialog with scatter plot and histogram."""
 
     def __init__(self, myWin: 'QMainWindow') -> None:
-        super().__init__()
         from src.scatter_histogramm import Ui_hist_scatter
-        self.myWin = myWin
-        self.setupUi(self)
+        self._dialog = QDialog()
+        self._ui = Ui_hist_scatter()
+        self._ui.setupUi(self._dialog)
+        self._myWin = myWin
         self.F = ScatterFigure()
-        self.horizontalLayout_2.addWidget(self.F.canvas)
-        self.force_index = 0
-        self.arr_dic: Dict[int, tuple] = {}
-        self.displace()
-        self.action_init()
+        self._ui.horizontalLayout_2.addWidget(self.F.canvas)
+        self._dialog.force_index = 0
+        self._dialog.arr_dic: Dict[int, tuple] = {}
+        self._displace()
+        self._dialog.pushButton = self._ui.pushButton
+        self._dialog.pushButton_4 = self._ui.pushButton_4
+        self._dialog.pushButton_5 = self._ui.pushButton_5
+        self._dialog.pushButton_6 = self._ui.pushButton_6
+        self._dialog.pushButton.clicked.connect(self._delete)
+        self._dialog.pushButton_4.clicked.connect(self._plot)
+        self._dialog.pushButton_5.clicked.connect(self._save)
+        self._dialog.pushButton_6.clicked.connect(self._openfile)
 
-    def setupUi(self, Dialog: QDialog) -> None:
-        from src.scatter_histogramm import Ui_hist_scatter
-        super().setupUi(Dialog)
-        Ui_hist_scatter.setupUi(self, Dialog)
-
-    def action_init(self) -> None:
-        self.pushButton.clicked.connect(self.delete)
-        self.pushButton_4.clicked.connect(self.plot)
-        self.pushButton_5.clicked.connect(self.save)
-        self.pushButton_6.clicked.connect(self.openfile)
-
-    def displace(self) -> None:
+    def _displace(self) -> None:
         self.F.clean()
-        self.horizontalLayout_2.removeWidget(self.F.canvas)
         self.F.canvas.draw()
-        self.horizontalLayout_2.addWidget(self.F.canvas)
 
-    def get_data(self) -> None:
-        if not self.myWin.pb.state and self.myWin.pb.tasktype != 'smfs':
+    def _get_data(self) -> None:
+        if not self._myWin.pb.state and self._myWin.pb.tasktype != 'smfs':
             return None
-        fc = self.myWin.pb.fc
-        ljp = self.myWin.pb.ljp
-        self.force_index = self.myWin.pb.forcecurve_index
+        fc = self._myWin.pb.fc
+        ljp = self._myWin.pb.ljp
+        self._dialog.force_index = self._myWin.pb.forcecurve_index
         fc.recover_force(ljp)
         data = fc.get_prodata()['retract']
         data_y = data['vDeflection'].reshape(-1) * 1e12
@@ -304,166 +305,173 @@ class StatisticsWindow(QDialog):
         print(force_arr)
         dlc_arr = fc.data['dlc']
         print(dlc_arr)
-        self.arr_dic[self.force_index] = (dlc_arr, force_arr)
+        self._dialog.arr_dic[self._dialog.force_index] = (dlc_arr, force_arr)
         fc.clean_force()
-        self.fname = 'test.scatterplot'
+        self._dialog.fname = 'test.scatterplot'
 
-    def plot(self) -> None:
-        if not self.myWin.pb.state or self.myWin.pb.tasktype != 'smfs':
+    def _plot(self) -> None:
+        if not self._myWin.pb.state or self._myWin.pb.tasktype != 'smfs':
             return None
-        self.get_data()
-        self.F.plotscatter(self.arr_dic, self.force_index)
-        self.F.plothisto(self.arr_dic)
-        self.displace()
+        self._get_data()
+        self.F.plotscatter(self._dialog.arr_dic, self._dialog.force_index)
+        self.F.plothisto(self._dialog.arr_dic)
+        self._displace()
 
-    def delete(self) -> None:
-        self.force_index = self.myWin.pb.forcecurve_index
-        if self.force_index in self.arr_dic.keys():
-            del self.arr_dic[self.force_index]
-        self.F.plotscatter(self.arr_dic, self.force_index)
-        self.F.plothisto(self.arr_dic)
-        self.displace()
+    def _delete(self) -> None:
+        self._dialog.force_index = self._myWin.pb.forcecurve_index
+        if self._dialog.force_index in self._dialog.arr_dic.keys():
+            del self._dialog.arr_dic[self._dialog.force_index]
+        self.F.plotscatter(self._dialog.arr_dic, self._dialog.force_index)
+        self.F.plothisto(self._dialog.arr_dic)
+        self._displace()
 
-    def save(self) -> None:
+    def _save(self) -> None:
         import os
         import pickle
-        if not self.myWin.pb.state or self.myWin.pb.tasktype != 'smfs':
+        if not self._myWin.pb.state or self._myWin.pb.tasktype != 'smfs':
             return None
-        fname = self.myWin.pb.zpo.fname
+        fname = self._myWin.pb.zpo.fname
         todir = os.path.dirname(fname)
         basename = os.path.basename(fname)
         rawname = os.path.splitext(basename)[0]
         fname = os.path.join(todir, f"{rawname}.scatterplot")
         with open(fname, 'wb') as f:
-            data = dict(arr_dic=self.arr_dic)
+            data = dict(arr_dic=self._dialog.arr_dic)
             pickle.dump(data, f)
 
-    def openfile(self) -> None:
+    def _openfile(self) -> None:
         import os
         import pickle
-        if not self.myWin.pb.state or self.myWin.pb.tasktype != 'smfs':
+        if not self._myWin.pb.state or self._myWin.pb.tasktype != 'smfs':
             return None
-        fname = self.myWin.pb.zpo.fname
+        fname = self._myWin.pb.zpo.fname
         todir = os.path.dirname(fname)
         basename = os.path.basename(fname)
         rawname = os.path.splitext(basename)[0]
         fname = os.path.join(todir, f"{rawname}.scatterplot")
         if not os.path.isfile(fname):
-            fname, _ = QFileDialog.getOpenFileName(self, "Open Scatter Plot", '*.scatterplot')
+            fname, _ = QFileDialog.getOpenFileName(self._dialog, "Open Scatter Plot", '*.scatterplot')
         if os.path.isfile(fname):
             with open(fname, 'rb') as f:
                 data = pickle.load(f)
-                self.arr_dic = data['arr_dic']
-            self.F.plotscatter(self.arr_dic, self.force_index)
-            self.F.plothisto(self.arr_dic)
-            self.displace()
+                self._dialog.arr_dic = data['arr_dic']
+            self.F.plotscatter(self._dialog.arr_dic, self._dialog.force_index)
+            self.F.plothisto(self._dialog.arr_dic)
+            self._displace()
+
+    def show(self) -> None:
+        self._dialog.show()
 
 
-class ScriptWindow(QDialog):
+class ScriptWindow:
     """Script management dialog window."""
 
     def __init__(self, myWin: 'QMainWindow') -> None:
-        super().__init__()
         from src.script import Ui_Script
-        self.myWin = myWin
-        self.setupUi(self)
-        self.script_path = r'./scripts'
-        self.get_script()
-        self.renew_list2()
-        self.listWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.listWidget_2.setSelectionMode(QAbstractItemView.ExtendedSelection)
-        self.add_lst: list = []
-        self.action_init()
+        self._dialog = QDialog()
+        self._ui = Ui_Script()
+        self._ui.setupUi(self._dialog)
+        self._myWin = myWin
+        self._dialog.script_path = r'./scripts'
+        self._ui.listWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self._ui.listWidget_2.setSelectionMode(QAbstractItemView.ExtendedSelection)
+        self._dialog.add_lst: list = []
+        self._dialog.listWidget = self._ui.listWidget
+        self._dialog.listWidget_2 = self._ui.listWidget_2
+        self._dialog.pushButton = self._ui.pushButton
+        self._dialog.pushButton_2 = self._ui.pushButton_2
+        self._dialog.pushButton_3 = self._ui.pushButton_3
+        self._dialog.pushButton_4 = self._ui.pushButton_4
+        self._dialog.pushButton_5 = self._ui.pushButton_5
+        self._dialog.pushButton_6 = self._ui.pushButton_6
+        self._dialog.pushButton_7 = self._ui.pushButton_7
+        self._dialog.pushButton_8 = self._ui.pushButton_8
+        self._setup_actions()
 
-    def setupUi(self, Dialog: QDialog) -> None:
-        from src.script import Ui_Script
-        super().setupUi(Dialog)
-        Ui_Script.setupUi(self, Dialog)
+    def _setup_actions(self) -> None:
+        self._dialog.pushButton.clicked.connect(self._add)
+        self._dialog.pushButton_2.clicked.connect(self._delete)
+        self._dialog.pushButton_3.clicked.connect(self._get_selectitem)
+        self._dialog.pushButton_4.clicked.connect(self._quickstart)
+        self._dialog.pushButton_5.clicked.connect(self._up)
+        self._dialog.pushButton_6.clicked.connect(self._down)
+        self._dialog.pushButton_7.clicked.connect(self._renew)
+        self._dialog.pushButton_8.clicked.connect(self._get_path)
 
-    def action_init(self) -> None:
-        self.pushButton.clicked.connect(self.add)
-        self.pushButton_2.clicked.connect(self.delete)
-        self.pushButton_3.clicked.connect(self.get_selectitem)
-        self.pushButton_4.clicked.connect(self.quickstart)
-        self.pushButton_5.clicked.connect(self.up)
-        self.pushButton_6.clicked.connect(self.down)
-        self.pushButton_7.clicked.connect(self.renew)
-        self.pushButton_8.clicked.connect(self.get_path)
+    def _delete(self) -> None:
+        self._get_selectitem()
+        print(self._dialog.select_dic['add'])
+        print(self._dialog.add_lst)
+        for i in self._dialog.select_dic['add']:
+            self._dialog.listWidget.removeItemWidget(self._dialog.listWidget.takeItem(self._dialog.listWidget.row(i)))
+            self._dialog.add_lst.remove(i.text())
 
-    def delete(self) -> None:
-        self.get_selectitem()
-        print(self.select_dic['add'])
-        print(self.add_lst)
-        for i in self.select_dic['add']:
-            self.listWidget.removeItemWidget(self.listWidget.takeItem(self.listWidget.row(i)))
-            self.add_lst.remove(i.text())
+    def _add(self) -> None:
+        self._get_selectitem()
+        for i in self._dialog.select_dic['script']:
+            self._dialog.add_lst.append(i.text())
+        self._renew_list1()
 
-    def add(self) -> None:
-        self.get_selectitem()
-        for i in self.select_dic['script']:
-            self.add_lst.append(i.text())
-        self.renew_list1()
+    def _up(self) -> None:
+        self._move(-1)
 
-    def up(self) -> None:
-        self.move(-1)
+    def _down(self) -> None:
+        self._move(+1)
 
-    def down(self) -> None:
-        self.move(+1)
-
-    def move(self, n: int) -> None:
-        self.get_selectitem()
-        for i, v in enumerate(self.select_dic['add']):
-            index = self.listWidget.row(v)
+    def _move(self, n: int) -> None:
+        self._get_selectitem()
+        for i, v in enumerate(self._dialog.select_dic['add']):
+            index = self._dialog.listWidget.row(v)
             try:
-                self.add_lst[index], self.add_lst[index + n] = self.add_lst[index + n], self.add_lst[index]
+                self._dialog.add_lst[index], self._dialog.add_lst[index + n] = self._dialog.add_lst[index + n], self._dialog.add_lst[index]
             except Exception:
                 pass
             break
-        self.renew_list1()
+        self._renew_list1()
 
-    def get_path(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, 'Load batch of force curve', '*.*')
+    def _get_path(self) -> None:
+        path = QFileDialog.getExistingDirectory(self._dialog, 'Load batch of force curve', '*.*')
         if path != '':
-            self.script_path = path
+            self._dialog.script_path = path
 
-    def get_selectitem(self) -> None:
-        self.select_dic: Dict[str, list] = {}
-        dic = {'add': self.listWidget, 'script': self.listWidget_2}
+    def _get_selectitem(self) -> None:
+        self._dialog.select_dic: Dict[str, list] = {}
+        dic = {'add': self._dialog.listWidget, 'script': self._dialog.listWidget_2}
         for i in ['add', 'script']:
-            self.select_dic[i] = []
+            self._dialog.select_dic[i] = []
             items = dic[i].selectedItems()
             for item in items:
-                self.select_dic[i].append(item)
+                self._dialog.select_dic[i].append(item)
 
-    def renew(self) -> None:
-        self.listWidget_2.clear()
-        self.get_script()
-        self.renew_list2()
+    def _renew(self) -> None:
+        self._dialog.listWidget_2.clear()
+        self._get_script()
+        self._renew_list2()
 
-    def renew_list1(self) -> None:
-        self.listWidget.clear()
-        for i in self.add_lst:
-            self.listWidget.addItem(i)
+    def _renew_list1(self) -> None:
+        self._dialog.listWidget.clear()
+        for i in self._dialog.add_lst:
+            self._dialog.listWidget.addItem(i)
 
-    def renew_list2(self) -> None:
-        for fname in self.f_lst:
-            self.listWidget_2.addItem(fname)
+    def _renew_list2(self) -> None:
+        for fname in self._dialog.f_lst:
+            self._dialog.listWidget_2.addItem(fname)
 
-    def get_script(self) -> None:
+    def _get_script(self) -> None:
         import os
-        self.f_lst: list = []
-        for a, b, c in os.walk(self.script_path):
+        self._dialog.f_lst: list = []
+        for a, b, c in os.walk(self._dialog.script_path):
             for fname in c:
                 if fname.endswith('.py'):
-                    self.f_lst.append(fname)
+                    self._dialog.f_lst.append(fname)
 
-    def quickstart(self) -> None:
+    def _quickstart(self) -> None:
         import os
         import sys
         from importlib import reload
-        zpo, ljp, fc = self.myWin.pb.zpo, self.myWin.pb.ljp, self.myWin.pb.fc
+        zpo, ljp, fc = self._myWin.pb.zpo, self._myWin.pb.ljp, self._myWin.pb.fc
         index_lst = range(len(zpo))
-        for i, v in enumerate(self.add_lst):
+        for i, v in enumerate(self._dialog.add_lst):
             print(v)
             name = os.path.splitext(v)[0]
             print(name)
@@ -473,16 +481,19 @@ class ScriptWindow(QDialog):
             exec(f"from scripts.{name} import {name}")
             exec(f"{name}_{i} = {name}(zpo, ljp, fc)")
         for index in index_lst:
-            for i, v in enumerate(self.add_lst):
+            for i, v in enumerate(self._dialog.add_lst):
                 name = os.path.splitext(v)[0]
                 try:
                     exec(f"{name}_{i}.run({index})")
                 except Exception as err:
                     print(err)
-        for i, v in enumerate(self.add_lst):
+        for i, v in enumerate(self._dialog.add_lst):
             name = os.path.splitext(v)[0]
             try:
                 exec(f"{name}_{i}.end()")
             except Exception as err:
                 print(err)
         print('finish')
+
+    def show(self) -> None:
+        self._dialog.show()

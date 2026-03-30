@@ -9,6 +9,8 @@ if TYPE_CHECKING:
     from src.main import programbody
     from src.multiProcess import multi_run
 
+from src.designer import Ui_MainWindow
+
 import matplotlib as mpl
 import matplotlib.pyplot as plt
 import matplotlib.style as mplstyle
@@ -28,19 +30,22 @@ mpl.rcParams['figure.subplot.top'] = 1
 mpl.rcParams['figure.subplot.bottom'] = 0.05
 
 
-class MyMainWindow(QMainWindow):
+class MyMainWindow(QMainWindow, Ui_MainWindow):
     """Main DataYee application window."""
 
-    def __init__(self, m_run: 'multi_run', parent: Optional[Any] = None) -> None:
+    def __init__(self, m_run: Optional[Any] = None, parent: Optional[Any] = None) -> None:
         super().__init__(parent)
-        from src.designer import Ui_MainWindow
         self.setupUi(self)
+        from src.main import programbody
+        from src.ui.widgets.force_curve_canvas import ForceCurveCanvas as myFigure
+        from src.ui_related import showimage
+        from src.fittingcore import fitEnergy
         self.filedir = ''
         self.fname = ''
         self.tasktype = 'smfs'
         self.svfname = 'test.DataYee-force'
-        self.pb: 'programbody' = m_run.pb
-        self.F: 'ForceCurveCanvas' = m_run.F
+        self.pb: 'programbody' = programbody()
+        self.F: 'ForceCurveCanvas' = myFigure()
         self.gridlayout = QGridLayout(self.groupBox)
         self.gridlayout.addWidget(self.F.canvas)
         self.xdata: Optional[float] = None
@@ -56,14 +61,10 @@ class MyMainWindow(QMainWindow):
         self.img: Any = None
         self.allowrotate: bool = False
         self.overlaymode: bool = False
-        self.showimage_win = m_run.showimage_win
-        self.fitEnergy = m_run.fitEnergy
+        self.showimage_win = showimage()
+        self.fitEnergy = fitEnergy()
         self.action_init()
-        self.m_run = m_run
-
-    def setupUi(self, MainWindow: QMainWindow) -> None:
-        from src.designer import Ui_MainWindow
-        Ui_MainWindow.setupUi(self, MainWindow)
+        self.m_run = m_run if m_run is not None else None
 
     def action_init(self) -> None:
         self.F.canvas.mpl_connect("button_press_event", self.on_press)
@@ -136,6 +137,7 @@ class MyMainWindow(QMainWindow):
         self.actionExit.triggered.connect(self.close)
         self.actionData_equipment.triggered.connect(self.dataEuipment)
         self.actionData_slimming.triggered.connect(self.dataSlimming)
+        self.actionUpdate.triggered.connect(self.check_for_updates)
 
     def enerpytypeBE(self) -> None:
         self.fitEnergy.start('BE')
@@ -227,6 +229,18 @@ class MyMainWindow(QMainWindow):
 
     def aboutprogramm(self) -> None:
         QMessageBox.information(self, 'DataYee', 'Programm Version:0.1', QMessageBox.Ok | QMessageBox.Close, QMessageBox.Close)
+
+    def check_for_updates(self) -> None:
+        from src.update import check_for_updates, format_update_message, get_current_version
+        is_update, release = check_for_updates()
+        if release is None:
+            QMessageBox.warning(self, '检查更新', '无法获取更新信息，请检查网络连接。')
+            return
+        if is_update:
+            message = format_update_message(release)
+            QMessageBox.information(self, '发现新版本', message, QMessageBox.Ok)
+        else:
+            QMessageBox.information(self, '检查更新', f'当前版本 {get_current_version()} 已是最新版本。')
 
     def displace_result(self, range_fix: bool = False) -> None:
         if range_fix:

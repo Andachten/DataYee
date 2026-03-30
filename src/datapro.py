@@ -13,7 +13,8 @@ from scipy.optimize import curve_fit
 from scipy.ndimage import gaussian_filter
 import matplotlib.pyplot as plt
 from PIL import Image
-from src.predictcore import feature_extract,MobileNet,myNet,Net
+# DEPRECATED: ML module - imports removed
+# from src.predictcore import feature_extract,MobileNet,myNet,Net
 import matplotlib as mpl
 from sklearn.neighbors import KernelDensity
 from src.tool import timer
@@ -25,7 +26,8 @@ mpl.rcParams['font.size'] = 8
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
 #m = MobileNet()
-my = myNet('img')
+# DEPRECATED: ML module - global myNet initialization removed
+# my = myNet('img')
 plt.ioff()
 def lcfunc(x, lc, lp):
     return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12

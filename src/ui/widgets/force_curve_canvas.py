@@ -20,16 +20,17 @@ def getfitcurve(wlcarg: List[Tuple[np.ndarray, ...]], peakindex: List[int], data
     return arg_lst
 
 
-def _lcfunc(x: np.ndarray, lc: float, lp: float, k: float, offset: float) -> np.ndarray:
-    """WLC model function."""
-    return k * (0.25 * (1 - x / lc + lp / x) ** -2 - 0.25 + x / lc - 5 * lp / (4 * x)) + offset
+def _lcfunc(x: np.ndarray, lc: float, lp: float) -> np.ndarray:
+    """WLC model function matching datapro.lcfunc signature."""
+    return 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
 
 
-class ForceCurveCanvas(FigureCanvas):
+class ForceCurveCanvas:
     """Canvas widget for displaying force curves with WLC fits and peaks."""
 
     def __init__(self, parent: Optional[Any] = None) -> None:
         self.fig = Figure(dpi=100)
+        self.canvas = FigureCanvas(self.fig)
         self.ax = self.fig.add_subplot()
         self.ax.plot([-1e4, 1e4], [0, 0], lw=1.5, c='#ff8787')
         self.ax.plot([0, 0], [-50, 50], 'r-', lw=1)
@@ -46,7 +47,6 @@ class ForceCurveCanvas(FigureCanvas):
             'class': []
         }
         self.range_fix = False
-        super().__init__(self.fig)
         self.overlay_dic: Dict[int, Any] = {}
         self.overlaymode = False
         self.data_x: Optional[np.ndarray] = None
@@ -253,10 +253,6 @@ class ForceCurveCanvas(FigureCanvas):
         data = self.fc.get_prodata()['retract']
         self.data_y = data['vDeflection'][:, 0] * 1e12
         self.data_x = data['measuredHeight'][:, 0] * 1e9
-
-    @property
-    def figure(self) -> Figure:
-        return self.fig
 
 
 from src.loadjpk import forcecurve
