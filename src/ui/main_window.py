@@ -1,7 +1,7 @@
 from typing import Any, Optional, TYPE_CHECKING
 import sys
 import numpy as np
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QSettings
 from PyQt5.QtWidgets import QApplication, QMainWindow, QFileDialog, QMessageBox, QProgressDialog, QGridLayout, QButtonGroup
 
 if TYPE_CHECKING:
@@ -40,7 +40,8 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         from src.ui.widgets.force_curve_canvas import ForceCurveCanvas as myFigure
         from src.ui_related import showimage
         from src.fittingcore import fitEnergy
-        self.filedir = ''
+        self.settings = QSettings('DataYee', 'DataYee')
+        self.filedir = self.settings.value('lastDirectory', '')
         self.fname = ''
         self.tasktype = 'smfs'
         self.svfname = 'test.DataYee-force'
@@ -193,23 +194,29 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.displace_result(range_fix=True)
 
     def openfile(self) -> None:
-        fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", '*.txt;;*.jpk-force;;*.jpk-force-map;;*.spm')
+        last_dir = self.settings.value('lastDirectory', '')
+        fname, _ = QFileDialog.getOpenFileName(self, "Load force curve", last_dir, '*.txt;;*.jpk-force;;*.jpk-force-map;;*.spm')
         self.fname = fname
         if fname != '':
+            self.settings.setValue('lastDirectory', fname.rsplit('/', 1)[0].rsplit('\\', 1)[0])
             self.pb.creattask(fname)
 
     def openfile_DataYee(self) -> None:
-        fname, _ = QFileDialog.getOpenFileName(self, "Open DataYee Force", '*.DataYee-force')
+        last_dir = self.settings.value('lastDirectory', '')
+        fname, _ = QFileDialog.getOpenFileName(self, "Open DataYee Force", last_dir, '*.DataYee-force')
         self.fname = fname
         if fname != '':
+            self.settings.setValue('lastDirectory', fname.rsplit('/', 1)[0].rsplit('\\', 1)[0])
             self.pb.creattask(fname)
             self.F.clean_overlay()
             self.displace_result()
 
     def opendir(self) -> None:
-        path = QFileDialog.getExistingDirectory(self, 'Load batch of force curve', '*.*')
+        last_dir = self.settings.value('lastDirectory', '')
+        path = QFileDialog.getExistingDirectory(self, 'Load batch of force curve', last_dir if last_dir else '*.*')
         self.filedir = path
         if path != '':
+            self.settings.setValue('lastDirectory', path)
             self.pb.creattask(path)
 
     def savefile(self) -> None:
