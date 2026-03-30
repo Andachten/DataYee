@@ -245,7 +245,7 @@ def KMsClustering(matrix: npt.NDArray[np.float64], n_clusters: int = 8) -> npt.N
     Returns:
         Cluster labels
     """
-    km = KMeans(n_clusters=n_clusters, precompute_distances=True).fit(matrix)
+    km = KMeans(n_clusters=n_clusters).fit(matrix)
     return km.labels_
 
 

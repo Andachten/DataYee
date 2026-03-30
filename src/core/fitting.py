@@ -74,16 +74,24 @@ def r2_calculate(
     """Calculate R-squared coefficient of determination.
 
     Args:
-        y_actual: Actual values
+        y_actual: Actual values (1D or 2D array)
         y_predicted: Predicted values
 
     Returns:
-        R-squared value
+        R-squared value (scalar or array if 2D input)
     """
-    sse = np.sum((y_actual - y_predicted) ** 2, axis=1)
-    sst = np.sum((y_actual - np.mean(y_actual)) ** 2, axis=1)
+    y_actual = np.asarray(y_actual)
+    y_predicted = np.asarray(y_predicted)
+    
+    if y_actual.ndim == 1:
+        sse = np.sum((y_actual - y_predicted) ** 2)
+        sst = np.sum((y_actual - np.mean(y_actual)) ** 2)
+    else:
+        sse = np.sum((y_actual - y_predicted) ** 2, axis=1)
+        sst = np.sum((y_actual - np.mean(y_actual, axis=1, keepdims=True)) ** 2, axis=1)
+    
     r2 = 1 - sse / sst
-    return float(r2)
+    return r2
 
 
 def fit(
@@ -131,7 +139,8 @@ def fit(
         b = np.array(list(product(*[np.linspace(x, y) for x, y in bounds]))).T
         arg = [np.tile(x.reshape(-1, 1), (1, len(x_arr))) for x in b]
         res = func(x_arr, *arg)
-        r2 = r2_calculate(res, y_arr)
+        y_arr_broadcast = np.broadcast_to(y_arr, res.shape)
+        r2 = r2_calculate(res, y_arr_broadcast)
         index0_1 = np.where((r2 > 0) & (r2 < 1))[0]
         if len(index0_1) == 0:
             break

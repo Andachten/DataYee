@@ -1,5 +1,6 @@
 """Integration tests for complete workflows."""
 
+import os
 import pytest
 import numpy as np
 
@@ -28,8 +29,16 @@ class TestSMFSWorkflow:
 
     def test_zipfileopera_creation(self):
         """Test archive manager creation."""
+        import tempfile
+        import os
         from src.core.file_io import zipfileopera
 
-        zpo = zipfileopera()
-        assert zpo.version == "version2"
-        assert len(zpo) == 0
+        temp_dir = tempfile.gettempdir()
+        temp_fname = os.path.join(temp_dir, "test_datayee_" + str(os.getpid()) + ".DataYee-force")
+        try:
+            zpo = zipfileopera(temp_fname)
+            assert zpo.version == "version2"
+            assert len(zpo) == 0
+        finally:
+            if os.path.exists(temp_fname):
+                os.unlink(temp_fname)
