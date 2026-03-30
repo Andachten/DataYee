@@ -37,16 +37,11 @@ def setup_gui(file_path: Optional[str] = None) -> None:
         file_path: Optional file to open on startup
     """
     from PyQt5.QtWidgets import QApplication
-    from PyQt5.QtCore import Qt
-    
-    QApplication.setAttribute(Qt.AA_EnableHighDpiScaling, True)
-    QApplication.setAttribute(Qt.AA_UseHighDpiPixmaps, True)
     
     app = QApplication(sys.argv)
     app.setApplicationName("DataYee")
     app.setOrganizationName("SMFS")
-    app.setAttribute(Qt.AA_EnableHighDpiScaling)
-    app.setAttribute(Qt.AA_UseHighDpiPixmaps)
+    
     from src.ui.main_window import MyMainWindow
     from src.ui.dialogs.windows import (
         ParaWindow,
@@ -55,10 +50,6 @@ def setup_gui(file_path: Optional[str] = None) -> None:
         StatisticsWindow,
         ScriptWindow,
     )
-
-    app = QApplication(sys.argv)
-    app.setApplicationName("DataYee")
-    app.setOrganizationName("SMFS")
 
     myWin = MyMainWindow()
 
