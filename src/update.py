@@ -45,7 +45,7 @@ def fetch_latest_release() -> Optional[ReleaseInfo]:
         with urllib.request.urlopen(request, timeout=10) as response:
             data = json.loads(response.read().decode())
             return ReleaseInfo(
-                tag_name=data.get("tag_name", "").lstrip("v"),
+                tag_name=data.get("tag_name", "").lstrip("vV"),
                 name=data.get("name", ""),
                 html_url=data.get("html_url", ""),
                 body=data.get("body", ""),
