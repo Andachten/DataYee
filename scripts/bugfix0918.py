@@ -12,6 +12,7 @@ class bugfix0918():
         self.ljp = ljp
         self.fc = fc
     def run(self,index):
+        self.fc.data = self.zpo[index]
         self.fc.clean_force()
         self.zpo.changingforce(self.fc)
     def end(self):

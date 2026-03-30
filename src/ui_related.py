@@ -16,6 +16,7 @@ import numpy as np
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg as FigureCanvas
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+from importlib import reload
 class tableplus():
     def __init__(self,table):
         self.table = table
@@ -97,6 +98,7 @@ class para_window(QDialog,Ui_Dialog):
         self.lp_max.valueChanged.connect(self.spinbox_changevalue)
         self.rotatestate.setChecked(False)
         self.rotatestate.stateChanged.connect(self.cbchange)
+        self.delay.stateChanged.connect(self.cbchange)
         pass
     def spinbox_changevalue(self, value):
         sender = self.sender()
@@ -123,6 +125,8 @@ class para_window(QDialog,Ui_Dialog):
         sender = self.sender()
         if sender == self.rotatestate:
             self.myWin.allowrotate = not self.myWin.allowrotate
+        elif sender == self.delay:
+            self.myWin.F.overlaymode = not self.myWin.F.overlaymode
 class dlcrange_window(QDialog,Ui_dlc_range):
     def __init__(self,myWin):
         super(dlcrange_window, self).__init__()
@@ -308,6 +312,7 @@ class script_win(QDialog,Ui_Script):
         super(script_win, self).__init__()
         self.setupUi(self)
         self.myWin = myWin
+        self.script_path = r'./scripts'
         self.get_script()
         self.renew_list2()
         self.listWidget.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -322,6 +327,7 @@ class script_win(QDialog,Ui_Script):
         self.pushButton_5.clicked.connect(self.up)
         self.pushButton_6.clicked.connect(self.down)
         self.pushButton_7.clicked.connect(self.renew)
+        self.pushButton_8.clicked.connect(self.get_path)
     def start(self,item):
         pass
     def delete(self):
@@ -350,6 +356,10 @@ class script_win(QDialog,Ui_Script):
                 pass
             break
         self.renew_list1()
+    def get_path(self):
+        path = QFileDialog.getExistingDirectory(self, 'Load batch of force curve', '*.*')
+        if path != '':
+            self.script_path = path
     def get_selectitem(self):
         self.select_dic = {}
         dic = {'add':self.listWidget,'script':self.listWidget_2}
@@ -373,26 +383,35 @@ class script_win(QDialog,Ui_Script):
     def get_script(self):
         import os
         self.f_lst = []
-        for a,b,c in os.walk(r'./script'):
+        for a,b,c in os.walk(self.script_path):
             for fname in c:
                 if fname.endswith('.py'):
                     self.f_lst.append(fname)
     def quickstart(self):
-        import os
+        import os,sys
         zpo,ljp,fc = self.myWin.pb.zpo,self.myWin.pb.ljp,self.myWin.pb.fc
         index_lst = range(len(zpo))
         for i,v in enumerate(self.add_lst):
             print(v)
             name = os.path.splitext(v)[0]
             print(name)
-            exec("from script.{} import {}".format(name,name))
+            exec("from scripts.{} import {}".format(name,name))
+            reload(sys.modules['scripts'])
+            reload(sys.modules['scripts.{}'.format(name)])
+            exec("from scripts.{} import {}".format(name,name))
             exec("{}_{} = {}(zpo,ljp,fc)".format(name,i,name))
         for index in index_lst:
             for i,v in enumerate(self.add_lst):
                 name = os.path.splitext(v)[0]
-                exec("{}_{}.run({})".format(name,i,index))
+                try:
+                    exec("{}_{}.run({})".format(name,i,index))
+                except Exception as err:
+                    print(err)
         for i,v in enumerate(self.add_lst):
             name = os.path.splitext(v)[0]
-            exec("{}_{}.end()".format(name,i))
+            try:
+                exec("{}_{}.end()".format(name,i))
+            except Exception as err:
+                print(err)
         print('finish')
         

@@ -21,10 +21,11 @@ from src.multiProcess import multi_run
 #from PIL import ImageQt,Image
 
 mplstyle.use('fast')
+mpl.rcParams['path.simplify_threshold'] = 1.0
 mpl.rcParams['font.family'] = 'Arial'
 mpl.rcParams['axes.labelsize'] = 16
 mpl.rcParams['axes.labelweight'] = 'normal'
-mpl.rcParams['axes.linewidth'] = 1
+mpl.rcParams['axes.linewidth'] = 1.5
 mpl.rcParams['font.size'] = 12
 mpl.rcParams['axes.spines.right'] = False
 mpl.rcParams['axes.spines.top'] = False
@@ -48,17 +49,12 @@ def getfitcurve(wlcarg, peakindex, data_x):
 
 class myFigure(FigureCanvas):
     def __init__(self):
-        #self.figure = mpl.figure.Figure()
         self.canvas = FigureCanvas(mpl.figure.Figure(dpi=100))
-        #self.figure = self.canvas.figure
         self.ax = self.canvas.figure.add_subplot()
         self.ax.plot([-1e4, 1e4], [0, 0], lw=1.5, c='#ff8787')
         self.ax.plot([0, 0], [-50, 50], 'r-', lw=1)
         plt.subplots_adjust(left=0, bottom=0, right=1, top=0.5,hspace=0.1,wspace=0.1)
-        #self.figure.patch.set_facecolor('None')
-        #self.figure.patch.set_alpha(0)
-        self.fc_old = forcecurve()
-        self.fc_new = forcecurve()
+        self.fc = forcecurve()
         self.index = 0
         self.content = {'curve': [],
                         'peak': [],
@@ -66,9 +62,12 @@ class myFigure(FigureCanvas):
                         'mark': [],
                         'fitcurve': [],
                         'k':[],
-                        'selrange':[]}
+                        'selrange':[],
+                        'class':[]}
         self.range_fix = False
         super(myFigure, self).__init__(self.canvas.figure)
+        self.overlay_dic = {}
+        self.overlaymode = False
     def zoom_func(self,event,base_scale = 1.1,zoomx_state=True,zoomy_state=True):
         if not zoomx_state and not zoomy_state:
             return None
@@ -91,7 +90,7 @@ class myFigure(FigureCanvas):
             self.ax.set_ylim([ydata - cur_yrange*scale_factor,
                      ydata + cur_yrange*scale_factor])
     def plot_selrange(self,datax1,datax2):
-        if self.fc_new.data['datamsg'][0]=='':
+        if self.fc.data['datamsg'][0]=='':
             return None
         if datax1 ==None or datax2 == None:
             for line in self.content['selrange']:
@@ -110,6 +109,25 @@ class myFigure(FigureCanvas):
         cur_ylim = self.ax.get_ylim()
         self.content['selrange'].append(self.ax.plot([datax1,datax1],cur_ylim,c='#9fa8da',lw=1))
         self.content['selrange'].append(self.ax.plot([datax2,datax2],cur_ylim,c='#9fa8da',lw=1))
+    def overlay(self,curve_index):
+        if 'overlay' not in self.fc.data.keys():
+            self.fc.data['overlay'] = self.overlaymode
+        index = curve_index
+        if self.fc.data['overlay']:
+            if index not in self.overlay_dic.keys():
+                pass
+            else:
+                self.overlay_dic[index][0].remove()
+                del self.overlay_dic[index]
+            self.overlay_dic[index] = self.ax.plot(self.data_x[::10], self.data_y[::10], 'k', lw=1.5,alpha=0.1,markevery=10)
+        else:
+            if index in self.overlay_dic.keys():
+                self.overlay_dic[index][0].remove()
+                del self.overlay_dic[index]
+    def clean_overlay(self):
+        for i,v in self.overlay_dic.items():
+            v[0].remove()
+        self.overlay_dic = {}
     def motion(self,dx,dy):
         cur_xlim = self.ax.get_xlim()
         cur_ylim = self.ax.get_ylim()
@@ -121,7 +139,7 @@ class myFigure(FigureCanvas):
         self.ax.set_xlim([x - cur_xrange,x + cur_xrange])
         
     def getdata(self):
-        data = self.fc_new.get_prodata()['retract']
+        data = self.fc.get_prodata()['retract']
         self.data_y = data['vDeflection'][:, 0] * 1e12
         self.data_x = data['measuredHeight'][:, 0] * 1e9
 
@@ -135,9 +153,8 @@ class myFigure(FigureCanvas):
         for line in self.content['curve']:
             line[0].remove()
         self.content['curve'] = []
-        self.fc_new.recover_force(self.ljp)
         # self.ax.set_yticks(np.arange(0,self.data_y.max(),150))
-        if not self.fc_new.data['artificial_judge']:
+        if not self.fc.data['artificial_judge']:
             self.content['curve'].append(self.ax.plot(self.data_x, self.data_y, 'b', lw=1.5))
         else:
             self.content['curve'].append(self.ax.plot(self.data_x, self.data_y, c='#495057', lw=1.5))
@@ -146,11 +163,11 @@ class myFigure(FigureCanvas):
         for line in self.content['fitcurve']:
             line[0].remove()
         self.content['fitcurve'] = []
-        if len(self.fc_new.data['peakindex']) <= 0:
+        if len(self.fc.data['peakindex']) <= 0:
             return None
-        data_x = self.fc_new.get_prodata()['retract']['measuredHeight'][:, 0] * 1e9
-        fit_lst = getfitcurve(self.fc_new.data['wlcarg'], self.fc_new.data['peakindex'], data_x)
-        color_lst = (len(self.fc_new.data['wlcarg']) // len(color_lsts) + 1) * color_lsts
+        data_x = self.fc.get_prodata()['retract']['measuredHeight'][:, 0] * 1e9
+        fit_lst = getfitcurve(self.fc.data['wlcarg'], self.fc.data['peakindex'], data_x)
+        color_lst = (len(self.fc.data['wlcarg']) // len(color_lsts) + 1) * color_lsts
         for i, xy_ in enumerate(fit_lst):
             x_, y_ = xy_
             self.content['fitcurve'].append(self.ax.plot(x_, y_, '-.', c=color_lst[i], lw=1.5))
@@ -159,7 +176,7 @@ class myFigure(FigureCanvas):
         for line in self.content['peak']:
             line[0].remove()
         self.content['peak'] = []
-        peak_index = self.fc_new.data['peakindex']
+        peak_index = self.fc.data['peakindex']
         if len(peak_index) <= 0:
             return None
         
@@ -169,7 +186,7 @@ class myFigure(FigureCanvas):
         self.content['peak'].append(
             self.ax.plot(self.data_x[peak_index[self.index]], self.data_y[peak_index[self.index]],'ro', markersize=8))
         '''
-    def plotbottom(self):
+    def plotbott8om(self):
         for line in self.content['bottom']:
             line[0].remove()
         self.content['bottom'] = []
@@ -184,10 +201,10 @@ class myFigure(FigureCanvas):
             line.remove()
         self.content['mark'] = []
         font = {'family': 'serif', 'style': 'italic', 'weight': 'normal', 'color': 'red', 'size': 14}
-        mark = self.fc_new.data['mark']
+        mark = self.fc.data['mark']
         if len(mark) <= 0:
             return None
-        peak_index = self.fc_new.data['peakindex']
+        peak_index = self.fc.data['peakindex']
         for i in range(len(mark)):
             if mark[i] == 'none':
                 font['color'] = 'red'
@@ -209,10 +226,10 @@ class myFigure(FigureCanvas):
         for line in self.content['k']:
             line[0].remove()
         self.content['k'] = []
-        peak_index = self.fc_new.data['peakindex']
+        peak_index = self.fc.data['peakindex']
         if len(peak_index)==0:
             return None
-        k_lst = self.fc_new.data['k']
+        k_lst = self.fc.data['k']
         xrange = (self.data_x[peak_index[-1]]-self.data_x[0])*0.04
         yrange = (self.data_y.max()-self.data_y.min())*0.08
         for i,p_i in enumerate(peak_index):
@@ -224,12 +241,21 @@ class myFigure(FigureCanvas):
             x_ = x_[xyrange_index]
             y_ = y_[xyrange_index]
             self.content['k'].append(self.ax.plot(x_,y_,'b',lw=1))
+    def plotclass(self):
+        for line in self.content['class']:
+            line.remove()
+        self.content['class'] = []
+        if 'class' not in self.fc.data.keys():
+            c = 'N'
+        else:
+            c = self.fc.data['class']
+        self.content['class'].append(self.ax.text(0.05,0.9,c,fontsize=20,fontweight='bold',horizontalalignment='center',verticalalignment='center',transform = self.ax.transAxes))
     def changeall(self):
         self.plotcurve()
         dx = np.abs(self.data_x.max())-self.data_x.min()
         dy = np.abs(self.data_y.max())-self.data_y.min()
-        if len(self.fc_new.data['peakindex']) > 0:
-            self.setlim((-10, self.data_x[self.fc_new.data['peakindex'][-1]] + 0.05*dx), (-90, self.data_y.max() + 0.1*dy))
+        if len(self.fc.data['peakindex']) > 0:
+            self.setlim((-10, self.data_x[self.fc.data['peakindex'][-1]] + 0.05*dx), (-90, self.data_y.max() + 0.1*dy))
         else:
             self.setlim((-10, self.data_x.max() + 30), (-90, self.data_y.max() + 40))
         self.plotfitcurve()
@@ -237,39 +263,20 @@ class myFigure(FigureCanvas):
         #self.plotbottom()
         self.plotmark()
         self.plotk()
+        self.plotclass()
 
-    def plot(self, fc, index, ljp, tasktype='smfs'):
-        self.ljp = ljp
-        self.fc_new = fc
-        if 'rawdata' not in self.fc_new.data.keys() or 'retract' not in self.fc_new.data['rawdata'].keys():
-            self.fc_new.recover_force(ljp)
+    def plot(self, fc, index, ljp, tasktype='smfs',curve_index=0):
+        self.fc = fc
+        self.fc.recover_force(ljp)
+        self.index = index
         self.getdata()
-        if self.index != index:
-            self.index = index
-            self.plotpeak()
-        if self.fc_new.data['datamsg'] != self.fc_old.data['datamsg']:
-            self.changeall()
-        elif self.fc_new.data['artificial_judge'] != self.fc_old.data['artificial_judge']:
-            self.changeall()
-        elif self.fc_new.data['offset'] != self.fc_old.data['offset']:
-            self.changeall()
-        else:
-            if self.fc_new.data['peakindex'] != self.fc_old.data['peakindex']:
-                self.plotpeak()
-            if self.fc_new.data['artificial_judge'] != self.fc_old.data['artificial_judge']:
-                self.plotcurve()
-            if self.fc_new.data['wlcarg'] != self.fc_old.data['wlcarg']:
-                self.plotfitcurve()
-            if self.fc_new.data['mark'] != self.fc_old.data['mark']:
-                self.plotmark()
-            if self.fc_new.data['k'] != self.fc_old.data['k']:
-                self.plotk()
+        self.changeall()
+        self.overlay(curve_index)
         if tasktype == 'cell_curve' and not self.range_fix:
             set_range = 0.1
             ylim_min = self.data_y[int(set_range*len(self.data_y)):].min()-20
             self.setlim((self.data_x.min()-20, self.data_x.max() + 0.1*(self.data_x.max()-self.data_x.min())), (ylim_min, self.data_y.max() + 10))
         plt.draw()
-        self.fc_old = copy.deepcopy(self.fc_new)
 
 
 
@@ -291,9 +298,10 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.zoomy_state = True
         self.zoomfix_state = False
         self.press=False
-        self.control = False
+        self.control,self.alt = False,False
         self.img = None
         self.allowrotate = False
+        self.overlaymode = False
         self.showimage_win = showimage()
         self.fitEnergy = fitEnergy()
         self.action_init()
@@ -369,29 +377,39 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.actionClustering_by_KMeans.triggered.connect(self.KNcluster)
         self.actionSort_by_similarity.triggered.connect(self.SimilaritySort)
         self.actionExit.triggered.connect(self.close)
+        self.actionData_equipment.triggered.connect(self.dataEuipment)
+        self.actionData_slimming.triggered.connect(self.dataSlimming)
     def enerpytypeBE(self):
         self.fitEnergy.start('BE')
     def enerpytypeF(self):
         self.fitEnergy.start('Friddle')
     def onmotion_event(self,event):
         if self.press and None not in [self.ydata,self.xdata,event.xdata,event.ydata]:
-            if not self.control:
-                dx = event.xdata-self.xdata
-                dy = event.ydata-self.ydata
-                self.F.motion(dx, dy)
-                self.displace_result(range_fix=True)
-            else:
+            dx = event.xdata-self.xdata
+            dy = event.ydata-self.ydata
+            if self.control:
                 self.F.plot_selrange(self.xdata, event.xdata)
                 self.displace_result(range_fix=True)
+            elif self.alt:
+                self.pb.offset_move(dx,dy,True)
+            else:
+                self.F.motion(dx, dy)
+            self.displace_result(range_fix=True)
+            
+                
             
     def on_release(self,event):
         self.press=False
         self.xdata_r,self.ydata_r = event.xdata,event.ydata
         if None not in[self.xdata_r,self.xdata]:
+            dx = event.xdata-self.xdata
+            dy = event.ydata-self.ydata
             if self.control:
                 self.pb.rebaseline_cal(self.xdata,event.xdata,allowRotate = self.allowrotate)
                 self.F.plot_selrange(None, None)
                 self.displace_result(range_fix=True)
+            elif self.alt:
+                self.pb.offset_move(dx,dy,False)
                 
     def choose_zoom(self):
         if self.zoomy.isChecked():
@@ -415,11 +433,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.coor_data = (self.xdata,self.ydata)
         self.pb.pk_indexchange(n=None,coor=(self.xdata,self.ydata))
         self.displace_result(range_fix=True)
-        #print("event.xdata", event.xdata)
-        #print("event.ydata", event.ydata)
-        #print("event.inaxes", event.inaxes)
-        #print("x", event.x)
-        #print("y", event.y)
+        
     def scroll_event(self,event):
         if self.xdata!=None and self.ydata!=None:
             event.xdata,event.ydata = self.xdata,self.ydata
@@ -437,28 +451,29 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.fname = fname
         if fname != '':
             self.pb.creattask(fname)
+            self.F.clean_overlay()
             self.displace_result()
-            # self.zpo = zipfileopera(self.fname)
 
     def opendir(self):
         path = QFileDialog.getExistingDirectory(self, 'Load batch of force curve', '*.*')
         self.filedir = path
         if path != '':
             self.pb.creattask(path)
-            # self.ljp = loadjpkfile(self.filedir)
-            # self.zpo = zipfileopera()
-            # self.run_z = True
 
     def savefile(self):
         self.svfname = self.pb.zpo.fname
         if self.svfname == 'test.DataYee-force':
             self.svfname, _ = QFileDialog.getSaveFileName(self, 'Save DataYee Force', '*.DataYee-force')
-        self.pb.savechange(self.svfname)
+        self.pb.savechange(self.svfname,saveas=True)
         # self.change_dict={}
     def saveasfile(self):
         self.svfname = self.pb.zpo.fname
-        self.svfname, _ = QFileDialog.getSaveFileName(self, 'Save DataYee Force', '*.DataYee-force')
-        self.pb.savechange(self.svfname,saveas=True)
+        svfname, _ = QFileDialog.getSaveFileName(self, 'Save DataYee Force', '*.DataYee-force')
+        if svfname == '':
+            QMessageBox.information(self,"Error","Empty Path!")
+        else:
+            self.svfname = svfname
+            self.pb.savechange(self.svfname,saveas=True)
 
     def aboutprogramm(self):
         _ = QMessageBox.information(self, 'DataYee', 'Programm Version:0.1', QMessageBox.Ok | QMessageBox.Close,
@@ -469,16 +484,9 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.F.range_fix = True
         else:
             self.F.range_fix = False
-        
         self.gridlayout.removeWidget(self.F.canvas)
-        # plt.close()
-        # sip.delete(self.F)
-        # self.F = MyFigure()
         self.pb.plot(self.F)
-        # self.fc.recover_force(self.ljp)
-        # self.F.plot(self.fc,self.peak_index)
         self.pb.drawlabel(self.label, self.lclplabel)
-        # self.label.setText('Peak select: {}/{}'.format(self.force_index,len(self.zpo)-1))
         self.F.canvas.draw()
         self.gridlayout.addWidget(self.F.canvas)
         
@@ -518,6 +526,7 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
 
     def forcedelete(self):
         self.pb.fc_delete()
+        self.indexplus()
         self.resetslide()
         self.displace_result(range_fix=self.zoomfix_state)
 
@@ -538,9 +547,22 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
             self.peakdelete()
         elif e.key()==Qt.Key_Control:
             self.control = True
+        elif e.key()==Qt.Key_Alt:
+            self.alt = True
+        elif e.key()>=65 and e.key()<=90:
+            self.pb.changeClass(chr(e.key()))
+            self.indexplus()
+            self.displace_result(range_fix=self.zoomfix_state)
+        elif e.key()==Qt.Key_1:
+            #self.forcedelete()
+            self.CurveKeep()
+        elif e.key()==Qt.Key_2:
+            self.CurveDiscard()
     def keyReleaseEvent(self,e):
         if e.key()==Qt.Key_Control:
             self.control = False
+        elif e.key()==Qt.Key_Alt:
+            self.alt = False
     def resetslidevalue(self):
         self.lcslide.setValue(0)
         self.lpslide.setValue(0)
@@ -657,6 +679,16 @@ class MyMainWindow(QMainWindow, Ui_MainWindow):
         self.pb.execu_autostep(progress, self)
         if self.pb.state:
             self.displace_result()
+    def dataEuipment(self):
+        self.pb.Data_equip_slim('e',QProgressDialog(self),self)
+    def dataSlimming(self):
+        self.pb.Data_equip_slim('s',QProgressDialog(self),self)
+    def CurveKeep(self):
+        self.pb.keepcurve()
+        self.displace_result(range_fix=self.zoomfix_state)
+    def CurveDiscard(self):
+        self.pb.discardcurve()
+        self.displace_result(range_fix=self.zoomfix_state)
 def win_connect(main_win,dialog):
     main_win.actionparameters_setting.triggered.connect(dialog[0].show)
     main_win.actionmark_base_on_dlc.triggered.connect(dialog[1].show)
@@ -676,5 +708,3 @@ if __name__ == '__main__':
     myWin.show()
     sys.exit(app.exec_())
     plt.close()
-    
-    

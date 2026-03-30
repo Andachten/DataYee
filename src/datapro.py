@@ -4,6 +4,8 @@ Created on Thu May 27 22:51:44 2021
 
 @author: ZhengBin
 """
+import sys
+sys.path.append('../')
 import numpy as np
 import copy
 from scipy.signal import savgol_filter, find_peaks
@@ -46,6 +48,11 @@ def fig2img(fig):
     fig.canvas.draw()
     img = Image.frombytes('RGB', fig.canvas.get_width_height(), fig.canvas.tostring_rgb())
     return img
+def wlc_k_f_nox(lc,k):
+    lp = 0.36
+    x = (-1.028547**6*lc+250000*k*lc**2*lp)/(-1.028547**6+250000*k*lc*lp)+(80.11823662350369*(-1.057908931209**12*lc**3+5.142735**11*k*lc**4*lp-6.25**10*k**2*lc**5*lp**2)**(1/3))/(-1.028547**6+250000*k*lc*lp)
+    f = 1.3806e-23 * 298 / (lp * 1e-9) * (1 / 4 * (1 - x / lc) ** (-2) + x / lc - 1 / 4) * 1e12
+    return f
 def is_number(s):
     try:
         float(s)
@@ -70,7 +77,7 @@ def noise_down(fc):
         err = np.abs(savgol_filter(data_y[:, 0][int(r * len(data_y)):], s, 2) - data_y_right_smth).mean()
         if err < 4:
             break
-    fc.data['filters']['win_lens'] = s
+    fc.data['filters']['win_lens'] = 19
 def cal_baseline_drift(fc):
     fc.data['offset']['k'] = 0
     data = fc.get_prodata()['retract']
@@ -92,6 +99,8 @@ def cal_baseline_x(fc):
     fc.data['offset']['x'] = 0
     data = fc.get_prodata()['retract']
     data_x,data_y = data['measuredHeight'],data['vDeflection']
+    fc.data['offset']['x'] = data_x[0]
+    '''
     for i, v in enumerate(data_y):
         if v * data_y[i + 1] < 0:
             fc.data['offset']['x'] = 0.5 * (data_x[i] + data_x[i + 1])
@@ -99,6 +108,7 @@ def cal_baseline_x(fc):
         if i>int(0.5*len(data_x)):
             fc.data['offset']['x'] = data_x[0]
             break
+    '''
 def cal_highspeed_drift(fc):
     fc.data['offset']['highspeed'] = 0
     if not fc.data['arg']['highspeed']:
@@ -181,7 +191,10 @@ def wlcfit(fc):
     data_x,data_y = data['measuredHeight'].reshape(-1)*1e9,data['vDeflection'].reshape(-1)*1e12
     lp=fc.data['arg']['lp']
     for i,p_i in enumerate(fc.data['peakindex']):
-        b_i = np.where(p_i>fc.data['bottomindex'])[0]
+        try:
+            b_i = np.where(p_i>fc.data['bottomindex'])[0]
+        except:
+            b_i = []
         if len(b_i)!=0:
             b_i = fc.data['bottomindex'][b_i[-1]]
         else:
@@ -334,7 +347,7 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
         plt.close()
         return img
     a=ax.hist(x,bins=int(x.max()-x.min()))
-    kde = KernelDensity(kernel='gaussian', bandwidth=2).fit(x.reshape(-1,1))
+    kde = KernelDensity(kernel='gaussian', bandwidth=1.5).fit(x.reshape(-1,1))
     x_ = np.linspace(x.min(),x.max(),int(x.max()-x.min()))
     log_dens = kde.score_samples(x_.reshape(-1,1))
     p,_ = find_peaks(np.exp(log_dens)/np.exp(log_dens).max(),height=0.15,distance=5)
@@ -361,6 +374,25 @@ def Lc_transformer(data_x,data_y,plottype='hist'):
     img = fig2img(fig)
     plt.close()
     return img
+def Lc_transformer_(x,y):
+    f,x = WRC_transformer(y,x)
+    a = np.histogram(x,bins=int(x.max()-x.min()))
+    kde = KernelDensity(kernel='gaussian', bandwidth=1.5).fit(x.reshape(-1,1))
+    x_ = np.linspace(x.min(),x.max(),int(x.max()-x.min()))
+    log_dens = kde.score_samples(x_.reshape(-1,1))
+    p,_ = find_peaks(np.exp(log_dens)/np.exp(log_dens).max(),height=0.15,distance=5)
+    guess = []
+    bound_start = []
+    bound_end = []
+    for i in p:
+        guess += [x_[i], 25, 1]   
+        bound_start += [x_[i]-20,0,0]
+        bound_end += [x_[i]+20,100,20]
+    X = a[1]
+    Y = np.append(a[0],0)
+    popt, pcov = curve_fit(mlti_Gaussian, X, Y, p0=guess,bounds=(bound_start,bound_end))
+    lc = popt[::3]
+    return lc
 def plotmap(arr):
     lens = int(np.sqrt(len(arr)))
     arr = arr[:lens**2]

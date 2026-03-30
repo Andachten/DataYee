@@ -203,7 +203,7 @@
            </rect>
           </property>
           <property name="decimals">
-           <number>1</number>
+           <number>3</number>
           </property>
           <property name="value">
            <double>1.000000000000000</double>
@@ -239,6 +239,7 @@
           </property>
           <property name="font">
            <font>
+            <family>Arial</family>
             <pointsize>12</pointsize>
            </font>
           </property>
@@ -296,6 +297,7 @@
           </property>
           <property name="font">
            <font>
+            <family>Arial</family>
             <pointsize>12</pointsize>
            </font>
           </property>
@@ -324,6 +326,7 @@
           </property>
           <property name="font">
            <font>
+            <family>Arial</family>
             <pointsize>12</pointsize>
            </font>
           </property>
@@ -367,6 +370,7 @@
            </property>
            <property name="font">
             <font>
+             <family>Arial</family>
              <pointsize>12</pointsize>
             </font>
            </property>
@@ -507,6 +511,7 @@
           </property>
           <property name="font">
            <font>
+            <family>Arial</family>
             <pointsize>12</pointsize>
            </font>
           </property>
@@ -582,6 +587,7 @@
       </property>
       <property name="font">
        <font>
+        <family>Arial</family>
         <pointsize>14</pointsize>
         <underline>false</underline>
        </font>
@@ -771,6 +777,7 @@
        </property>
        <property name="font">
         <font>
+         <family>Arial</family>
          <pointsize>20</pointsize>
          <weight>75</weight>
          <bold>true</bold>
@@ -802,11 +809,12 @@
      <x>0</x>
      <y>0</y>
      <width>1307</width>
-     <height>45</height>
+     <height>33</height>
     </rect>
    </property>
    <property name="font">
     <font>
+     <family>Arial</family>
      <pointsize>18</pointsize>
     </font>
    </property>
@@ -857,6 +865,8 @@
     <addaction name="actionSave"/>
     <addaction name="actionSave_as"/>
     <addaction name="menuExport"/>
+    <addaction name="actionData_equipment"/>
+    <addaction name="actionData_slimming"/>
     <addaction name="separator"/>
     <addaction name="actionExit"/>
    </widget>
@@ -872,6 +882,7 @@
     </property>
     <addaction name="actionhelp"/>
     <addaction name="actionDataYee"/>
+    <addaction name="actionUpdate"/>
    </widget>
    <widget class="QMenu" name="menuEdit">
     <property name="font">
@@ -919,8 +930,8 @@
       <rect>
        <x>789</x>
        <y>471</y>
-       <width>162</width>
-       <height>114</height>
+       <width>140</width>
+       <height>94</height>
       </rect>
      </property>
      <property name="font">
@@ -1384,6 +1395,21 @@
     <font>
      <pointsize>12</pointsize>
     </font>
+   </property>
+  </action>
+  <action name="actionData_equipment">
+   <property name="text">
+    <string>Data equipment</string>
+   </property>
+  </action>
+  <action name="actionData_slimming">
+   <property name="text">
+    <string>Data slimming</string>
+   </property>
+  </action>
+  <action name="actionUpdate">
+   <property name="text">
+    <string>Update</string>
    </property>
   </action>
  </widget>

@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file 'script.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_Script(object):
     def setupUi(self, Script):
@@ -35,6 +37,7 @@ class Ui_Script(object):
         self.verticalLayout_2.setObjectName("verticalLayout_2")
         self.pushButton_5 = QtWidgets.QPushButton(self.groupBox_4)
         font = QtGui.QFont()
+        font.setPointSize(17)
         font.setBold(True)
         font.setWeight(75)
         self.pushButton_5.setFont(font)
@@ -66,6 +69,9 @@ class Ui_Script(object):
         self.groupBox_5.setObjectName("groupBox_5")
         self.verticalLayout_3 = QtWidgets.QVBoxLayout(self.groupBox_5)
         self.verticalLayout_3.setObjectName("verticalLayout_3")
+        self.pushButton_8 = QtWidgets.QPushButton(self.groupBox_5)
+        self.pushButton_8.setObjectName("pushButton_8")
+        self.verticalLayout_3.addWidget(self.pushButton_8)
         self.pushButton_7 = QtWidgets.QPushButton(self.groupBox_5)
         self.pushButton_7.setObjectName("pushButton_7")
         self.verticalLayout_3.addWidget(self.pushButton_7)
@@ -111,9 +117,9 @@ class Ui_Script(object):
         self.pushButton_5.setText(_translate("Script", "↑"))
         self.pushButton_6.setText(_translate("Script", "↓"))
         self.groupBox_2.setTitle(_translate("Script", "Scripts"))
+        self.pushButton_8.setText(_translate("Script", "Path"))
         self.pushButton_7.setText(_translate("Script", "Renew"))
         self.pushButton.setText(_translate("Script", "Add"))
         self.pushButton_2.setText(_translate("Script", "Delete"))
         self.pushButton_3.setText(_translate("Script", "Start"))
         self.pushButton_4.setText(_translate("Script", "Quick start"))
-

@@ -279,16 +279,11 @@ class loadjpkfile():
         '''
     def extract_force_data(self, filename, index):
         jpk = self.buffer['jpkforce']
-        springConstant = 0
-        for i in ['1','2']:
-            try:
-                springConstant = float(
-                jpk.shared_parameters['lcd-info'][i]['conversion-set']['conversion']['force']['scaling'][
+        try:
+            springConstant = float(
+                jpk.shared_parameters['lcd-info']['2']['conversion-set']['conversion']['force']['scaling'][
                     'multiplier'])
-                break
-            except:
-                continue
-        if springConstant == 0:
+        except:
             return None
         self.data['springConstant'] = springConstant
         for i, segment in jpk.segments.items():

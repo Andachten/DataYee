@@ -10,3 +10,4 @@ PyQt5
 dtaidistance==2.3.2
 openpyxl==3.0.9
 dtaidistance==2.3.2
+tslearn

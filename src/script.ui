@@ -49,6 +49,7 @@
           <widget class="QPushButton" name="pushButton_5">
            <property name="font">
             <font>
+             <pointsize>17</pointsize>
              <weight>75</weight>
              <bold>true</bold>
             </font>
@@ -104,6 +105,13 @@
          <string/>
         </property>
         <layout class="QVBoxLayout" name="verticalLayout_3">
+         <item>
+          <widget class="QPushButton" name="pushButton_8">
+           <property name="text">
+            <string>Path</string>
+           </property>
+          </widget>
+         </item>
          <item>
           <widget class="QPushButton" name="pushButton_7">
            <property name="text">

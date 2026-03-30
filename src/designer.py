@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file 'designer.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -75,7 +77,7 @@ class Ui_MainWindow(object):
         self.lpslide.setObjectName("lpslide")
         self.kSpinBox = QtWidgets.QDoubleSpinBox(self.groupBox_6)
         self.kSpinBox.setGeometry(QtCore.QRect(50, 120, 71, 31))
-        self.kSpinBox.setDecimals(1)
+        self.kSpinBox.setDecimals(3)
         self.kSpinBox.setProperty("value", 1.0)
         self.kSpinBox.setObjectName("kSpinBox")
         self.kSlider = QtWidgets.QSlider(self.groupBox_6)
@@ -87,6 +89,7 @@ class Ui_MainWindow(object):
         self.lclplabel = QtWidgets.QLabel(self.groupBox_6)
         self.lclplabel.setGeometry(QtCore.QRect(0, 0, 401, 31))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(12)
         self.lclplabel.setFont(font)
         self.lclplabel.setText("")
@@ -105,6 +108,7 @@ class Ui_MainWindow(object):
         self.groupBox_4 = QtWidgets.QGroupBox(self.groupBox_13)
         self.groupBox_4.setGeometry(QtCore.QRect(0, 0, 141, 71))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(12)
         self.groupBox_4.setFont(font)
         self.groupBox_4.setObjectName("groupBox_4")
@@ -114,6 +118,7 @@ class Ui_MainWindow(object):
         self.groupBox_5 = QtWidgets.QGroupBox(self.groupBox_13)
         self.groupBox_5.setGeometry(QtCore.QRect(0, 80, 141, 101))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(12)
         self.groupBox_5.setFont(font)
         self.groupBox_5.setObjectName("groupBox_5")
@@ -126,6 +131,7 @@ class Ui_MainWindow(object):
         self.zoomfix = QtWidgets.QCheckBox(self.groupBox_5)
         self.zoomfix.setGeometry(QtCore.QRect(20, 70, 91, 19))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(12)
         self.zoomfix.setFont(font)
         self.zoomfix.setObjectName("zoomfix")
@@ -174,6 +180,7 @@ class Ui_MainWindow(object):
         self.label = QtWidgets.QLabel(self.groupBox_7)
         self.label.setGeometry(QtCore.QRect(0, 0, 371, 41))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(12)
         self.label.setFont(font)
         self.label.setObjectName("label")
@@ -202,6 +209,7 @@ class Ui_MainWindow(object):
         self.groupBox = QtWidgets.QGroupBox(self.centralwidget)
         self.groupBox.setMinimumSize(QtCore.QSize(1030, 480))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(14)
         font.setUnderline(False)
         self.groupBox.setFont(font)
@@ -254,6 +262,7 @@ class Ui_MainWindow(object):
         self.pushButton = QtWidgets.QPushButton(self.groupBox_10)
         self.pushButton.setGeometry(QtCore.QRect(0, 340, 231, 51))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(20)
         font.setBold(True)
         font.setWeight(75)
@@ -271,8 +280,9 @@ class Ui_MainWindow(object):
         self.statusbar.setObjectName("statusbar")
         MainWindow.setStatusBar(self.statusbar)
         self.menuBar = QtWidgets.QMenuBar(MainWindow)
-        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1307, 45))
+        self.menuBar.setGeometry(QtCore.QRect(0, 0, 1307, 33))
         font = QtGui.QFont()
+        font.setFamily("Arial")
         font.setPointSize(18)
         self.menuBar.setFont(font)
         self.menuBar.setObjectName("menuBar")
@@ -320,7 +330,7 @@ class Ui_MainWindow(object):
         self.menuPlot.setFont(font)
         self.menuPlot.setObjectName("menuPlot")
         self.menucontour_lenght = QtWidgets.QMenu(self.menuPlot)
-        self.menucontour_lenght.setGeometry(QtCore.QRect(789, 471, 162, 114))
+        self.menucontour_lenght.setGeometry(QtCore.QRect(789, 471, 140, 94))
         font = QtGui.QFont()
         font.setFamily("Arial")
         font.setPointSize(12)
@@ -542,6 +552,12 @@ class Ui_MainWindow(object):
         font.setPointSize(12)
         self.actionScript.setFont(font)
         self.actionScript.setObjectName("actionScript")
+        self.actionData_equipment = QtWidgets.QAction(MainWindow)
+        self.actionData_equipment.setObjectName("actionData_equipment")
+        self.actionData_slimming = QtWidgets.QAction(MainWindow)
+        self.actionData_slimming.setObjectName("actionData_slimming")
+        self.actionUpdate = QtWidgets.QAction(MainWindow)
+        self.actionUpdate.setObjectName("actionUpdate")
         self.menuOpen.addSeparator()
         self.menuOpen.addAction(self.actionForce_Curve)
         self.menuOpen.addAction(self.actionBatch_of_Force_Curve)
@@ -554,10 +570,13 @@ class Ui_MainWindow(object):
         self.menu.addAction(self.actionSave)
         self.menu.addAction(self.actionSave_as)
         self.menu.addAction(self.menuExport.menuAction())
+        self.menu.addAction(self.actionData_equipment)
+        self.menu.addAction(self.actionData_slimming)
         self.menu.addSeparator()
         self.menu.addAction(self.actionExit)
         self.menuAbout.addAction(self.actionhelp)
         self.menuAbout.addAction(self.actionDataYee)
+        self.menuAbout.addAction(self.actionUpdate)
         self.menuAction.addAction(self.actionDelete)
         self.menuAction.addAction(self.actionBaseline_plus)
         self.menuAction.addAction(self.actionBaseline_minus)
@@ -670,4 +689,6 @@ class Ui_MainWindow(object):
         self.actionClustering_by_KMeans.setText(_translate("MainWindow", "Clustering by KMeans"))
         self.actionHistogram_scatter.setText(_translate("MainWindow", "Histogram_scatter"))
         self.actionScript.setText(_translate("MainWindow", "Script"))
-
+        self.actionData_equipment.setText(_translate("MainWindow", "Data equipment"))
+        self.actionData_slimming.setText(_translate("MainWindow", "Data slimming"))
+        self.actionUpdate.setText(_translate("MainWindow", "Update"))

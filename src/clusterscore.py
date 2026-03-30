@@ -13,7 +13,7 @@ sys.path.append(rootPath)
 from sklearn.neighbors import KernelDensity
 import numpy as np
 from src.loadjpk import forcecurve,loadjpkfile,zipfileopera
-from dtaidistance import dtw
+#from dtaidistance import dtw
 from src.datapro import wlc2lc,cal_baseline_x,cal_baseline_y
 
 def WLC_transformer(f,x,thre=30):
@@ -75,7 +75,7 @@ def get_lcseq(zpo,ljp,indexlst,length,step,thre):
         
     #arr = np.array(lst)
     return arr
-def get_distmatrix(zpo,ljp,m_run,length=400,step=2,thre=30,parallel=True,multip_n=4):
+def get_distmatrix(zpo,ljp,m_run,length=400,step=2,thre=30,parallel=True,multip_n=1):
     if not parallel:
         arr = np.array(get_lcseq(zpo,ljp,range(len(zpo)),length,step,thre))
     else:

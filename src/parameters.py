@@ -2,11 +2,13 @@
 
 # Form implementation generated from reading ui file 'parameters.ui'
 #
-# Created by: PyQt5 UI code generator 5.9.2
+# Created by: PyQt5 UI code generator 5.12.3
 #
 # WARNING! All changes made in this file will be lost!
 
+
 from PyQt5 import QtCore, QtGui, QtWidgets
+
 
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
@@ -176,6 +178,15 @@ class Ui_Dialog(object):
         font.setPointSize(14)
         self.rotatestate.setFont(font)
         self.rotatestate.setObjectName("rotatestate")
+        self.delay = QtWidgets.QCheckBox(Dialog)
+        self.delay.setGeometry(QtCore.QRect(370, 180, 131, 31))
+        font = QtGui.QFont()
+        font.setFamily("Arial")
+        font.setPointSize(14)
+        font.setBold(False)
+        font.setWeight(50)
+        self.delay.setFont(font)
+        self.delay.setObjectName("delay")
 
         self.retranslateUi(Dialog)
         self.buttonBox.accepted.connect(Dialog.accept)
@@ -199,4 +210,4 @@ class Ui_Dialog(object):
         self.label_11.setText(_translate("Dialog", "-"))
         self.label_12.setText(_translate("Dialog", "nm"))
         self.rotatestate.setText(_translate("Dialog", "Allow Curve Rotate"))
-
+        self.delay.setText(_translate("Dialog", "Delay Mode"))
